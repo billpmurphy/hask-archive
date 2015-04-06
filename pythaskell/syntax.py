@@ -1,3 +1,155 @@
+class Syntax(object):
+    """
+    Superclass for new syntactic constructs. By default, a piece of syntax
+    should raise a syntax error with a standard error message if the syntax
+    object is used with a Python buildin operator. Subclasses may override
+    these methods to define what syntax is valid:
+    """
+    def _raise_invalid(self):
+        raise SyntaxError(self.__class__._syntax_err_msg)
+
+    def __call__(self, _): self._raise_invalid()
+
+    def __gt__(self, _): self._raise_invalid()
+    def __lt__(self, _): self._raise_invalid()
+    def __ge__(self, _): self._raise_invalid()
+    def __le__(self, _): self._raise_invalid()
+    def __pos__(self, _): self._raise_invalid()
+    def __neg__(self, _): self._raise_invalid()
+    def __abs__(self, _): self._raise_invalid()
+    def __invert__(self, _): self._raise_invalid()
+    def __round__(self, _): self._raise_invalid()
+    def __floor__(self, _): self._raise_invalid()
+    def __ceil__(self, _): self._raise_invalid()
+    def __trunc__(self, _): self._raise_invalid()
+
+    def __add__(self, _): self._raise_invalid()
+    def __sub__(self, _): self._raise_invalid()
+    def __mul__(self, _): self._raise_invalid()
+    def __floordiv__(self, _): self._raise_invalid()
+    def __div__(self, _): self._raise_invalid()
+    def __mod__(self, _): self._raise_invalid()
+    def __divmod__(self, _): self._raise_invalid()
+    def __rpow__(self, _): self._raise_invalid()
+    def __lshift__(self, _): self._raise_invalid()
+    def __rshift__(self, _): self._raise_invalid()
+    def __or__(self, _): self._raise_invalid()
+    def __and__(self, _): self._raise_invalid()
+    def __xor__(self, _): self._raise_invalid()
+
+    def __radd__(self, _): self._raise_invalid()
+    def __rsub__(self, _): self._raise_invalid()
+    def __rmul__(self, _): self._raise_invalid()
+    def __rfloordiv__(self, _): self._raise_invalid()
+    def __rdiv__(self, _): self._raise_invalid()
+    def __rmod__(self, _): self._raise_invalid()
+    def __rdivmod__(self, _): self._raise_invalid()
+    def __rrpow__(self, _): self._raise_invalid()
+    def __rlshift__(self, _): self._raise_invalid()
+    def __rrshift__(self, _): self._raise_invalid()
+    def __ror__(self, _): self._raise_invalid()
+    def __rand__(self, _): self._raise_invalid()
+    def __rxor__(self, _): self._raise_invalid()
+
+    def __iadd__(self, _): self._raise_invalid()
+    def __isub__(self, _): self._raise_invalid()
+    def __imul__(self, _): self._raise_invalid()
+    def __ifloordiv__(self, _): self._raise_invalid()
+    def __idiv__(self, _): self._raise_invalid()
+    def __imod__(self, _): self._raise_invalid()
+    def __idivmod__(self, _): self._raise_invalid()
+    def __irpow__(self, _): self._raise_invalid()
+    def __ilshift__(self, _): self._raise_invalid()
+    def __irshift__(self, _): self._raise_invalid()
+    def __ior__(self, _): self._raise_invalid()
+    def __iand__(self, _): self._raise_invalid()
+    def __ixor__(self, _): self._raise_invalid()
+
+
+## Guards! Guards!
+
+class NoGuardMatchException(Exception):
+    pass
+
+
+class c(Syntax):
+    """
+    Guard condition.
+    """
+    _syntax_err_msg = "Syntax error in guard condition"
+
+    def __init__(self, fn):
+        if not hasattr(fn, "__call__"):
+            raise ValueError("Guard condition must be callable")
+        self._func = fn
+
+    def has_return_value(self):
+        return hasattr(self, "_return_value")
+
+    def return_value(self):
+        if not self.has_return_value():
+            raise SyntaxError("Guard condition does not have return value")
+        else:
+            return self._return_value
+
+    def __call__(self, *args, **kwargs):
+        return self._func(*args, **kwargs)
+
+    def __rshift__(self, value):
+        if self.has_return_value():
+            raise SyntaxError("Multiple return values in guard condition")
+        self._return_value = value
+        return self
+
+
+
+otherwise = c(lambda _: True)
+
+
+class guard(object):
+    """
+    Usage:
+
+    ~(guard(8)
+        | c(lambda x: x < 5) >> "less than 5"
+        | c(lambda x: x < 9) >> "less than 9"
+        | otherwise          >> "unsure"
+    )
+    """
+    def __init__(self, value):
+        self._value = value
+        self._tried_to_match = False
+        self._guard_satisfied = False
+
+    def __or__(self, cond):
+        if self._guard_satisfied:
+            return self
+
+        self._tried_to_match = True
+
+        if not isinstance(cond, c):
+            raise SyntaxError("Guard expression contains non-condition")
+
+        if not cond.has_return_value():
+            raise SyntaxError("Condition expression is missing return value")
+
+        if cond(self._value):
+            self._guard_satisfied = True
+            self._return_value = cond.return_value()
+        return self
+
+    def __invert__(self):
+        if not self._tried_to_match:
+            raise SyntaxError("No conditions in guard expression")
+
+        if self._guard_satisfied:
+            return self._return_value
+        raise NoGuardMatchException("No match found in guard")
+
+
+## "case of" pattern matching
+
+
 class Underscore(object):
     """
     Singleton for `__`.
@@ -31,8 +183,10 @@ def _p(key):
         raise SyntaxError("Can't use _p() outside a `caseof` expression")
     return
 
+
 class Wildcard(object):
     pass
+
 
 class caseof(object):
     """
@@ -122,16 +276,3 @@ class caseof(object):
         """
         del caseof._caseof_bound_vars
         del caseof._ready_for_pattern
-
-#############################
-
-class guard(object):
-    def __init__(self, value):
-        self._value = value
-    def __and__(self, other):
-        pass
-
-class cond(object):
-    def __init__(self, fn, return_value):
-        self.fn = fn
-        self._return_value = return_value
