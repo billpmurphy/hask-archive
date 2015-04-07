@@ -149,6 +149,7 @@ class guard(object):
 
 ## "case of" pattern matching
 
+## clean up this sick filth
 
 class Underscore(object):
     """
