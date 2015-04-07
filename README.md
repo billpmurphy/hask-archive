@@ -48,3 +48,44 @@ Things that need to be explored more, in importance order:
 
 Key features of Haskell I am forgetting:
 * ???????
+
+
+(Some of the) things that currently work and look pretty good:
+
+Maybe
+
+```python
+>>> from pythaskell.types import Maybe, Just, Nothing
+>>> Nothing
+Nothing
+>>> Just(1)
+Just(1)
+>>> Just("hello")
+Just(hello)
+>>> Just("hello") * (lambda x: x + " world")  # fmap
+Just(hello world)
+>>> Nothing * (lambda x: x + " world")
+Nothing
+>>> Just(1) >> (lambda x: Just(x + 1)) >> (lambda x: Just(x + 1)) # bind
+Just(3)
+>>> Nothing >> (lambda x: Just(x + 1)) >> (lambda x: Just(x + 1))
+Nothing
+>>> from pythaskell.data.maybe import *
+>>> # all the functions from Data.Maybe are here
+>>> catMaybes([Just(1), Just(2), Nothing, Just(4)])
+[Just(1), Just(2), Just(4)]
+```
+
+Guards
+
+```python
+>>> from pythaskell.syntax import guard, c, otherwise
+>>> ~(guard(8)
+...     | c(lambda x: x < 5)  >> "< 5"
+...     | c(lambda x: x < 10) >> "< 10"
+...     | otherwise           >> "huge"
+... )
+'< 10'
+```
+
+(will do demos of the rest when I'm less lazy/busy)

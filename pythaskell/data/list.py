@@ -1,5 +1,7 @@
 ## Data.List
 
+from ..types import Just, Nothing
+
 ## Basic functions
 
 def head(xs):

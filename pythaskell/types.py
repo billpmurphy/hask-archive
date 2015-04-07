@@ -24,7 +24,7 @@ class Functor(Typeclass):
     def fmap(self, fn):
         raise NotImplementedError()
 
-    def __mult__(self, fn):
+    def __mul__(self, fn):
         return self.fmap(fn)
 
 
@@ -46,10 +46,6 @@ class Monad(Applicative):
 
 
 ## Maybe monad
-
-
-class NothingException(Exception):
-    pass
 
 
 class Maybe(Monad):
