@@ -1,6 +1,23 @@
+import abc
+
 ## Some basic "typeclasses"
 
-class Functor(object):
+class Typeclass(object):
+    __metaclass__ = abc.ABCMeta
+
+
+class Num(Typeclass):
+    __metaclass__ = abc.ABCMeta
+
+
+Num.register(int)
+Num.register(float)
+Num.register(complex)
+
+
+class Functor(Typeclass):
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, _value):
         self._value = _value
 
@@ -12,11 +29,15 @@ class Functor(object):
 
 
 class Applicative(Functor):
+    __metaclass__ = abc.ABCMeta
+
     def pure(self, value):
         raise NotImplementedError()
 
 
 class Monad(Applicative):
+    __metaclass__ = abc.ABCMeta
+
     def bind(self, fn):
         raise NotImplementedError()
 
@@ -32,6 +53,8 @@ class NothingException(Exception):
 
 
 class Maybe(Monad):
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, value):
         self._is_nothing = False
         self._value = value

@@ -3,12 +3,24 @@ class Syntax(object):
     Superclass for new syntactic constructs. By default, a piece of syntax
     should raise a syntax error with a standard error message if the syntax
     object is used with a Python buildin operator. Subclasses may override
-    these methods to define what syntax is valid:
+    these methods to define what syntax is valid.
     """
     def _raise_invalid(self):
         raise SyntaxError(self.__class__._syntax_err_msg)
 
+    def __len__(self, _): self._raise_invalid()
+    def __getitem__(self, _): self._raise_invalid()
+    def __setitem__(self, _): self._raise_invalid()
+    def __delitem__(self, _): self._raise_invalid()
+    def __iter__(self, _): self._raise_invalid()
+    def __reversed__(self, _): self._raise_invalid()
+    def __contains__(self, _): self._raise_invalid()
+    def __missing__(self, _): self._raise_invalid()
+
     def __call__(self, _): self._raise_invalid()
+    def __enter__(self): self._raise_invalid()
+    def __exit__(self, exception_type, exception_value, traceback):
+        self._raise_invalid()
 
     def __gt__(self, _): self._raise_invalid()
     def __lt__(self, _): self._raise_invalid()
@@ -189,7 +201,7 @@ class Wildcard(object):
     pass
 
 
-class caseof(object):
+class caseof(Syntax):
     """
     Pattern matching similar to Haskell's "case of" syntax.
 

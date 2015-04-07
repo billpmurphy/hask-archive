@@ -36,8 +36,8 @@ Things that need to be explored more, in importance order:
   ADT?
 * pattern matching (case of) - is there a better way of handling local binidng
   that horrid global state? in general, need to clean this filth up
-* types and type assertions - is there some way to abuse decorators to do this?
-  or the function docstring? might want to look around
+* types and type assertions - ~~is there some way to abuse decorators to do this?
+  or the function docstring? might want to look around~~ decorators are the way to go - would be awesome to implement full Hindley-Milner in python
 * port more Haskell standard libraries
 * other monads/functors
 * immutable variables - can we mess with `globals()` to prevent regular assignment?
