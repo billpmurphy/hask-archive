@@ -130,6 +130,23 @@ Traceback (most recent call last):
   File "pythaskell/data/maybe.py", line 14, in fromJust
     raise ValueError("Cannot call fromJust on Nothing.")
 ValueError: Cannot call fromJust on Nothing.
+
+>>> from pythaskell.types import in_maybe
+>>> def f(y):
+...     x = y * 10
+...     return x
+...
+>>> pythaskell.types.in_maybe(f, 9)
+Just(90)
+
+>>> def g(y):
+...     if y > 5:
+...         raise ValueError("y is too large!")
+...     return y
+...
+>>> pythaskell.types.in_maybe(g, 9)
+Nothing
+
 ```
 
 
@@ -157,6 +174,22 @@ Right(0.00137174211248)
 
 >>> Right(3) >> (lambda x: Left(x)) >> (lambda x: Right(x**x))
 Left(3)
+
+>>> from pythaskell.types import in_either
+>>> def f(y):
+...     x = y * 10
+...     return x
+...
+>>> pythaskell.types.in_either(f, 9)
+Right(90)
+
+>>> def g(y):
+...     if y > 5:
+...         raise ValueError("y is too large!")
+...     return y
+...
+>>> pythaskell.types.in_either(g, 9)
+Left(y is too large!)
 ```
 
 Guards
