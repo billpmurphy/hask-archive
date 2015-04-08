@@ -16,7 +16,9 @@ def in_typeclass(cls, typeclass):
     """
     Return True if cls is a member of typeclass, and False otherwise.
     """
-    if cls in builtins:
+    if typeclass in builtins:
+        return False
+    elif cls in builtins:
         try:
             return issubclass(cls, typeclass)
         except TypeError:
@@ -38,8 +40,11 @@ def add_typeclass_flag(cls, typeclass):
     return cls
 
 
-class Show(object):
+class Typeclass(object):
     __metaclass__ = abc.ABCMeta
+
+
+class Show(Typeclass):
 
     def __init__(self, cls):
         if not hasattr(cls, "__repr__"):
@@ -49,8 +54,7 @@ class Show(object):
         return
 
 
-class Num(object):
-    __metaclass__ = abc.ABCMeta
+class Num(Typeclass):
 
     def __init__(self, cls):
         # todo: add checks for magic methods an object should have to be
@@ -60,8 +64,7 @@ class Num(object):
 
 
 
-class Functor(object):
-    __metaclass__ = abc.ABCMeta
+class Functor(Typeclass):
 
     def __init__(self, cls):
         """
@@ -91,8 +94,7 @@ class Functor(object):
         return
 
 
-class Applicative(object):
-    __metaclass__ = abc.ABCMeta
+class Applicative(Typeclass):
 
     def __init__(self, cls):
         """
@@ -118,8 +120,7 @@ class Applicative(object):
         return
 
 
-class Monad(object):
-    __metaclass__ = abc.ABCMeta
+class Monad(Typeclass):
 
     def __init__(self, cls):
         """
