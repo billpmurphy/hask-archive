@@ -55,37 +55,58 @@ Key features of Haskell I am forgetting:
 Maybe
 
 ```python
->>> from pythaskell.types import Maybe, Just, Nothing
+>>> from pythaskell.types import Just, Nothing
+
 >>> Nothing
 Nothing
+
 >>> Just(1)
 Just(1)
+
 >>> Just("hello")
 Just(hello)
+
 >>> Just("hello") * (lambda x: x + " world")  # fmap
 Just(hello world)
+
 >>> Nothing * (lambda x: x + " world")
 Nothing
+
 >>> Just(1) >> (lambda x: Just(x + 1)) >> (lambda x: Just(x + 1)) # bind
 Just(3)
+
 >>> Nothing >> (lambda x: Just(x + 1)) >> (lambda x: Just(x + 1))
 Nothing
->>> from pythaskell.data.maybe import *
->>> # all the functions from Data.Maybe are here
+
+>>> from pythaskell.data.maybe import catMaybes, fromJust
+
 >>> catMaybes([Just(1), Just(2), Nothing, Just(4)])
 [Just(1), Just(2), Just(4)]
+
+>>> fromJust(Just(4))
+4
 ```
 
 Guards
 
 ```python
 >>> from pythaskell.syntax import guard, c, otherwise
->>> ~(guard(8)
-...     | c(lambda x: x < 5)  >> "< 5"
-...     | c(lambda x: x < 10) >> "< 10"
-...     | otherwise           >> "huge"
+
+>>> a = 8
+>>> ~(guard(a)
+...     | c(lambda x: x < 5)  >> "a is < 5"
+...     | c(lambda x: x < 10) >> "a is < 10"
+...     | otherwise           >> "a is huge"
 ... )
-'< 10'
+'a is < 10'
+
+>>> ~(guard(10)
+        | c(lambda x: x < 5) >> "x is < 5")
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "pythaskell/syntax.py", line 159, in __invert__
+    raise NoGuardMatchException("No match found in guard")
+pythaskell.syntax.NoGuardMatchException: No match found in guard
 ```
 
 (will do demos of the rest when I'm less lazy/busy)
