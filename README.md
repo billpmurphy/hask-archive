@@ -1,4 +1,4 @@
-***Notes yall***
+***Notes y'all***
 
 This is still in "throw everything at the wall" phase. Goal here is to push the
 boundaries as far as physically possible, to get as close to Haskell as Python
@@ -12,12 +12,15 @@ Top priority:
 Things that are reasonably well explored so far, but do not have definitive
 implementation details:
 * guards - is there a way to clean up the syntax?
+* caseof - syntax needs overhaul
 * Typeclasses - see if there is some smarter way
 * Monads - need typechecking in bind/fmap
 * Maybe - needs work on decorator/wrapper, reconsider design choices
 * Either - needs work on decorator/wrapper, reconsider design choices
 * infix function composition with "\*" - works great, just need better way of
-  having curried functions
+  having curried functions. Also, the curried function wrapper (however that
+  ends up looking) should be an instance of Functor, so that the "\*" syntax is
+  actually just `fmap`, as it should be.
 * reimplementing Haskell standard library functions
 * using regular classes to represent the functor/applicative/monad heirarchy -
   not sure if this is the way to go
@@ -28,6 +31,10 @@ Things that need to be explored more, in importance order:
   nice (this is crucial, need this to fix up Maybe/Either monad wrappers, and
   do a lot of other stuff). might end up mostly ripping it off, although I
   think there are some things we can improve
+* types and type assertions - decorators are the way to go - need to figure out
+  how to do all the typechecking and have the function wrapper take care of
+  this automagically. It would be awesome to implement full Hindley-Milner in
+  python
 * immutable data strucures - again look at fn.py, but I think we can do better
   here. would be nice to have an immutable linked list similar to fn.py, and
   also a lazy list stream datatype built out of LLs
@@ -38,13 +45,13 @@ Things that need to be explored more, in importance order:
   ADT?
 * pattern matching (case of) - is there a better way of handling local binidng
   that horrid global state? in general, need to clean this filth up
-* types and type assertions - ~~is there some way to abuse decorators to do this?
-  or the function docstring? might want to look around~~ decorators are the way to go - would be awesome to implement full Hindley-Milner in python
-* port more Haskell standard libraries
 * other monads/functors
-* immutable variables - can we mess with `globals()` to prevent regular assignment?
+* immutable variables - can we mess with `globals()` to prevent regular
+  assignment?
 * pattern matching in regular assignment
 * tail call optimization - again, read fn.py's decorator
+* port more Haskell standard libraries (probably want to wait for later to do
+  this)
 * arrows
 
 
@@ -52,7 +59,7 @@ Key features of Haskell I am forgetting:
 * ???????
 
 
-(Some of the) things that currently work and look pretty good:
+***(Some of the) things that currently work and look pretty good:***
 
 Function composition syntax
 ```
