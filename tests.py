@@ -6,6 +6,10 @@ from pythaskell.syntax import NoGuardMatchException as NGME
 
 from pythaskell.types import Just
 from pythaskell.types import Nothing
+from pythaskell.types import Right
+from pythaskell.types import Left
+from pythaskell.types import in_maybe
+from pythaskell.types import in_either
 
 from pythaskell.types import parse_haskell_typestring
 from pythaskell.types import parse_constraints
@@ -35,16 +39,26 @@ class TestSyntax(unittest.TestCase):
         pass
 
 
-class TestTypes(unittest.TestCase):
-    pass
+class TestMaybe(unittest.TestCase):
 
+    def test_eq(self):
+        self.assertEqual(Nothing, Nothing)
+        self.assertEqual(Just(3), Just(3))
+        self.assertEqual(Just("3"), Just("3"))
 
-class TestHOF(unittest.TestCase):
-    pass
+        self.assertNotEqual(Just(1), Just(3))
+        self.assertNotEqual(Nothing, Just(3))
 
+    def test_fmap(self):
+        # add more
+        self.assertEqual(Just(3), Just(2) * (lambda x: x + 1))
+        self.assertEqual(Just("1"), Just(1) * str)
 
+    def test_bind(self):
+        # add more
+        self.assertEqual(Just(10), Just(1) >> (lambda x: Just(x * 10)))
+        self.assertEqual(Just("1"), Just(1) >> (lambda x: Just(str(x))))
 
-###
 
 class TestParse(unittest.TestCase):
 

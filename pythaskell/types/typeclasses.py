@@ -1,6 +1,7 @@
 import abc
 from types import *
 
+
 builtins = (NoneType, TypeType, BooleanType, IntType, LongType, FloatType,
             ComplexType, StringType, UnicodeType, TupleType, ListType,
             DictType, DictionaryType, FunctionType, LambdaType, GeneratorType,
@@ -11,9 +12,9 @@ builtins = (NoneType, TypeType, BooleanType, IntType, LongType, FloatType,
             MemberDescriptorType)
 
 
-def is_typeclass_member(cls, typeclass):
+def in_typeclass(cls, typeclass):
     """
-    Return true if cls is a mmeber of typeclass_name, and False otherwise.
+    Return True if cls is a member of typeclass, and False otherwise.
     """
     if cls in builtins:
         try:
@@ -80,6 +81,11 @@ class Functor(object):
             return self.fmap(fn)
 
         cls = add_typeclass_flag(cls, self.__class__)
+
+        for attr in ("fmap", "__mul__"):
+            if hasattr(cls, attr):
+                raise TypeError("Class cannot implement %s" % attr)
+
         cls.fmap = fmap
         cls.__mul__ = mul
         return
@@ -93,7 +99,7 @@ class Applicative(object):
         Transform a class into a member of Applicative. The class must implement
         __pure__() as appropriate, and must be a member of Functor.
         """
-        if not is_typeclass_member(cls, Functor):
+        if not in_typeclass(cls, Functor):
             raise TypeError("Class must be a member of Functor")
 
         if not hasattr(cls, "__pure__"):
@@ -104,6 +110,10 @@ class Applicative(object):
             return self.__pure__(value)
 
         cls = add_typeclass_flag(cls, self.__class__)
+
+        if hasattr(cls, "pure"):
+            raise TypeError("Class cannot implement %s" % attr)
+
         cls.pure = pure
         return
 
@@ -116,7 +126,7 @@ class Monad(object):
         Transform a class into a member of Monad. The class must implement
         __bind__() as appropriate, and must be a member of Applicative.
         """
-        if not is_typeclass_member(cls, Applicative):
+        if not in_typeclass(cls, Applicative):
             raise TypeError("Class must be a member of Applicative")
 
         if not hasattr(cls, "__bind__"):
@@ -132,6 +142,11 @@ class Monad(object):
             return self.bind(fn)
 
         cls = add_typeclass_flag(cls, self.__class__)
+
+        for attr in ("bind", "__rshift__"):
+            if hasattr(cls, attr):
+                raise TypeError("Class cannot implement %s" % attr)
+
         cls.bind = bind
         cls.__rshift__ = rshift
         return
@@ -191,6 +206,7 @@ class Just(Maybe):
 Nothing = Maybe._make_nothing()
 
 
+# @either decorator
 def in_maybe(fn, *args, **kwargs):
     """
     Apply arguments to a function. If the function call raises an exception,
@@ -204,10 +220,6 @@ def in_maybe(fn, *args, **kwargs):
     if len(args) > 0 or len(kwargs) > 0:
         return _closure_in_maybe(*args, **kwargs)
     return _closure_in_maybe
-
-
-# todo: @maybe decorator: Your function will act as if it is always inside
-# in_maybe
 
 
 class Either(object):
@@ -246,7 +258,13 @@ class Right(Either):
         self._is_left = False
 
 
+# @either decorator
 def in_either(fn, *args, **kwargs):
+    """
+    Apply arguments to a function. If the function call raises an exception,
+    return the exception inside Left. Otherwise, take the result and wrap it in
+    a Right.
+    """
     def _closure_in_either(*args, **kwargs):
         try:
             return Right(fn(*args, **kwargs))
@@ -255,10 +273,6 @@ def in_either(fn, *args, **kwargs):
     if len(args) > 0 or len(kwargs) > 0:
         return _closure_in_either(*args, **kwargs)
     return _closure_in_either
-
-
-# todo: @either decorator: Your function will act as if it is always inside
-# in_either
 
 
 # Typeclass instances
