@@ -3,14 +3,16 @@ import unittest
 from pythaskell.syntax import guard
 from pythaskell.syntax import c
 from pythaskell.syntax import NoGuardMatchException as NGME
+
 from pythaskell.types import Just
 from pythaskell.types import Nothing
 
-from pythaskell.static import parse_haskell_typestring
-from pythaskell.static import parse_constraints
-from pythaskell.static import parse_signature
-from pythaskell.static import check_paren_balance
-from pythaskell.static import TypeStringException as TSE
+from pythaskell.types import parse_haskell_typestring
+from pythaskell.types import parse_constraints
+from pythaskell.types import parse_signature
+from pythaskell.types import check_paren_balance
+from pythaskell.types import TypeStringException as TSE
+
 
 class TestSyntax(unittest.TestCase):
 

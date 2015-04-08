@@ -1,9 +1,27 @@
-def is_typeclass_member(cls, typeclass_name):
+import abc
+from types import *
+
+builtins = (NoneType, TypeType, BooleanType, IntType, LongType, FloatType,
+            ComplexType, StringType, UnicodeType, TupleType, ListType,
+            DictType, DictionaryType, FunctionType, LambdaType, GeneratorType,
+            CodeType, ClassType, InstanceType, MethodType, UnboundMethodType,
+            BuiltinFunctionType, BuiltinMethodType, ModuleType, FileType,
+            XRangeType, EllipsisType, TracebackType, FrameType, BufferType,
+            DictProxyType, NotImplementedType, GetSetDescriptorType,
+            MemberDescriptorType)
+
+
+def is_typeclass_member(cls, typeclass):
     """
     Return true if cls is a mmeber of typeclass_name, and False otherwise.
     """
-    if hasattr(cls, "__typeclasses__"):
-        return typeclass_name in cls.__typeclasses__
+    if cls in builtins:
+        try:
+            return issubclass(cls, typeclass)
+        except TypeError:
+            return False
+    elif hasattr(cls, "__typeclasses__"):
+        return typeclass.__name__ in cls.__typeclasses__
     return False
 
 
@@ -19,67 +37,82 @@ def add_typeclass_flag(cls, typeclass_name):
     return cls
 
 
-def functor(cls):
-    """
-    Transform a class into a member of Applicative. The class must implement
-    __fmap__() as appropriate.
-    """
-    # wrapper around fmap
-    def fmap(self, fn):
-        # later, will do some typechecking here
-        return self.__fmap__(fn)
-
-    # `*` syntax for fmap
-    def mul(self, fn):
-        return self.fmap(fn)
-
-    cls = add_typeclass_flag(cls, "Functor")
-    cls.fmap = fmap
-    cls.__mul__ = mul
-    return cls
+class Num(object):
+    __metaclass__ = abc.ABCMeta
 
 
-def applicative(cls):
-    """
-    Transform a class into a member of Applicative. The class must implement
-    __pure__() as appropriate, and must be a member of Functor.
-    """
-    if not is_typeclass_member(cls, "Functor"):
-        raise TypeError("Class must be a member of Functor")
-
-    def pure(self, value):
-        # later, will do some typechecking here
-        return self.__pure__(value)
-
-    cls = add_typeclass_flag(cls, "Applicative")
-    cls.pure = pure
-    return cls
+Num.register(int)
+Num.register(float)
+Num.register(complex)
 
 
-def monad(cls):
-    """
-    Transform a class into a member of Monad. The class must implement
-    __bind__() as appropriate, and must be a member of Applicative.
-    """
-    if not is_typeclass_member(cls, "Applicative"):
-        raise TypeError("Class must be a member of Applicative")
+class Functor(object):
+    __metaclass__ = abc.ABCMeta
 
-    if not hasattr(cls, "__bind__"):
-        raise TypeError("Class must implement `__bind__`")
+    def __init__(self, cls):
+        """
+        Transform a class into a member of Functor. The class must implement
+        __fmap__() as appropriate.
+        """
+        # wrapper around fmap
+        def fmap(self, fn):
+            # later, will do some typechecking here
+            return self.__fmap__(fn)
 
-    # wrapper around monadic bind
-    def bind(self, fn):
-        # later, will do some typechecking here
-        return self.__bind__(fn)
+        # `*` syntax for fmap
+        def mul(self, fn):
+            return self.fmap(fn)
 
-    # `>>` syntax for monadic bind
-    def rshift(self, fn):
-        return self.bind(fn)
+        cls = add_typeclass_flag(cls, Functor.__name__)
+        cls.fmap = fmap
+        cls.__mul__ = mul
 
-    cls = add_typeclass_flag(cls, "Monad")
-    cls.bind = bind
-    cls.__rshift__ = rshift
-    return cls
+
+class Applicative(object):
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, cls):
+        """
+        Transform a class into a member of Applicative. The class must implement
+        __pure__() as appropriate, and must be a member of Functor.
+        """
+        if not is_typeclass_member(cls, Functor):
+            raise TypeError("Class must be a member of Functor")
+
+        def pure(self, value):
+            # later, will do some typechecking here
+            return self.__pure__(value)
+
+        cls = add_typeclass_flag(cls, Applicative.__name__)
+        cls.pure = pure
+
+
+class Monad(object):
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, cls):
+        """
+        Transform a class into a member of Monad. The class must implement
+        __bind__() as appropriate, and must be a member of Applicative.
+        """
+        if not is_typeclass_member(cls, Applicative):
+            raise TypeError("Class must be a member of Applicative")
+
+        if not hasattr(cls, "__bind__"):
+            raise TypeError("Class must implement `__bind__`")
+
+        # wrapper around monadic bind
+        def bind(self, fn):
+            # later, will do some typechecking here
+            return self.__bind__(fn)
+
+        # `>>` syntax for monadic bind
+        def rshift(self, fn):
+            return self.bind(fn)
+
+        cls = add_typeclass_flag(cls, Monad.__name__)
+        cls.bind = bind
+        cls.__rshift__ = rshift
 
 
 ## Maybe monad
@@ -127,9 +160,9 @@ class Maybe(object):
         return nothing
 
 
-Maybe = functor(Maybe)
-Maybe = applicative(Maybe)
-Maybe = monad(Maybe)
+Functor(Maybe)
+Applicative(Maybe)
+Monad(Maybe)
 
 
 class Just(Maybe):
@@ -195,9 +228,9 @@ class Right(Either):
         self._is_left = False
 
 
-Either = functor(Either)
-Either = applicative(Either)
-Either = monad(Either)
+Functor(Either)
+Applicative(Either)
+Monad(Either)
 
 
 def in_either(fn, *args, **kwargs):
