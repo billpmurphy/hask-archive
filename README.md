@@ -165,8 +165,9 @@ Guards
 'a is < 10'
 
 >>> ~(guard(10)
-        | c(lambda x: x < 0) >> "x is < 0"
-        | c(lambda x: x < 5) >> "x is < 5")
+...     | c(lambda x: x < 0) >> "x is < 0"
+...     | c(lambda x: x < 5) >> "x is < 5"
+... )
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
   File "pythaskell/syntax.py", line 159, in __invert__
