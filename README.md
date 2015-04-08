@@ -12,6 +12,8 @@ Top priority:
 Things that are reasonably well explored so far, but do not have definitive
 implementation details:
 * guards - is there a way to clean up the syntax?
+* Typeclasses - see if there is some smarter way
+* Monads - need typechecking in bind/fmap
 * Maybe - needs work on decorator/wrapper, reconsider design choices
 * Either - needs work on decorator/wrapper, reconsider design choices
 * infix function composition with "\*" - works great, just need better way of
@@ -52,6 +54,31 @@ Key features of Haskell I am forgetting:
 
 (Some of the) things that currently work and look pretty good:
 
+Function composition syntax
+```
+>>> from pythaskell.compose import id, __, flip
+
+>>> # the identity function
+>>> id(10)
+10
+
+>>> func = id * (lambda x: x + 1) * (lambda x: x * 2)
+>>> func(10)
+22
+
+>>> minus = lambda x, y: x - 9
+>>> minus(10, 6)
+4
+
+>>> flip(minus)(10, 6)
+-4
+
+>>> # scala-style lambdas (this example works, but still working on this)
+>>> func = (__ + 1) * (10 + __)
+>>> func(9)
+20
+```
+
 Maybe
 
 ```python
@@ -66,18 +93,21 @@ Just(1)
 >>> Just("hello")
 Just(hello)
 
->>> Just("hello") * (lambda x: x + " world")  # fmap
+>>> # fmap
+>>> Just("hello") * (lambda x: x + " world"
 Just(hello world)
 
 >>> Nothing * (lambda x: x + " world")
 Nothing
 
->>> Just(1) >> (lambda x: Just(x + 1)) >> (lambda x: Just(x + 1)) # bind
+>>> # bind
+>>> Just(1) >> (lambda x: Just(x + 1)) >> (lambda x: Just(x + 1))
 Just(3)
 
 >>> Nothing >> (lambda x: Just(x + 1)) >> (lambda x: Just(x + 1))
 Nothing
 
+>>> # all your favorite functions from Data.Maybe are here too
 >>> from pythaskell.data.maybe import catMaybes, fromJust
 
 >>> catMaybes([Just(1), Just(2), Nothing, Just(4)])
@@ -85,6 +115,40 @@ Nothing
 
 >>> fromJust(Just(4))
 4
+
+>>> fromJust(Nothing)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "pythaskell/data/maybe.py", line 14, in fromJust
+    raise ValueError("Cannot call fromJust on Nothing.")
+ValueError: Cannot call fromJust on Nothing.
+```
+
+
+Either
+
+```python
+>>> from pythaskell.types import Left, Right
+
+>>> Right(3)
+Right(3)
+
+>>> Left("error!")
+Left(error!)
+
+>>> # fmap
+>>> Right(3) * (lambda x: x - 10)
+Right(-7)
+
+>>> Left("err") * (lambda x: x + "or")
+Left("err")
+
+>>> # bind
+>>> Right(3) >> (lambda x: Right(x**x)) >> (lambda x: Left(x ** -2))
+Left(0.00137174211248)
+
+>>> Right(3) >> (lambda x: Left(x)) >> (lambda x: Right(x**x))
+Left(3)
 ```
 
 Guards
@@ -101,6 +165,7 @@ Guards
 'a is < 10'
 
 >>> ~(guard(10)
+        | c(lambda x: x < 0) >> "x is < 0"
         | c(lambda x: x < 5) >> "x is < 5")
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>

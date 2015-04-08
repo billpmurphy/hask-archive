@@ -28,7 +28,7 @@ class f(object):
             return f(lambda x: other(x))
 
 
-idy = f()
+id = f()
 
 
 class _lambda(object):
@@ -38,10 +38,7 @@ class _lambda(object):
     def __call__(self, arg):
         return
 
-    def __add__(self, other):
-        return f(lambda x: x + other)
+    def __add__(self, other): return f(lambda x: x + other)
+    def __radd__(self, other): return f(lambda x: x + other)
 
-    def __radd__(self, other):
-        return f(lambda x: x + other)
-
-_l = _lambda()
+__ = _lambda()

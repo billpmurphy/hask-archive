@@ -120,13 +120,13 @@ class Either(Monad):
         self._value = value
 
     def fmap(self, fn):
-        return self if self._is_left else Right(fn(self.value))
+        return self if self._is_left else Right(fn(self._value))
 
     def pure(self, value):
         return Right(value)
 
     def bind(self, fn):
-        return self if self._is_left else fn(self.value)
+        return self if self._is_left else fn(self._value)
 
     def __eq__(self, other):
         if self._is_left == other._is_left:
