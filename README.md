@@ -66,7 +66,7 @@ Function composition syntax
 >>> func(10)
 22
 
->>> minus = lambda x, y: x - 9
+>>> minus = lambda x, y: x - y
 >>> minus(10, 6)
 4
 
