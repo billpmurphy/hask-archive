@@ -69,6 +69,13 @@ class TestParse(unittest.TestCase):
 
         self.assertFalse(check_paren_balance("("))
         self.assertFalse(check_paren_balance(")"))
+        self.assertFalse(check_paren_balance("(()"))
+        self.assertFalse(check_paren_balance("())"))
+        self.assertFalse(check_paren_balance("())"))
+        self.assertFalse(check_paren_balance("())"))
+        self.assertFalse(check_paren_balance(")("))
+        self.assertFalse(check_paren_balance(")()("))
+        self.assertFalse(check_paren_balance("((()())(())()))())"))
 
     def test_parse_constraint(self):
         self.assertCons(1, "Monad m")
@@ -95,14 +102,15 @@ class TestParse(unittest.TestCase):
         self.assertNumArgs(2, "g -> ((t -> b -> a) -> (m -> f a))")
         self.assertNumArgs(2, "g -> ((t -> (b -> a)) -> (m -> f a))")
 
-        self.assertNumArgs(3, "f :: a -> b -> b")
-        self.assertNumArgs(3, "f :: (a -> b) -> a -> b")
-        self.assertNumArgs(3, "f :: a -> (a -> b) -> b")
-        self.assertNumArgs(3, "f :: a -> b -> (a -> b)")
+        self.assertNumArgs(3, "a -> b -> b")
+        self.assertNumArgs(3, "(a -> b) -> a -> b")
+        self.assertNumArgs(3, "a -> (a -> b) -> b")
+        self.assertNumArgs(3, "a -> b -> (a -> b)")
         self.assertNumArgs(3, "g -> (t -> b -> a) -> (m -> f a)")
 
-        self.assertNumArgs(4, "f :: a -> b -> c -> a")
-        self.assertNumArgs(5, "f :: a -> b -> c -> d -> a")
+        self.assertNumArgs(4, "a -> b -> c -> a")
+        self.assertNumArgs(5, "a -> b -> c -> d -> a")
+        self.assertNumArgs(100, "a -> " * 99 + "a")
 
     def test_whitespace(self):
         with self.assertRaises(TSE): self.parse(" f :: a -> a")

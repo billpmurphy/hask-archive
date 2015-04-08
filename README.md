@@ -62,7 +62,8 @@ Key features of Haskell I am forgetting:
 ***(Some of the) things that currently work and look pretty good:***
 
 Function composition syntax
-```
+
+```python
 >>> from pythaskell.compose import id, __, flip
 
 >>> # the identity function
@@ -101,7 +102,7 @@ Just(1)
 Just(hello)
 
 >>> # fmap
->>> Just("hello") * (lambda x: x + " world"
+>>> Just("hello") * (lambda x: x + " world")
 Just(hello world)
 
 >>> Nothing * (lambda x: x + " world")
@@ -151,8 +152,8 @@ Right(-7)
 Left("err")
 
 >>> # bind
->>> Right(3) >> (lambda x: Right(x**x)) >> (lambda x: Left(x ** -2))
-Left(0.00137174211248)
+>>> Right(3) >> (lambda x: Right(x**x)) >> (lambda x: Right(x ** -2))
+Right(0.00137174211248)
 
 >>> Right(3) >> (lambda x: Left(x)) >> (lambda x: Right(x**x))
 Left(3)

@@ -1,6 +1,14 @@
 import re
+from collections import defaultdict
 
 # some static typing ideas
+
+def t(obj):
+    """
+    Return the type of an object.
+    """
+    return obj.__type__() if hasattr(obj, "__type__") else type(obj)
+
 
 class TypeStringException(Exception):
     pass
@@ -12,9 +20,12 @@ class TypeSig(object):
         self.constraints = constraints
         self.sig_args = sig_args
 
-        self.lookup = {}
+        self.lookup = defaultdict(lambda: set())
         for c in self.constraints:
-            self.lookup[c[0]] = c[1]
+            self.lookup[c[1]].add(c[0])
+
+    def __len__(self):
+        return len(self.sig_args)
 
 
 def split_typestring(typestring):
@@ -65,7 +76,7 @@ def split_constraints(typesig):
     Check the type signature part of the string for constraint clauses.
     If they exist, parse them into tuples.
     """
-    constraint_match = re.match("\((.+?)\) => (.*)", typesig)
+    constraint_match = re.match("^\((.+?)\) => (.*)$", typesig)
 
     if constraint_match:
         constraints = parse_constraints(constraint_match.group(1))
@@ -75,6 +86,7 @@ def split_constraints(typesig):
         sig = typesig
 
     if "=>" in sig:
+        # checking this specifically because it's a common error
         raise TypeStringException("Invalid `=>` in typestring")
 
     return constraints, sig
@@ -136,7 +148,7 @@ def parse_signature(sig):
         # everything in between
         if sig[i] == "(":
             enclosed, rest = find_inside_parens(sig, i)
-            return [parse_signature(enclosed)] + parse_signature(rest[4:])
+            return [parse_signature(enclosed)] + parse_signature(rest)
 
         # If we encounter an arrow, we can split the string straighforwardly
         elif sig[i:i+4] == " -> ":
@@ -147,8 +159,9 @@ def parse_signature(sig):
 def parse_haskell_typestring(typestring):
     fn_name, typesig = split_typestring(typestring)
     constraints, sig = split_constraints(typesig)
+    signature = parse_signature(sig)
 
     if not check_paren_balance(sig):
         raise TypeStringException("Unbalanced parens in typestring")
 
-    return parse_signature(sig)
+    return TypeSig(fn_name, constraints, signature)
