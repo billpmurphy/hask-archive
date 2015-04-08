@@ -164,11 +164,12 @@ Guards
 >>> from pythaskell.syntax import guard, c, otherwise
 
 >>> a = 8
->>> ~(guard(a)
-...     | c(lambda x: x < 5)  >> "a is < 5"
-...     | c(lambda x: x < 10) >> "a is < 10"
-...     | otherwise           >> "a is huge"
+>>> b = ~(guard(a)
+...         | c(lambda x: x < 5)  >> "a is < 5"
+...         | c(lambda x: x < 10) >> "a is < 10"
+...         | otherwise           >> "a is huge"
 ... )
+>>> b
 'a is < 10'
 
 >>> ~(guard(10)
