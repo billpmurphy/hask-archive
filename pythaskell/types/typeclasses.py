@@ -21,29 +21,42 @@ def is_typeclass_member(cls, typeclass):
         except TypeError:
             return False
     elif hasattr(cls, "__typeclasses__"):
-        return typeclass.__name__ in cls.__typeclasses__
+        return typeclass in cls.__typeclasses__
     return False
 
 
-def add_typeclass_flag(cls, typeclass_name):
+def add_typeclass_flag(cls, typeclass):
     """
     Add a typeclass membership flag to a class, signifying that the class
     belongs to the specified typeclass.
     """
     if hasattr(cls, "__typeclasses__"):
-        cls.__typeclasses__.append(typeclass_name)
+        cls.__typeclasses__.append(typeclass)
     else:
-        cls.__typeclasses__ = [typeclass_name]
+        cls.__typeclasses__ = [typeclass]
     return cls
+
+
+class Show(object):
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, cls):
+        if not hasattr(cls, "__repr__"):
+            raise TypeError("Class must implement `__repr__`")
+
+        cls = add_typeclass_flag(cls, self.__class__)
+        return
 
 
 class Num(object):
     __metaclass__ = abc.ABCMeta
 
+    def __init__(self, cls):
+        # todo: add checks for magic methods an object should have to be
+        # considered an instance of num
+        cls = add_typeclass_flag(cls, self.__class__)
+        pass
 
-Num.register(int)
-Num.register(float)
-Num.register(complex)
 
 
 class Functor(object):
@@ -54,6 +67,9 @@ class Functor(object):
         Transform a class into a member of Functor. The class must implement
         __fmap__() as appropriate.
         """
+        if not hasattr(cls, "__fmap__"):
+            raise TypeError("Class must implement `__fmap__`")
+
         # wrapper around fmap
         def fmap(self, fn):
             # later, will do some typechecking here
@@ -63,9 +79,10 @@ class Functor(object):
         def mul(self, fn):
             return self.fmap(fn)
 
-        cls = add_typeclass_flag(cls, Functor.__name__)
+        cls = add_typeclass_flag(cls, self.__class__)
         cls.fmap = fmap
         cls.__mul__ = mul
+        return
 
 
 class Applicative(object):
@@ -79,12 +96,16 @@ class Applicative(object):
         if not is_typeclass_member(cls, Functor):
             raise TypeError("Class must be a member of Functor")
 
+        if not hasattr(cls, "__pure__"):
+            raise TypeError("Class must implement `__pure__`")
+
         def pure(self, value):
             # later, will do some typechecking here
             return self.__pure__(value)
 
-        cls = add_typeclass_flag(cls, Applicative.__name__)
+        cls = add_typeclass_flag(cls, self.__class__)
         cls.pure = pure
+        return
 
 
 class Monad(object):
@@ -110,9 +131,10 @@ class Monad(object):
         def rshift(self, fn):
             return self.bind(fn)
 
-        cls = add_typeclass_flag(cls, Monad.__name__)
+        cls = add_typeclass_flag(cls, self.__class__)
         cls.bind = bind
         cls.__rshift__ = rshift
+        return
 
 
 ## Maybe monad
@@ -160,11 +182,6 @@ class Maybe(object):
         return nothing
 
 
-Functor(Maybe)
-Applicative(Maybe)
-Monad(Maybe)
-
-
 class Just(Maybe):
     def __init__(self, value):
         super(self.__class__, self).__init__(value)
@@ -189,7 +206,8 @@ def in_maybe(fn, *args, **kwargs):
     return _closure_in_maybe
 
 
-# @maybe decorator: Your function will act as if it is always inside in_maybe
+# todo: @maybe decorator: Your function will act as if it is always inside
+# in_maybe
 
 
 class Either(object):
@@ -228,11 +246,6 @@ class Right(Either):
         self._is_left = False
 
 
-Functor(Either)
-Applicative(Either)
-Monad(Either)
-
-
 def in_either(fn, *args, **kwargs):
     def _closure_in_either(*args, **kwargs):
         try:
@@ -244,4 +257,27 @@ def in_either(fn, *args, **kwargs):
     return _closure_in_either
 
 
-# @either decorator: Your function will act as if it is always inside in_either
+# todo: @either decorator: Your function will act as if it is always inside
+# in_either
+
+
+# Typeclass instances
+
+Show.register(int)
+Show.register(float)
+Show.register(complex)
+Show(Maybe)
+Show(Either)
+
+Num.register(int)
+Num.register(float)
+Num.register(complex)
+
+Functor(Maybe)
+Functor(Either)
+
+Applicative(Maybe)
+Applicative(Either)
+
+Monad(Maybe)
+Monad(Either)

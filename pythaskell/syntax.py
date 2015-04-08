@@ -114,7 +114,6 @@ class c(Syntax):
         return self
 
 
-
 otherwise = c(lambda _: True)
 
 
