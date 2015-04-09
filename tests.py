@@ -4,6 +4,8 @@ from pythaskell.syntax import guard
 from pythaskell.syntax import c
 from pythaskell.syntax import NoGuardMatchException as NGME
 
+from pythaskell.types import in_typeclass
+
 from pythaskell.types import Just
 from pythaskell.types import Nothing
 from pythaskell.types import Right
@@ -41,8 +43,12 @@ class TestSyntax(unittest.TestCase):
 
 class TestMaybe(unittest.TestCase):
 
+    def check_instances(self):
+        self.assertTrue(in_typeclass(Functor, Maybe))
+        self.assertTrue(in_typeclass(Applicative, Maybe))
+        self.assertTrue(in_typeclass(Monad, Maybe))
+
     def test_show(self):
-        self.assertEqual("Just(3)", Just(3).show())
         self.assertEqual("Just(3)", Just(3).__repr__())
 
     def test_eq(self):

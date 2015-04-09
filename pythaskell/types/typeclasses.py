@@ -55,7 +55,6 @@ class Show(Typeclass):
             return __repr__(self)
 
         cls.__repr__ = _repr
-        cls.show = _repr
         cls = add_typeclass_flag(cls, self.__class__)
         return
 
