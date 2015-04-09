@@ -41,6 +41,10 @@ class TestSyntax(unittest.TestCase):
 
 class TestMaybe(unittest.TestCase):
 
+    def test_show(self):
+        self.assertEqual("Just(3)", Just(3).show())
+        self.assertEqual("Just(3)", Just(3).__repr__())
+
     def test_eq(self):
         self.assertEqual(Nothing, Nothing)
         self.assertEqual(Just(3), Just(3))
