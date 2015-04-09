@@ -37,16 +37,17 @@ class TestSyntax(unittest.TestCase):
 
         # matching checks
 
-    def test_caseof(self):
-        pass
-
 
 class TestMaybe(unittest.TestCase):
 
     def check_instances(self):
+        self.assertTrue(in_typeclass(Show, Maybe))
+        self.assertTrue(in_typeclass(Eq, Maybe))
         self.assertTrue(in_typeclass(Functor, Maybe))
         self.assertTrue(in_typeclass(Applicative, Maybe))
         self.assertTrue(in_typeclass(Monad, Maybe))
+
+        self.assertFalse(in_typeclass(Num, Maybe))
 
     def test_show(self):
         self.assertEqual("Just(3)", Just(3).__repr__())
@@ -57,7 +58,11 @@ class TestMaybe(unittest.TestCase):
         self.assertEqual(Just("3"), Just("3"))
 
         self.assertNotEqual(Just(1), Just(3))
+        self.assertNotEqual(Just(1), Just("1"))
         self.assertNotEqual(Nothing, Just(3))
+
+        self.assertTrue(Just(1) == Just(1) or Just(1) != Just(1))
+        self.assertFalse(Just(1) == Just(1) and Just(1) != Just(1))
 
     def test_fmap(self):
         # add more
