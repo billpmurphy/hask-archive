@@ -9,40 +9,49 @@ there.
 Top priority:
 * change this absolutely awful name
 
+
+Things that are mostly together, at least for now:
+* guards - is there a way to clean up the syntax?
+* Typeclasses
+
+
 Things that are reasonably well explored so far, but do not have definitive
 implementation details:
-* guards - is there a way to clean up the syntax?
 * caseof - syntax needs overhaul
-* Typeclasses - see if there is some smarter way
-* Monads - need typechecking in bind/fmap
-* Maybe - needs work on decorator/wrapper, reconsider design choices
-* Either - needs work on decorator/wrapper, reconsider design choices
+* Higher-kinded types
+* Either - need to figure out how to hand polymorphism in typeclass instances
 * infix function composition with "\*" - works great, just need better way of
   having curried functions. Also, the curried function wrapper (however that
   ends up looking) should be an instance of Functor, so that the "\*" syntax is
   actually just `fmap`, as it should be.
 * reimplementing Haskell standard library functions
-* using regular classes to represent the functor/applicative/monad heirarchy -
-  not sure if this is the way to go
 
 Things that need to be explored more, in importance order:
+* ADTs - explore metaclasses for this. I see two major ways of doing it--parse strings that look like Haskell, or subclass `syntax` and cleverly use operators that spit out new classes. E.g.:
+
+```python
+data("Maybe", "a") => con("Just", "a") | con("Nothing")
+```
+
 * currying/composition/lambda syntax - study
   [fn.py](https://github.com/kachayev/fn.py), because their implementation is
   nice (this is crucial, need this to fix up Maybe/Either monad wrappers, and
   do a lot of other stuff). might end up mostly ripping it off, although I
-  think there are some things we can improve
-* types and type assertions - decorators are the way to go - need to figure out
+  think there are some things we can improve. It should be an instance of Functor
+* Types and type assertions - decorators are the way to go; need to figure out
   how to do all the typechecking and have the function wrapper take care of
   this automagically. It would be awesome to implement full Hindley-Milner in
-  python
+  python. There are two possible routes: lots of string parsing, or decorators
+  that take arguments that are pieces of syntax. E.g.:
+
+```python
+constr(Num, "a") => typ(int) > typ(Just, "a") > typ(int)
+```
+
+* an immutable linked list similar to fn.py, and/or a lazy list stream
+  datatype built out of LLs
 * immutable data strucures - again look at fn.py, but I think we can do better
-  here. would be nice to have an immutable linked list similar to fn.py, and
-  also a lazy list stream datatype built out of LLs
-* typeclasses/type heirarchy - must be some better way of doing this. `abc`
-  module hacks maybe?
-* ADTs - is there some way to do this metaclasses? metaclasses that represent
-  Sum/Product, that can turn strings into a bunch of classes that represents an
-  ADT?
+  here.
 * pattern matching (case of) - is there a better way of handling local binidng
   that horrid global state? in general, need to clean this filth up
 * other monads/functors
