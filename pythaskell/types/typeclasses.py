@@ -84,8 +84,8 @@ class Functor(Typeclass):
 
     def __init__(self, cls, __fmap__):
         """
-        Transform a class into a member of Functor. The class must implement
-        __fmap__() as appropriate.
+        Transform a class into a member of Functor. The fmap function must be
+        supplied when making the class a member of Functor.
         """
         # wrapper around fmap
         def fmap(self, fn):
@@ -106,8 +106,8 @@ class Applicative(Typeclass):
 
     def __init__(self, cls, __pure__):
         """
-        Transform a class into a member of Applicative. The class must implement
-        __pure__() as appropriate, and must be a member of Functor.
+        Transform a class into a member of Applicative. The pure function must be
+        supplied when making the class a member of Applicative.
         """
         if not in_typeclass(cls, Functor):
             raise TypeError("Class must be a member of Functor")
@@ -125,8 +125,8 @@ class Monad(Typeclass):
 
     def __init__(self, cls, __bind__):
         """
-        Transform a class into a member of Monad. The class must implement
-        __bind__() as appropriate, and must be a member of Applicative.
+        Transform a class into a member of Monad. The bind function must be
+        supplied when making the class a member of Monad.
         """
         if not in_typeclass(cls, Applicative):
             raise TypeError("Class must be a member of Applicative")
