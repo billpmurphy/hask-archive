@@ -4,23 +4,31 @@ from types import *
 
 ## Some typeclass utilies
 
-builtins = (NoneType, TypeType, BooleanType, IntType, LongType, FloatType,
-            ComplexType, StringType, UnicodeType, TupleType, ListType,
-            DictType, DictionaryType, FunctionType, LambdaType, GeneratorType,
-            CodeType, ClassType, InstanceType, MethodType, UnboundMethodType,
-            BuiltinFunctionType, BuiltinMethodType, ModuleType, FileType,
-            XRangeType, EllipsisType, TracebackType, FrameType, BufferType,
-            DictProxyType, NotImplementedType, GetSetDescriptorType,
-            MemberDescriptorType)
+def is_builtin(cls):
+    """
+    Return True if a type is a Python builtin type, and False otherwise.
+    """
+    b = (NoneType, TypeType, BooleanType, IntType, LongType, FloatType,
+         ComplexType, StringType, UnicodeType, TupleType, ListType,
+         DictType, DictionaryType, FunctionType, LambdaType, GeneratorType,
+         CodeType, ClassType, InstanceType, MethodType, UnboundMethodType,
+         BuiltinFunctionType, BuiltinMethodType, ModuleType, FileType,
+         XRangeType, EllipsisType, TracebackType, FrameType, BufferType,
+         DictProxyType, NotImplementedType, GetSetDescriptorType,
+         MemberDescriptorType)
+    return cls in b
 
 
 def in_typeclass(cls, typeclass):
     """
     Return True if cls is a member of typeclass, and False otherwise.
     """
-    if typeclass in builtins:
+    if is_builtin(typeclass):
+        # builtins are never typeclasses, even if they are subclasses of
+        # Typeclass. This is because builtins inherit typeclasses to signify
+        # their membership
         return False
-    elif cls in builtins:
+    elif is_builtin(cls):
         try:
             return issubclass(cls, typeclass)
         except TypeError:
@@ -35,7 +43,9 @@ def add_typeclass_flag(cls, typeclass):
     Add a typeclass membership flag to a class, signifying that the class
     belongs to the specified typeclass.
     """
-    if hasattr(cls, "__typeclasses__"):
+    if is_builtin(cls):
+        typeclass.register(cls)
+    elif hasattr(cls, "__typeclasses__"):
         cls.__typeclasses__.append(typeclass)
     else:
         cls.__typeclasses__ = [typeclass]
@@ -51,10 +61,7 @@ class Typeclass(object):
 class Show(Typeclass):
 
     def __init__(self, cls, __repr__):
-        def _repr(self):
-            return __repr__(self)
-
-        cls.__repr__ = _repr
+        cls.__repr__ = __repr__
         cls = add_typeclass_flag(cls, self.__class__)
         return
 
@@ -62,10 +69,7 @@ class Show(Typeclass):
 class Eq(Typeclass):
 
     def __init__(self, cls, __eq__):
-        def _eq(self, other):
-            return __eq__(self, other)
-
-        cls.__eq__ = _eq
+        cls.__eq__ = __eq__
         cls = add_typeclass_flag(cls, self.__class__)
         return
 
