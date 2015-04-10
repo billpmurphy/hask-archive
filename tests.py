@@ -1,5 +1,7 @@
 import unittest
 
+from pythaskell.lazy_stream import Seq
+
 from pythaskell.syntax import data
 from pythaskell.syntax import typ
 from pythaskell.syntax import guard
@@ -60,9 +62,12 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): data("My_ADT", "a") == "1"
         with self.assertRaises(se): data("My_ADT", "a") == typ("A") | "1"
         with self.assertRaises(se): data("My_ADT", "a") | typ("A")
+
+        # wth is going on here?
         #with self.assertRaises(se): data("My_ADT", "a") == typ("A") == typ("B")
 
         self.assertIsNotNone(data("My_ADT", "a") == typ("A") | typ("B"))
+
 
 class TestMaybe(unittest.TestCase):
 
@@ -103,7 +108,27 @@ class TestMaybe(unittest.TestCase):
         self.assertEqual(Just("1"), Just(1) >> (lambda x: Just(str(x))))
 
 
+class TestSeq(unittest.TestCase):
+
+    def test_seq(self):
+        self.assertEqual(3, Seq(range(10))[3])
+        self.assertEqual(3, Seq(range(4))[-1])
+        self.assertEqual(3, Seq((i for i in range(10)))[3])
+        self.assertEqual(3, Seq((i for i in range(4)))[-1])
+        self.assertEqual(2, Seq([0, 1, 2, 3])[2])
+        self.assertEqual(2, Seq([0, 1, 2, 3])[-2])
+        self.assertEqual(1, Seq((0, 1, 2, 3))[1])
+        self.assertEqual(1, Seq((0, 1, 2, 3))[-3])
+
+        with self.assertRaises(IndexError): Seq((0, 1, 2))[3]
+        with self.assertRaises(IndexError): Seq((0, 1, 2))[-4]
+
+        self.assertTrue(list(range(10)), list(iter(Seq(range(10)))))
+
+
+# remove all this nonsense, since we are doing ADTs a different way
 class TestParse(unittest.TestCase):
+
 
     def setUp(self):
         # some aliases for readability

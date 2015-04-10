@@ -72,11 +72,11 @@ class typ(syntax.Syntax):
 
 class typs(syntax.Syntax):
 
-    def __init__(self, *data_constructors):
-        self._data_constructors = data_constructors
+    def __init__(self, *typ_objs):
+        self.typ_objs = typ_objs
 
     def _add(self, typ_obj):
-        return self._data_constructors.append(type_obj)
+        return self.typ_objs.append(type_obj)
 
     def __iter__(self):
-        return iter(self._data_constructors)
+        return iter(self.typ_objs)

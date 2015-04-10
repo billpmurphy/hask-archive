@@ -56,6 +56,10 @@ Show.register(int)
 Show.register(float)
 Show.register(complex)
 
+Eq.register(int)
+Eq.register(float)
+Eq.register(complex)
+
 Num.register(int)
 Num.register(float)
 Num.register(complex)

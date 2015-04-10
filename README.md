@@ -17,6 +17,11 @@ Things that are mostly together, at least for now:
 
 Things that are reasonably well explored so far, but do not have definitive
 implementation details:
+* Lazy seq type - this is just getting some ideas down. I also like the idea of
+  some kind of linked list type (preferably immutable) that we can then use to
+  built immutable data structures out of. Not sure whether it makes sense to
+  have this also be that, or what. Might also be preferable to build those ADTs
+  using the actual ADT system, once it is built. Food for thought.
 * caseof - syntax needs overhaul
 * Higher-kinded types
 * Either - need to figure out how to hand polymorphism in typeclass instances
@@ -30,7 +35,7 @@ Things that need to be explored more, in importance order:
 * ADTs - explore metaclasses for this. I see two major ways of doing it--parse strings that look like Haskell, or subclass `syntax` and cleverly use operators that spit out new classes. E.g.:
 
 ```python
-data("Maybe", "a") => con("Just", "a") | con("Nothing")
+data("Maybe", "a") = d("Just", "a") | "Nothing"
 ```
 
 * currying/composition/lambda syntax - study
@@ -45,7 +50,9 @@ data("Maybe", "a") => con("Just", "a") | con("Nothing")
   that take arguments that are pieces of syntax. E.g.:
 
 ```python
-constr(Num, "a") => typ(int) > typ(Just, "a") > typ(int)
+@sig(con(Num, "a") >> typ(int) >> typ(Just, "a") >> typ(int))
+def my_function(x, y):
+    ...
 ```
 
 * an immutable linked list similar to fn.py, and/or a lazy list stream
