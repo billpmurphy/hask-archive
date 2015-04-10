@@ -61,7 +61,9 @@ class TestMaybe(unittest.TestCase):
         self.assertNotEqual(Just(1), Just("1"))
         self.assertNotEqual(Nothing, Just(3))
 
+        self.assertTrue(Nothing == Nothing or Nothing != Nothing)
         self.assertTrue(Just(1) == Just(1) or Just(1) != Just(1))
+        self.assertFalse(Nothing == Nothing and Nothing != Nothing)
         self.assertFalse(Just(1) == Just(1) and Just(1) != Just(1))
 
     def test_fmap(self):
