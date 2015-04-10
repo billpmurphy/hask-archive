@@ -5,8 +5,14 @@ class Syntax(object):
     object is used with a Python buildin operator. Subclasses may override
     these methods to define what syntax is valid.
     """
+    def __init__(self, err_msg):
+        self._syntax_err_msg = err_msg
+
     def _raise_invalid(self):
-        raise SyntaxError(self.__class__._syntax_err_msg)
+        if hasattr(self, "_syntax_err_msg"):
+            raise SyntaxError(self._syntax_err_msg)
+        else:
+            raise SyntaxError("Syntax error in `%s`" % self.__name__)
 
     def __len__(self, _): self._raise_invalid()
     def __getitem__(self, _): self._raise_invalid()
@@ -22,6 +28,8 @@ class Syntax(object):
     def __exit__(self, exception_type, exception_value, traceback):
         self._raise_invalid()
 
+    def __cmp__(self, ): self._raise_invalid()
+    def __eq__(self, ): self._raise_invalid()
     def __gt__(self, _): self._raise_invalid()
     def __lt__(self, _): self._raise_invalid()
     def __ge__(self, _): self._raise_invalid()

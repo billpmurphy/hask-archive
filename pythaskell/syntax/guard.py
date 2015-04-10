@@ -1,4 +1,4 @@
-from syntax import Syntax
+import syntax
 
 ## Guards! Guards!
 
@@ -6,16 +6,18 @@ class NoGuardMatchException(Exception):
     pass
 
 
-class c(Syntax):
+class c(syntax.Syntax):
     """
     Guard condition.
     """
-    _syntax_err_msg = "Syntax error in guard condition"
 
     def __init__(self, fn):
         if not hasattr(fn, "__call__"):
             raise ValueError("Guard condition must be callable")
         self._func = fn
+
+        syntax_err_msg = "Syntax error in guard condition"
+        super(self.__class__, self).__init__(syntax_err_msg)
 
     def has_return_value(self):
         return hasattr(self, "_return_value")
@@ -39,7 +41,7 @@ class c(Syntax):
 otherwise = c(lambda _: True)
 
 
-class guard(Syntax):
+class guard(syntax.Syntax):
     """
     Usage:
 
@@ -53,6 +55,9 @@ class guard(Syntax):
         self._value = value
         self._tried_to_match = False
         self._guard_satisfied = False
+
+        syntax_err_msg = "Syntax error in guard"
+        super(self.__class__, self).__init__(syntax_err_msg)
 
     def __or__(self, cond):
         if self._guard_satisfied:

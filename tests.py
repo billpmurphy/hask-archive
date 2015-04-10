@@ -1,5 +1,7 @@
 import unittest
 
+from pythaskell.syntax import data
+from pythaskell.syntax import typ
 from pythaskell.syntax import guard
 from pythaskell.syntax import c
 from pythaskell.syntax import NoGuardMatchException as NGME
@@ -25,18 +27,42 @@ class TestSyntax(unittest.TestCase):
     def test_guard(self):
         # syntax checks
         se = SyntaxError
+        with self.assertRaises(se): c(lambda x: x == 10) + c(lambda _: 1)
+        with self.assertRaises(se): c(lambda x: x == 10) - c(lambda _: 1)
+        with self.assertRaises(se): c(lambda x: x == 10) << c(lambda _: 1)
+        with self.assertRaises(se): c(lambda x: x == 10) & c(lambda _: 1)
+
         with self.assertRaises(se): c(lambda x: x > 1) | c(lambda x: x < 1)
         with self.assertRaises(se): c(lambda x: x == 10) >> "1" >> "2"
-
-        with self.assertRaises(se): c(lambda x: x == 10) + 1
-        with self.assertRaises(se): c(lambda x: x == 10) - 1
-        with self.assertRaises(se): c(lambda x: x == 10) << 2
-
         with self.assertRaises(se): "1" >> c(lambda x: x == 10)
         with self.assertRaises(se): guard(1) | c(lambda x: x > 1)
+        with self.assertRaises(se): guard(1) | (lambda x: x > 1)
+        with self.assertRaises(se): ~guard(1) | (lambda x: x > 1)
+        with self.assertRaises(se): ~guard(1)
 
         # matching checks
 
+    def test_caseof(self):
+        pass
+
+    def test_data(self):
+        se = SyntaxError
+
+        with self.assertRaises(se): data("My_ADT")
+        with self.assertRaises(se): data(1, "a")
+        with self.assertRaises(se): data("My_adt", 1)
+        with self.assertRaises(se): data("my_adt", "a")
+        with self.assertRaises(se): data("my_adt", chr(110))
+        with self.assertRaises(se): data("My_ADT", "a", "a")
+        with self.assertRaises(se): data("My_ADT", "a", "cc")
+        with self.assertRaises(se): data("My_ADT", "a", "B")
+
+        with self.assertRaises(se): data("My_ADT", "a") == "1"
+        with self.assertRaises(se): data("My_ADT", "a") == typ("A") | "1"
+        with self.assertRaises(se): data("My_ADT", "a") | typ("A")
+        #with self.assertRaises(se): data("My_ADT", "a") == typ("A") == typ("B")
+
+        self.assertIsNotNone(data("My_ADT", "a") == typ("A") | typ("B"))
 
 class TestMaybe(unittest.TestCase):
 

@@ -1,4 +1,4 @@
-from syntax import Syntax
+import syntax
 
 ## "case of" pattern matching
 
@@ -42,7 +42,7 @@ class Wildcard(object):
     pass
 
 
-class caseof(Syntax):
+class caseof(syntax.Syntax):
     """
     Pattern matching similar to Haskell's "case of" syntax.
 

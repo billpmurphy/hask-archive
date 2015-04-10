@@ -1,5 +1,5 @@
 import abc
-from types import *
+import types
 
 
 ## Some typeclass utilies
@@ -8,14 +8,18 @@ def is_builtin(cls):
     """
     Return True if a type is a Python builtin type, and False otherwise.
     """
-    b = (NoneType, TypeType, BooleanType, IntType, LongType, FloatType,
-         ComplexType, StringType, UnicodeType, TupleType, ListType,
-         DictType, DictionaryType, FunctionType, LambdaType, GeneratorType,
-         CodeType, ClassType, InstanceType, MethodType, UnboundMethodType,
-         BuiltinFunctionType, BuiltinMethodType, ModuleType, FileType,
-         XRangeType, EllipsisType, TracebackType, FrameType, BufferType,
-         DictProxyType, NotImplementedType, GetSetDescriptorType,
-         MemberDescriptorType)
+    b = (types.NoneType, types.TypeType, types.BooleanType, types.IntType,
+         types.LongType, types.FloatType, types.ComplexType,
+         types.StringType, types.UnicodeType, types.TupleType,
+         types.ListType, types.DictType, types.DictionaryType,
+         types.FunctionType, types.LambdaType, types.GeneratorType,
+         types.CodeType, types.ClassType, types.InstanceType,
+         types.MethodType, types.UnboundMethodType,
+         types.BuiltinFunctionType, types.BuiltinMethodType,
+         types.ModuleType, types.FileType, types.XRangeType,
+         types.EllipsisType, types.TracebackType, types.FrameType,
+         types.BufferType, types.DictProxyType, types.NotImplementedType,
+         types.GetSetDescriptorType, types.MemberDescriptorType)
     return cls in b
 
 
