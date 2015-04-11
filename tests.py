@@ -1,37 +1,23 @@
 import unittest
 
-from pythaskell.lazy_stream import Seq
-from pythaskell.lazy_stream import l
+from hask import in_typeclass
 
-from pythaskell.syntax import data
-from pythaskell.syntax import typ
-from pythaskell.syntax import guard
-from pythaskell.syntax import c
-from pythaskell.syntax import NoGuardMatchException as NGME
+from hask import guard, c
+from hask import caseof
+from hask import data, typ
 
-from pythaskell.types import in_typeclass
-from pythaskell.types import Show
-from pythaskell.types import Eq
-from pythaskell.types import Num
-from pythaskell.types import Functor
-from pythaskell.types import Applicative
-from pythaskell.types import Monad
-from pythaskell.types import Traversable
-from pythaskell.types import Ix
+from hask import LazyList, l
+from hask import Maybe, Just, Nothing, in_maybe
+from hask import Either, Left, Right, in_either
 
-from pythaskell.types import Maybe
-from pythaskell.types import Just
-from pythaskell.types import Nothing
-from pythaskell.types import Right
-from pythaskell.types import Left
-from pythaskell.types import in_maybe
-from pythaskell.types import in_either
-
-from pythaskell.types import parse_haskell_typestring
-from pythaskell.types import parse_constraints
-from pythaskell.types import parse_signature
-from pythaskell.types import check_paren_balance
-from pythaskell.types import TypeStringException as TSE
+from hask import Show
+from hask import Eq
+from hask import Num
+from hask import Functor
+from hask import Applicative
+from hask import Monad
+from hask import Traversable
+from hask import Ix
 
 
 class TestSyntax(unittest.TestCase):
@@ -119,135 +105,41 @@ class TestMaybe(unittest.TestCase):
         self.assertEqual(Just("1"), Just(1) >> (lambda x: Just(str(x))))
 
 
-class TestSeq(unittest.TestCase):
+class TestLazyList(unittest.TestCase):
 
     def test_instances(self):
-        self.assertTrue(in_typeclass(Seq, Show))
-        #self.assertTrue(in_typeclass(Seq, Eq))
-        self.assertTrue(in_typeclass(Seq, Functor))
-        self.assertTrue(in_typeclass(Seq, Applicative))
-        self.assertTrue(in_typeclass(Seq, Monad))
-        self.assertTrue(in_typeclass(Seq, Traversable))
-        self.assertTrue(in_typeclass(Seq, Ix))
+        self.assertTrue(in_typeclass(LazyList, Show))
+        #self.assertTrue(in_typeclass(LazyList, Eq))
+        self.assertTrue(in_typeclass(LazyList, Functor))
+        self.assertTrue(in_typeclass(LazyList, Applicative))
+        self.assertTrue(in_typeclass(LazyList, Monad))
+        self.assertTrue(in_typeclass(LazyList, Traversable))
+        self.assertTrue(in_typeclass(LazyList, Ix))
 
     def test_ix(self):
-        self.assertEqual(3, Seq(range(10))[3])
-        self.assertEqual(3, Seq(range(4))[-1])
-        self.assertEqual(3, Seq((i for i in range(10)))[3])
-        self.assertEqual(3, Seq((i for i in range(4)))[-1])
-        self.assertEqual(2, Seq([0, 1, 2, 3])[2])
-        self.assertEqual(2, Seq([0, 1, 2, 3])[-2])
-        self.assertEqual(1, Seq((0, 1, 2, 3))[1])
-        self.assertEqual(1, Seq((0, 1, 2, 3))[-3])
+        self.assertEqual(3, LazyList(range(10))[3])
+        self.assertEqual(3, LazyList(range(4))[-1])
+        self.assertEqual(3, LazyList((i for i in range(10)))[3])
+        self.assertEqual(3, LazyList((i for i in range(4)))[-1])
+        self.assertEqual(2, LazyList([0, 1, 2, 3])[2])
+        self.assertEqual(2, LazyList([0, 1, 2, 3])[-2])
+        self.assertEqual(1, LazyList((0, 1, 2, 3))[1])
+        self.assertEqual(1, LazyList((0, 1, 2, 3))[-3])
 
-        with self.assertRaises(IndexError): Seq((0, 1, 2))[3]
-        with self.assertRaises(IndexError): Seq((0, 1, 2))[-4]
+        with self.assertRaises(IndexError): LazyList((0, 1, 2))[3]
+        with self.assertRaises(IndexError): LazyList((0, 1, 2))[-4]
 
     def test_eq(self):
-        self.assertTrue(list(range(10)), list(Seq(range(10))))
+        self.assertTrue(list(range(10)), list(LazyList(range(10))))
 
     def test_functor(self):
         test_f = lambda x: x ** 2 - 1
 
-        self.assertEquals(map(test_f, range(9)), list(Seq(range(9)) * test_f))
+        self.assertEquals(map(test_f, range(9)),
+                          list(LazyList(range(9)) * test_f))
 
     def test_list_comp(self):
         self.assertEquals(l[0, ...][:10], range(10)[:10])
-
-
-# remove all this nonsense, since we are doing ADTs a different way
-class TestParse(unittest.TestCase):
-
-
-    def setUp(self):
-        # some aliases for readability
-        self.psig = parse_signature
-        self.assertNumArgs = lambda n,x: self.assertEqual(n, len(self.psig(x)))
-
-        self.pcon = parse_constraints
-        self.assertCons = lambda n,x: self.assertEqual(n, len(self.pcon(x)))
-
-        self.parse = parse_haskell_typestring
-        self.assertParseArgs = lambda n,x: self.assertEqual(n,len(self.parse(x)))
-
-
-    def test_check_parens(self):
-        self.assertTrue(check_paren_balance(""))
-        self.assertTrue(check_paren_balance("()"))
-        self.assertTrue(check_paren_balance("(())"))
-        self.assertTrue(check_paren_balance("((()))(())"))
-        self.assertTrue(check_paren_balance("()()()"))
-        self.assertTrue(check_paren_balance("(()())()"))
-        self.assertTrue(check_paren_balance("((()())(()(()))())"))
-
-        self.assertFalse(check_paren_balance("("))
-        self.assertFalse(check_paren_balance(")"))
-        self.assertFalse(check_paren_balance("(()"))
-        self.assertFalse(check_paren_balance("())"))
-        self.assertFalse(check_paren_balance("())"))
-        self.assertFalse(check_paren_balance("())"))
-        self.assertFalse(check_paren_balance(")("))
-        self.assertFalse(check_paren_balance(")()("))
-        self.assertFalse(check_paren_balance("((()())(())()))())"))
-
-    def test_parse_constraint(self):
-        self.assertCons(1, "Monad m")
-        self.assertCons(2, "Monad m,Functor f")
-        self.assertCons(2, "Monad m, Functor f")
-        self.assertCons(3, "Monad m,Functor f,Num a")
-        self.assertCons(3, "Monad m, Functor f, Num a")
-        self.assertCons(3, "Monad m, Functor m, Num a")
-
-        with self.assertRaises(TSE): self.pcon("Monadm")
-        with self.assertRaises(TSE): self.pcon("Monad m a")
-        with self.assertRaises(TSE): self.pcon("Monad m a, Functor f")
-
-    def test_parse_sig(self):
-        self.assertNumArgs(1, "a")
-        self.assertNumArgs(1, "m a")
-
-        self.assertNumArgs(2, "a -> a")
-        self.assertNumArgs(2, "a -> b")
-        self.assertNumArgs(2, "a -> m a")
-        self.assertNumArgs(2, "g a -> a")
-        self.assertNumArgs(2, "g t b a -> m f a")
-        self.assertNumArgs(2, "g -> (t -> b -> a -> m -> f a)")
-        self.assertNumArgs(2, "g -> ((t -> b -> a) -> (m -> f a))")
-        self.assertNumArgs(2, "g -> ((t -> (b -> a)) -> (m -> f a))")
-
-        self.assertNumArgs(3, "a -> b -> b")
-        self.assertNumArgs(3, "(a -> b) -> a -> b")
-        self.assertNumArgs(3, "a -> (a -> b) -> b")
-        self.assertNumArgs(3, "a -> b -> (a -> b)")
-        self.assertNumArgs(3, "g -> (t -> b -> a) -> (m -> f a)")
-
-        self.assertNumArgs(4, "a -> b -> c -> a")
-        self.assertNumArgs(5, "a -> b -> c -> d -> a")
-        self.assertNumArgs(100, "a -> " * 99 + "a")
-
-    def test_whitespace(self):
-        with self.assertRaises(TSE): self.parse(" f :: a -> a")
-        with self.assertRaises(TSE): self.parse("f :: a -> a ")
-        with self.assertRaises(TSE): self.parse("f  :: a -> a")
-        with self.assertRaises(TSE): self.parse("f:: a -> a")
-        with self.assertRaises(TSE): self.parse("f ::a -> a")
-        with self.assertRaises(TSE): self.parse("f ::a -> a")
-        with self.assertRaises(TSE): self.parse("f :: a-> b")
-        with self.assertRaises(TSE): self.parse("f :: a ->b")
-        with self.assertRaises(TSE): self.parse("f :: a->b")
-
-    def test_structure(self):
-        with self.assertRaises(TSE): self.parse("asdf")
-        with self.assertRaises(TSE): self.parse("f ::")
-        with self.assertRaises(TSE): self.parse("f-f ::")
-        with self.assertRaises(TSE): self.parse("f f ::")
-        with self.assertRaises(TSE): self.parse("f :: a => a")
-        with self.assertRaises(TSE): self.parse("f :: (Num a) => a => a")
-
-    def test_full_parse(self):
-        self.assertParseArgs(1, "f :: a")
-        self.assertParseArgs(1, "f :: (Monad m) => m a")
-        self.assertParseArgs(1, "f :: (Monad m, Functor f) => m f a")
 
 
 if __name__ == '__main__':

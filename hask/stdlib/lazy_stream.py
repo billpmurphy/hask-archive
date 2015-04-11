@@ -1,15 +1,15 @@
 import collections
 import itertools
 
-import syntax
-from types import Show
-from types import Functor
-from types import Applicative
-from types import Monad
-from types import Traversable
-from types import Ix
+from ..lang import syntax
+from ..lang.typeclasses import Show
+from ..lang.typeclasses import Functor
+from ..lang.typeclasses import Applicative
+from ..lang.typeclasses import Monad
+from ..lang.typeclasses import Traversable
+from ..lang.typeclasses import Ix
 
-class Seq(object):
+class LazyList(object):
     """
     Efficient lazy sequence datatype.
     Usage: see tests.py
@@ -48,19 +48,19 @@ class _list_builder(syntax.Syntax):
         if type(lst) in (tuple, list) and len(lst) < 5 and Ellipsis in lst:
             if len(lst) == 2 and lst[1] is Ellipsis:
                 # [x, ...]
-                return Seq(list_gen(lst[0], inf, 1))
+                return LazyList(list_gen(lst[0], inf, 1))
             elif len(lst) == 3 and lst[2] is Ellipsis:
                 # [x, y, ...]
                 inc = lst[1] - lst[0]
-                return Seq(list_gen(lst[0], inf * inc, inc))
+                return LazyList(list_gen(lst[0], inf * inc, inc))
             elif len(lst) == 3 and lst[1] is Ellipsis:
                 # [x, ..., y]
-                return Seq(list_gen(lst[0], [2], 1))
+                return LazyList(list_gen(lst[0], [2], 1))
             elif len(lst) == 4 and lst[3] is Ellipsis:
                 # [x, y, ..., z]
                 inc = lst[1] - lst[0]
-                return Seq(list_gen(lst[0], lst[3], inc))
-        return Seq(lst)
+                return LazyList(list_gen(lst[0], lst[3], inc))
+        return LazyList(lst)
 
 
 l = _list_builder("Syntax error in list comprehension")
@@ -74,15 +74,15 @@ def _seq_show(self):
 
 
 def _seq_fmap(self, fn):
-    return Seq(itertools.imap(fn, iter(self)))
+    return LazyList(itertools.imap(fn, iter(self)))
 
 
 def _seq_pure(self, x):
-    return Seq([x])
+    return LazyList([x])
 
 
 def _seq_bind(self, fn):
-    return Seq(itertools.chain.from_iterable(self.fmap(fn)))
+    return LazyList(itertools.chain.from_iterable(self.fmap(fn)))
 
 
 def _seq_next(self):
@@ -116,15 +116,15 @@ def _seq_getitem(self, ix):
         # bad typecasting is bad (and inefficient)
         return list(self._evaluated)[ix]
     except (StopIteration, IndexError):
-        raise IndexError("Seq index out of range: %s" % i)
+        raise IndexError("LazyList index out of range: %s" % i)
 
 
-Show(Seq, _seq_show)
-Functor(Seq, _seq_fmap)
-Applicative(Seq, _seq_pure)
-Monad(Seq, _seq_bind)
-Traversable(Seq, _seq_next, _seq_iter)
-Ix(Seq, _seq_getitem)
+Show(LazyList, _seq_show)
+Functor(LazyList, _seq_fmap)
+Applicative(LazyList, _seq_pure)
+Monad(LazyList, _seq_bind)
+Traversable(LazyList, _seq_next, _seq_iter)
+Ix(LazyList, _seq_getitem)
 
 
 
@@ -133,7 +133,7 @@ Ix(Seq, _seq_getitem)
 # more testing
 
 # do something interesting with itertools.filter - maybe just overwrite it with
-# a version that uses itertools.filter and returns a Seq?
+# a version that uses itertools.filter and returns a LazyList?
 
 # add folds and Foldable typeclasses
 

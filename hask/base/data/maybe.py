@@ -1,5 +1,6 @@
 ### Data.Maybe
-from ..types import Just, Nothing
+from ...stdlib import Just
+from ...stdlib import Nothing
 
 def isJust(maybe_a):
     return not maybe_a is Nothing

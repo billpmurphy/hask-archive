@@ -1,6 +1,7 @@
-## Data.List
+from ...stdlib import Just
+from ...stdlib import Nothing
 
-from ..types import Just, Nothing
+## Data.List
 
 ## Basic functions
 

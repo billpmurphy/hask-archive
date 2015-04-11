@@ -1,9 +1,6 @@
 import type_system
 
 
-## Main Haskell typeclasses
-
-
 class Show(type_system.Typeclass):
 
     def __init__(self, cls, __repr__):
@@ -140,6 +137,3 @@ class Ix(type_system.Typeclass):
 
         cls = type_system.add_typeclass_flag(cls, self.__class__)
         return
-
-
-

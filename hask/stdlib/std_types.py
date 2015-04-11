@@ -1,9 +1,9 @@
-from typeclasses import Show
-from typeclasses import Eq
-from typeclasses import Num
-from typeclasses import Functor
-from typeclasses import Applicative
-from typeclasses import Monad
+from ..lang.typeclasses import Show
+from ..lang.typeclasses import Eq
+from ..lang.typeclasses import Num
+from ..lang.typeclasses import Functor
+from ..lang.typeclasses import Applicative
+from ..lang.typeclasses import Monad
 
 
 ## Maybe monad

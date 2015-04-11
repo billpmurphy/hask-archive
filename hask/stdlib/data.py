@@ -1,7 +1,7 @@
 import re
 import string
 
-import syntax
+from ..lang import syntax
 
 
 class data(syntax.Syntax):

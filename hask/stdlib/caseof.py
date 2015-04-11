@@ -1,4 +1,4 @@
-import syntax
+from ..lang import syntax
 
 ## "case of" pattern matching
 
