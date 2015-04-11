@@ -164,4 +164,3 @@ def in_either(fn, *args, **kwargs):
     if len(args) > 0 or len(kwargs) > 0:
         return _closure_in_either(*args, **kwargs)
     return _closure_in_either
-

@@ -1,6 +1,7 @@
 import unittest
 
 from pythaskell.lazy_stream import Seq
+from pythaskell.lazy_stream import l
 
 from pythaskell.syntax import data
 from pythaskell.syntax import typ
@@ -149,6 +150,10 @@ class TestSeq(unittest.TestCase):
         test_f = lambda x: x ** 2 - 1
 
         self.assertEquals(map(test_f, range(9)), list(Seq(range(9)) * test_f))
+
+    def test_list_comp(self):
+        self.assertEquals(l[0, ...][:10], range(10)[:10])
+
 
 # remove all this nonsense, since we are doing ADTs a different way
 class TestParse(unittest.TestCase):

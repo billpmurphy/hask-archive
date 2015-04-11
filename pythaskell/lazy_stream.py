@@ -1,14 +1,13 @@
 import collections
 import itertools
 
-
+import syntax
 from types import Show
 from types import Functor
 from types import Applicative
 from types import Monad
 from types import Traversable
 from types import Ix
-
 
 class Seq(object):
     """
@@ -34,6 +33,38 @@ class Seq(object):
     def __add__(self, iterable):
         self._gen = itertools.chain(self._gen, iterable)
         return self
+
+
+class _list_builder(syntax.Syntax):
+
+    def __getitem__(self, lst):
+
+        inf = float("inf")
+        def list_gen(start, stop, inc):
+            while start < stop:
+                yield start
+                start += inc
+
+        if type(lst) in (tuple, list) and len(lst) < 5 and Ellipsis in lst:
+            if len(lst) == 2 and lst[1] is Ellipsis:
+                # [x, ...]
+                return Seq(list_gen(lst[0], inf, 1))
+            elif len(lst) == 3 and lst[2] is Ellipsis:
+                # [x, y, ...]
+                inc = lst[1] - lst[0]
+                return Seq(list_gen(lst[0], inf * inc, inc))
+            elif len(lst) == 3 and lst[1] is Ellipsis:
+                # [x, ..., y]
+                return Seq(list_gen(lst[0], [2], 1))
+            elif len(lst) == 4 and lst[3] is Ellipsis:
+                # [x, y, ..., z]
+                inc = lst[1] - lst[0]
+                return Seq(list_gen(lst[0], lst[3], inc))
+        return Seq(lst)
+
+
+l = _list_builder("Syntax error in list comprehension")
+
 
 ## typeclass instances
 
@@ -67,18 +98,23 @@ def _seq_iter(self):
             self._evaluated.append(item)
         count += 1
         yield item
-    raise StopIteration()
 
-
-def _seq_getitem(self, i):
+def _seq_getitem(self, ix):
     # if we have a negative index, evaluate the entire sequence
     try:
+        if type(ix) == slice:
+            i = ix.stop
+        else:
+            i = ix
+
         if i >= 0:
             while (i+1) > len(self._evaluated):
                 next(self)
         else:
             self._full_evaluate()
-        return self._evaluated[i]
+
+        # bad typecasting is bad (and inefficient)
+        return list(self._evaluated)[ix]
     except (StopIteration, IndexError):
         raise IndexError("Seq index out of range: %s" % i)
 
@@ -91,6 +127,7 @@ Traversable(Seq, _seq_next, _seq_iter)
 Ix(Seq, _seq_getitem)
 
 
+
 ## todo:
 
 # more testing
@@ -98,7 +135,7 @@ Ix(Seq, _seq_getitem)
 # do something interesting with itertools.filter - maybe just overwrite it with
 # a version that uses itertools.filter and returns a Seq?
 
-# add Traversable and Foldable typeclasses
+# add folds and Foldable typeclasses
 
 # actually...just spend a lot of time reading this and seeing how best to make
 # Haskell out of it
