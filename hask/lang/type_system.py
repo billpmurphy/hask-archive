@@ -56,7 +56,16 @@ def add_typeclass_flag(cls, typeclass):
         cls.__typeclasses__.append(typeclass)
     else:
         cls.__typeclasses__ = [typeclass]
-    return cls
+    return
+
+
+def add_attr(cls, attr_name, attr):
+    """
+    Add an attribute to a class. If the class is a builtin, do nothing.
+    """
+    if not is_builtin(cls):
+        setattr(cls, attr_name, attr)
+    return
 
 
 # static type assertion decorator

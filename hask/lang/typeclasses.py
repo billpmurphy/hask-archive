@@ -4,22 +4,37 @@ import type_system
 class Show(type_system.Typeclass):
 
     def __init__(self, cls, __repr__):
-        cls.__repr__ = __repr__
-        cls = type_system.add_typeclass_flag(cls, self.__class__)
+        type_system.add_attr(cls, "__repr__", __repr__)
+        type_system.add_typeclass_flag(cls, self.__class__)
         return
 
 
 class Eq(type_system.Typeclass):
+    """
+    The Eq class defines equality (==) and inequality (!=). Minimal complete
+    definition: __eq__
+    """
 
     def __init__(self, cls, __eq__):
         def __ne__(self, other):
             return not self.__eq__(other)
 
-        cls.__eq__ = __eq__
-        cls.__ne__ = __ne__
-        cls = type_system.add_typeclass_flag(cls, self.__class__)
+        type_system.add_attr(cls, "__eq__", __eq__)
+        type_system.add_attr(cls, "__ne__", __ne__)
+        type_system.add_typeclass_flag(cls, self.__class__)
         return
 
+
+class Ord(type_system.Typeclass):
+    pass
+
+
+class Enum(type_system.Typeclass):
+    pass
+
+
+class Bounded(type_system.Typeclass):
+    pass
 
 class Num(type_system.Typeclass):
 
@@ -32,7 +47,7 @@ class Num(type_system.Typeclass):
         if not type_system.in_typeclass(cls, Eq):
             raise TypeError("Class must be a member of Eq")
 
-        cls = type_system.add_typeclass_flag(cls, self.__class__)
+        type_system.add_typeclass_flag(cls, self.__class__)
         return
 
 
@@ -44,17 +59,17 @@ class Functor(type_system.Typeclass):
         supplied when making the class a member of Functor.
         """
         # wrapper around fmap
-        def fmap(self, fn):
+        def _fmap(self, fn):
             # later, will do some typechecking here
             return __fmap__(self, fn)
 
         # `*` syntax for fmap
-        def mul(self, fn):
+        def _mul(self, fn):
             return self.fmap(fn)
 
-        cls.fmap = fmap
-        cls.__mul__ = mul
-        cls = type_system.add_typeclass_flag(cls, self.__class__)
+        type_system.add_attr(cls, "fmap", _fmap)
+        type_system.add_attr(cls, "__mul__", _mul)
+        type_system.add_typeclass_flag(cls, self.__class__)
         return
 
 
@@ -68,12 +83,12 @@ class Applicative(type_system.Typeclass):
         if not type_system.in_typeclass(cls, Functor):
             raise TypeError("Class must be a member of Functor")
 
-        def pure(self, value):
+        def _pure(self, value):
             # later, will do some typechecking here
             return __pure__(self, value)
 
-        cls = type_system.add_typeclass_flag(cls, self.__class__)
-        cls.pure = pure
+        type_system.add_attr(cls, "pure", _pure)
+        type_system.add_typeclass_flag(cls, self.__class__)
         return
 
 
@@ -88,17 +103,17 @@ class Monad(type_system.Typeclass):
             raise TypeError("Class must be a member of Applicative")
 
         # wrapper around monadic bind
-        def bind(self, fn):
+        def _bind(self, fn):
             # later, will do some typechecking here
             return __bind__(self, fn)
 
         # `>>` syntax for monadic bind
-        def rshift(self, fn):
+        def _rshift(self, fn):
             return self.bind(fn)
 
-        cls = type_system.add_typeclass_flag(cls, self.__class__)
-        cls.bind = bind
-        cls.__rshift__ = rshift
+        type_system.add_attr(cls, "bind", _bind)
+        type_system.add_attr(cls, "__rshift__", _rshift)
+        type_system.add_typeclass_flag(cls, self.__class__)
         return
 
 
@@ -111,16 +126,18 @@ class Traversable(type_system.Typeclass):
         def _next(self):
             return __next__(self)
 
-        cls.next = _next
-        cls.__next__ = _next
-        cls.__iter__ = _iter
+        type_system.add_attr(cls, "next", _next)
+        type_system.add_attr(cls, "__next__", _next)
+        type_system.add_attr(cls, "__iter__", _iter)
 
         if __len__ is None:
             def _default_len(self):
                 return len((i for i in iter(self)))
-            cls.__len__ = _default_len
+            type_system.add_attr(cls, "__len__", _default_len)
+        else:
+            type_system.add_attr(cls, "__len__", __len__)
 
-        cls = type_system.add_typeclass_flag(cls, self.__class__)
+        type_system.add_typeclass_flag(cls, self.__class__)
         return
 
 
@@ -133,7 +150,10 @@ class Ix(type_system.Typeclass):
         def _getitem(self, i):
             return __getitem__(self, i)
 
-        cls.__getitem__ = _getitem
-
-        cls = type_system.add_typeclass_flag(cls, self.__class__)
+        type_system.add_attr(cls, "__getitem__", _getitem)
+        type_system.add_typeclass_flag(cls, self.__class__)
         return
+
+
+class Foldable(type_system.Typeclass):
+    pass
