@@ -6,7 +6,7 @@ from hask import guard, c
 from hask import caseof
 from hask import data, typ
 
-from hask import LazyList, l
+from hask import LazyList, L
 from hask import Maybe, Just, Nothing, in_maybe
 from hask import Either, Left, Right, in_either
 
@@ -139,7 +139,7 @@ class TestLazyList(unittest.TestCase):
                           list(LazyList(range(9)) * test_f))
 
     def test_list_comp(self):
-        self.assertEquals(l[0, ...][:10], range(10)[:10])
+        self.assertEquals(L[0, ...][:10], range(10)[:10])
 
 
 if __name__ == '__main__':

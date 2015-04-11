@@ -63,7 +63,7 @@ class _list_builder(syntax.Syntax):
         return LazyList(lst)
 
 
-l = _list_builder("Syntax error in list comprehension")
+L = _list_builder("Syntax error in list comprehension")
 
 
 ## typeclass instances

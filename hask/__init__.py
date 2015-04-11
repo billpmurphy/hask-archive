@@ -19,7 +19,7 @@ from hask.stdlib import NoGuardMatchException
 from hask.stdlib import data
 from hask.stdlib import typ
 
-from hask.stdlib import l
+from hask.stdlib import L
 from hask.stdlib import LazyList
 
 from hask.stdlib import Maybe
