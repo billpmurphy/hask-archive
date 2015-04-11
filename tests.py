@@ -9,7 +9,16 @@ from pythaskell.syntax import c
 from pythaskell.syntax import NoGuardMatchException as NGME
 
 from pythaskell.types import in_typeclass
+from pythaskell.types import Show
+from pythaskell.types import Eq
+from pythaskell.types import Num
+from pythaskell.types import Functor
+from pythaskell.types import Applicative
+from pythaskell.types import Monad
+from pythaskell.types import Traversable
+from pythaskell.types import Ix
 
+from pythaskell.types import Maybe
 from pythaskell.types import Just
 from pythaskell.types import Nothing
 from pythaskell.types import Right
@@ -71,16 +80,17 @@ class TestSyntax(unittest.TestCase):
 
 class TestMaybe(unittest.TestCase):
 
-    def check_instances(self):
-        self.assertTrue(in_typeclass(Show, Maybe))
-        self.assertTrue(in_typeclass(Eq, Maybe))
-        self.assertTrue(in_typeclass(Functor, Maybe))
-        self.assertTrue(in_typeclass(Applicative, Maybe))
-        self.assertTrue(in_typeclass(Monad, Maybe))
+    def test_instances(self):
+        self.assertTrue(in_typeclass(Maybe, Show))
+        self.assertTrue(in_typeclass(Maybe, Eq))
+        self.assertTrue(in_typeclass(Maybe, Functor))
+        self.assertTrue(in_typeclass(Maybe, Applicative))
+        self.assertTrue(in_typeclass(Maybe, Monad))
 
-        self.assertFalse(in_typeclass(Num, Maybe))
+        self.assertFalse(in_typeclass(Maybe, Num))
 
     def test_show(self):
+
         self.assertEqual("Just(3)", Just(3).__repr__())
 
     def test_eq(self):
@@ -110,7 +120,16 @@ class TestMaybe(unittest.TestCase):
 
 class TestSeq(unittest.TestCase):
 
-    def test_seq(self):
+    def test_instances(self):
+        self.assertTrue(in_typeclass(Seq, Show))
+        #self.assertTrue(in_typeclass(Seq, Eq))
+        self.assertTrue(in_typeclass(Seq, Functor))
+        self.assertTrue(in_typeclass(Seq, Applicative))
+        self.assertTrue(in_typeclass(Seq, Monad))
+        self.assertTrue(in_typeclass(Seq, Traversable))
+        self.assertTrue(in_typeclass(Seq, Ix))
+
+    def test_ix(self):
         self.assertEqual(3, Seq(range(10))[3])
         self.assertEqual(3, Seq(range(4))[-1])
         self.assertEqual(3, Seq((i for i in range(10)))[3])
@@ -123,8 +142,13 @@ class TestSeq(unittest.TestCase):
         with self.assertRaises(IndexError): Seq((0, 1, 2))[3]
         with self.assertRaises(IndexError): Seq((0, 1, 2))[-4]
 
-        self.assertTrue(list(range(10)), list(iter(Seq(range(10)))))
+    def test_eq(self):
+        self.assertTrue(list(range(10)), list(Seq(range(10))))
 
+    def test_functor(self):
+        test_f = lambda x: x ** 2 - 1
+
+        self.assertEquals(map(test_f, range(9)), list(Seq(range(9)) * test_f))
 
 # remove all this nonsense, since we are doing ADTs a different way
 class TestParse(unittest.TestCase):

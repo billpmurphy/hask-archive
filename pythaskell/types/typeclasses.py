@@ -103,3 +103,43 @@ class Monad(type_system.Typeclass):
         cls.bind = bind
         cls.__rshift__ = rshift
         return
+
+
+class Traversable(type_system.Typeclass):
+
+    def __init__(self, cls, __next__, __iter__, __len__=None):
+        def _iter(self):
+            return __iter__(self)
+
+        def _next(self):
+            return __next__(self)
+
+        cls.next = _next
+        cls.__next__ = _next
+        cls.__iter__ = _iter
+
+        if __len__ is None:
+            def _default_len(self):
+                return len((i for i in iter(self)))
+            cls.__len__ = _default_len
+
+        cls = type_system.add_typeclass_flag(cls, self.__class__)
+        return
+
+
+class Ix(type_system.Typeclass):
+
+    def __init__(self, cls, __getitem__):
+        if not type_system.in_typeclass(cls, Traversable):
+            raise TypeError("Class must be a member of Traversable")
+
+        def _getitem(self, i):
+            return __getitem__(self, i)
+
+        cls.__getitem__ = _getitem
+
+        cls = type_system.add_typeclass_flag(cls, self.__class__)
+        return
+
+
+
