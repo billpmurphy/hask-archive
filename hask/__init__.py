@@ -16,6 +16,12 @@ from hask.lang.typeclasses import Ix
 from hask.lang.typeclasses import Foldable
 from hask.lang.typeclasses import Iterator
 
+from hask.lang.hof import const
+from hask.lang.hof import flip
+from hask.lang.hof import curry
+from hask.lang.hof import id
+from hask.lang.hof import F
+
 from hask.stdlib import caseof
 
 from hask.stdlib import guard
@@ -23,7 +29,6 @@ from hask.stdlib import c
 from hask.stdlib import NoGuardMatchException
 
 from hask.stdlib import data
-from hask.stdlib import typ
 
 from hask.stdlib import L
 from hask.stdlib import LazyList

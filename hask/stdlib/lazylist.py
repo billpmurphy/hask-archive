@@ -3,6 +3,7 @@ import itertools
 
 from ..lang import syntax
 from ..lang.typeclasses import Show
+from ..lang.typeclasses import Eq
 from ..lang.typeclasses import Functor
 from ..lang.typeclasses import Applicative
 from ..lang.typeclasses import Monad
@@ -78,6 +79,11 @@ def _seq_show(self):
     return str(list(self.evaluated))[:-1] + "...]"
 
 
+def _seq_eq(self, other):
+    # this is horrifically inefficient
+    return list(self) == list(other)
+
+
 def _seq_fmap(self, fn):
     return LazyList(itertools.imap(fn, iter(self)))
 
@@ -126,10 +132,11 @@ def _seq_getitem(self, ix):
 
 
 Show(LazyList, _seq_show)
+Eq(LazyList, _seq_eq)
 Functor(LazyList, _seq_fmap)
 Applicative(LazyList, _seq_pure)
 Monad(LazyList, _seq_bind)
-Foldable(LazyList, None)
+Foldable(LazyList, None) # need to write foldr
 Traversable(LazyList, _seq_iter)
 Iterator(LazyList, _seq_next)
 Ix(LazyList, _seq_getitem)

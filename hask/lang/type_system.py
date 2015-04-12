@@ -1,7 +1,10 @@
 import abc
+import inspect
 import functools
 import types
 
+
+## Typeclass infrastructure
 
 class Typeclass(object):
     __metaclass__ = abc.ABCMeta
@@ -68,10 +71,19 @@ def add_attr(cls, attr_name, attr):
     return
 
 
-# static type assertion decorator
-def sig(signature):
-    @functools.wraps
-    def _wrapper(*args, **kwargs):
-        pass
+## Type system
 
-    return _wrapper
+
+def sig(*ty_args):
+    def decorate(func):
+
+        @functools.wraps(func)
+        def _wrapper(*args, **kwargs):
+            assertions = zip(ty_args, args)
+            for t, v in assertions:
+                if type(v) != t:
+                    raise TypeError("Typecheck failed: {v} :: {t}"
+                                    .format(v=v, t=t))
+            return func(*args, **kwargs)
+        return _wrapper
+    return decorate

@@ -5,7 +5,6 @@ from guard import guard
 from guard import NoGuardMatchException
 
 from data import data
-from data import typ
 
 from lazylist import L
 from lazylist import LazyList

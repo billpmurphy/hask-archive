@@ -4,7 +4,10 @@ from hask import in_typeclass
 
 from hask import guard, c
 from hask import caseof
-from hask import data, typ
+from hask import data
+
+from hask import curry
+from hask import F
 
 from hask import LazyList, L
 from hask import Maybe, Just, Nothing, in_maybe
@@ -47,6 +50,7 @@ class TestSyntax(unittest.TestCase):
         pass
 
     def test_data(self):
+        # come back to this after building out type_system
         se = SyntaxError
 
         with self.assertRaises(se): data("My_ADT")
@@ -58,14 +62,36 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): data("My_ADT", "a", "cc")
         with self.assertRaises(se): data("My_ADT", "a", "B")
 
-        with self.assertRaises(se): data("My_ADT", "a") == "1"
-        with self.assertRaises(se): data("My_ADT", "a") == typ("A") | "1"
-        with self.assertRaises(se): data("My_ADT", "a") | typ("A")
-
-        # wth is going on here?
+        #with self.assertRaises(se): data("My_ADT", "a") == "1"
+        #with self.assertRaises(se): data("My_ADT", "a") == typ("A") | "1"
+        #with self.assertRaises(se): data("My_ADT", "a") | typ("A")
         #with self.assertRaises(se): data("My_ADT", "a") == typ("A") == typ("B")
+        #self.assertIsNotNone(data("My_ADT", "a") == typ("A") | typ("B"))
 
-        self.assertIsNotNone(data("My_ADT", "a") == typ("A") | typ("B"))
+
+class TestHOF(unittest.TestCase):
+
+    def test_curry(self):
+
+        # regular version
+        def prod3(x, y, z):
+            return x * y * z
+
+        # curried version
+        cprod3 = curry(prod3)
+
+        @curry # curried version using decorator
+        def dprod3(x, y, z):
+            return x * y * z
+
+        self.assertEqual(prod3(1, 2, 3), cprod3(1, 2, 3))
+        self.assertEqual(prod3(1, 2, 3), cprod3(1, 2)(3))
+        self.assertEqual(prod3(1, 2, 3), cprod3(1)(2, 3))
+        self.assertEqual(prod3(1, 2, 3), cprod3(1)(2)(3))
+        self.assertEqual(prod3(1, 2, 3), dprod3(1, 2, 3))
+        self.assertEqual(prod3(1, 2, 3), dprod3(1, 2)(3))
+        self.assertEqual(prod3(1, 2, 3), dprod3(1)(2, 3))
+        self.assertEqual(prod3(1, 2, 3), dprod3(1)(2)(3))
 
 
 class TestMaybe(unittest.TestCase):
@@ -78,10 +104,13 @@ class TestMaybe(unittest.TestCase):
         self.assertTrue(in_typeclass(Maybe, Monad))
 
         self.assertFalse(in_typeclass(Maybe, Num))
+        self.assertFalse(in_typeclass(Maybe, Foldable))
+        self.assertFalse(in_typeclass(Maybe, Traversable))
+        self.assertFalse(in_typeclass(Maybe, Ix))
 
     def test_show(self):
-
         self.assertEqual("Just(3)", Just(3).__repr__())
+        self.assertEqual("Nothing", Nothing.__repr__())
 
     def test_eq(self):
         self.assertEqual(Nothing, Nothing)
@@ -112,7 +141,7 @@ class TestLazyList(unittest.TestCase):
 
     def test_instances(self):
         self.assertTrue(in_typeclass(LazyList, Show))
-        #self.assertTrue(in_typeclass(LazyList, Eq))
+        self.assertTrue(in_typeclass(LazyList, Eq))
         self.assertTrue(in_typeclass(LazyList, Functor))
         self.assertTrue(in_typeclass(LazyList, Applicative))
         self.assertTrue(in_typeclass(LazyList, Monad))

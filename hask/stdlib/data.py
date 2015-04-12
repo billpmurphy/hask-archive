@@ -51,32 +51,4 @@ class data(syntax.Syntax):
         return self
 
 
-class typ(syntax.Syntax):
 
-    def __init__(self, data_name, *fields):
-        syntax_err_msg = "Syntax error in `typ`"
-        super(self.__class__, self).__init__(syntax_err_msg)
-        return
-
-    def __or__(self, other):
-        if type(other) == typ:
-            return typs(self, other)
-        elif type(other) == typs:
-            return typs._add(typ)
-        else:
-            raise SyntaxError("")
-
-    def __eq__(self, other):
-        raise SyntaxError("")
-
-
-class typs(syntax.Syntax):
-
-    def __init__(self, *typ_objs):
-        self.typ_objs = typ_objs
-
-    def _add(self, typ_obj):
-        return self.typ_objs.append(type_obj)
-
-    def __iter__(self):
-        return iter(self.typ_objs)
