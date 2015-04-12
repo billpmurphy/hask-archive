@@ -1,3 +1,6 @@
+import hask
+
+
 try:
     from setuptools import setup
 except ImportError:
@@ -6,7 +9,7 @@ except ImportError:
 description = "We put a Haskell in your Python so you can Haskell while you Python."
 setup(
         name = 'hask',
-        version = fn.__version__,
+        version = hask.__version__,
         description=description,
         long_description = open('README.md').read(),
         author='Bill Murphy',
