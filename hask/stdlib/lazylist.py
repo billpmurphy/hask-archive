@@ -24,10 +24,10 @@ class LazyList(object):
         self.unevaluated = itertools.chain([])
 
         # ugly type assertion
-        if type(iterable) in (list, tuple):
-            self.evaluated.extend(iterable)
-        else:
+        if hasattr(iterable, "next") or hasattr(iterable, "__next__"):
             self.unevaluated = itertools.chain(self.unevaluated, iterable)
+        else:
+            self.evaluated.extend(iterable)
         return
 
     def eval_all(self):
@@ -105,7 +105,7 @@ def _seq_next(self):
 def _seq_iter(self):
     count = 0
     for item in itertools.chain(self.evaluated, self.unevaluated):
-        if count > len(self.evaluated):
+        if count >= len(self.evaluated):
             self.evaluated.append(item)
         count += 1
         yield item
