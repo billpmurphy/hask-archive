@@ -12,12 +12,15 @@ from hask import Either, Left, Right, in_either
 
 from hask import Show
 from hask import Eq
+from hask import Ord
+from hask import Bounded
 from hask import Num
 from hask import Functor
 from hask import Applicative
 from hask import Monad
 from hask import Traversable
 from hask import Ix
+from hask import Foldable
 
 
 class TestSyntax(unittest.TestCase):
@@ -117,6 +120,7 @@ class TestLazyList(unittest.TestCase):
         self.assertTrue(in_typeclass(LazyList, Ix))
 
     def test_ix(self):
+        ie = IndexError
         self.assertEqual(3, LazyList(range(10))[3])
         self.assertEqual(3, LazyList(range(4))[-1])
         self.assertEqual(3, LazyList((i for i in range(10)))[3])
@@ -126,8 +130,10 @@ class TestLazyList(unittest.TestCase):
         self.assertEqual(1, LazyList((0, 1, 2, 3))[1])
         self.assertEqual(1, LazyList((0, 1, 2, 3))[-3])
 
-        with self.assertRaises(IndexError): LazyList((0, 1, 2))[3]
-        with self.assertRaises(IndexError): LazyList((0, 1, 2))[-4]
+        with self.assertRaises(ie): LazyList((0, 1, 2))[3]
+        with self.assertRaises(ie): LazyList((0, 1, 2))[-4]
+        with self.assertRaises(ie): LazyList((i for i in range(3)))[3]
+        with self.assertRaises(ie): LazyList((i for i in range(3)))[-4]
 
     def test_eq(self):
         self.assertTrue(list(range(10)), list(LazyList(range(10))))
@@ -135,11 +141,18 @@ class TestLazyList(unittest.TestCase):
     def test_functor(self):
         test_f = lambda x: x ** 2 - 1
 
+        self.assertEquals(map(test_f, LazyList(9)),
+                          list(LazyList(range(9)) * test_f))
         self.assertEquals(map(test_f, range(9)),
                           list(LazyList(range(9)) * test_f))
 
     def test_list_comp(self):
+        self.assertEquals(10, len(L[0, ...][:10]))
         self.assertEquals(L[0, ...][:10], range(10)[:10])
+        self.assertEquals(L[-10, ...][:10], range(-10, 0)[:10])
+
+        #self.assertEquals(11, len(L[-5, ..., 5]))
+        self.assertEquals(L[-5, ..., 5][:10], range(-5, 5)[:10])
 
 
 if __name__ == '__main__':
