@@ -1,3 +1,6 @@
+import functools
+
+
 def flip(f):
     """
     flip(f) takes its (first) two arguments in the reverse order of f.
@@ -12,23 +15,22 @@ def const(a, b):
 
 
 class f(object):
-    def __init__(self, func=None):
+    def __init__(self, func):
         self.func = func
 
     def __call__(self, arg):
-        if self.func is not None:
-            return self.func(arg)
-        else:
-            return arg
-
-    def __mul__(self, other):
-        if self.func is not None:
-            return f(lambda x: other(self.func(x)))
-        else:
-            return f(lambda x: other(x))
+        return self.func.__call__(arg)
 
 
-id = f()
+def _func_fmap(self, other):
+    return f(lambda x: other(self.func(x)))
+
+
+def _identity(a):
+    return a
+
+
+id = f(_identity)
 
 
 class _lambda(object):

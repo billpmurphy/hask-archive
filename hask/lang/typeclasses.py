@@ -26,7 +26,13 @@ class Eq(type_system.Typeclass):
 
 
 class Ord(type_system.Typeclass):
-    pass
+    def __init__(self, cls, __cmp__):
+        if not type_system.in_typeclass(cls, Eq):
+            raise TypeError("Class must be a member of Eq")
+
+        type_system.add_attr(cls, "__cmp__", __eq__)
+        type_system.add_typeclass_flag(cls, self.__class__)
+        return
 
 
 class Enum(type_system.Typeclass):
@@ -34,7 +40,12 @@ class Enum(type_system.Typeclass):
 
 
 class Bounded(type_system.Typeclass):
-    pass
+    def __init__(self, cls, minBound, maxBound):
+        type_system.add_attr(cls, "minBound", minBound)
+        type_system.add_attr(cls, "maxBound", maxBound)
+        type_system.add_typeclass_flag(cls, self.__class__)
+        return
+
 
 class Num(type_system.Typeclass):
 
@@ -117,22 +128,50 @@ class Monad(type_system.Typeclass):
         return
 
 
+class Foldable(type_system.Typeclass):
+    def __init__(self, cls, _foldr):
+        type_system.add_typeclass_flag(cls, self.__class__)
+        return
+
+
 class Traversable(type_system.Typeclass):
 
-    def __init__(self, cls, __next__, __iter__, __len__=None):
+    def __init__(self, cls, __iter__):
+        if not type_system.in_typeclass(cls, Foldable):
+            raise TypeError("Class must be a member of Foldable")
+
+        if not type_system.in_typeclass(cls, Functor):
+            raise TypeError("Class must be a member of Functor")
+
         def _iter(self):
             return __iter__(self)
 
-        def _next(self):
-            return __next__(self)
-
-        type_system.add_attr(cls, "next", _next)
-        type_system.add_attr(cls, "__next__", _next)
         type_system.add_attr(cls, "__iter__", _iter)
+        type_system.add_typeclass_flag(cls, self.__class__)
+        return
+
+
+class Ix(type_system.Typeclass):
+
+    def __init__(self, cls, __getitem__, __len__=None):
+        if not type_system.in_typeclass(cls, Traversable):
+            raise TypeError("Class must be a member of Traversable")
+
+        def _getitem(self, i):
+            return __getitem__(self, i)
+
+        type_system.add_attr(cls, "__getitem__", _getitem)
 
         if __len__ is None:
             def _default_len(self):
-                return len((i for i in iter(self)))
+                """
+                Default length function: Iterate through elements and count
+                them up.
+                """
+                count = 0
+                for _ in iter(self):
+                    count += 1
+                return count
             type_system.add_attr(cls, "__len__", _default_len)
         else:
             type_system.add_attr(cls, "__len__", __len__)
@@ -141,19 +180,15 @@ class Traversable(type_system.Typeclass):
         return
 
 
-class Ix(type_system.Typeclass):
-
-    def __init__(self, cls, __getitem__):
+class Iterator(type_system.Typeclass):
+    def __init__(self, cls, __next__):
         if not type_system.in_typeclass(cls, Traversable):
             raise TypeError("Class must be a member of Traversable")
 
-        def _getitem(self, i):
-            return __getitem__(self, i)
+        def _next(self):
+            return __next__(self)
 
-        type_system.add_attr(cls, "__getitem__", _getitem)
+        type_system.add_attr(cls, "__next__", _next)
+        type_system.add_attr(cls, "next", _next)
         type_system.add_typeclass_flag(cls, self.__class__)
         return
-
-
-class Foldable(type_system.Typeclass):
-    pass

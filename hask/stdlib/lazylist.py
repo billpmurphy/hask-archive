@@ -8,6 +8,9 @@ from ..lang.typeclasses import Applicative
 from ..lang.typeclasses import Monad
 from ..lang.typeclasses import Traversable
 from ..lang.typeclasses import Ix
+from ..lang.typeclasses import Iterator
+from ..lang.typeclasses import Foldable
+
 
 class LazyList(object):
     """
@@ -16,22 +19,22 @@ class LazyList(object):
     """
 
     def __init__(self, iterable=None):
-        self._evaluated = collections.deque()
-        self._gen = itertools.chain([])
+        self.evaluated = collections.deque()
+        self.unevaluated = itertools.chain([])
 
         # ugly type assertion
         if type(iterable) in (list, tuple):
-            self._evaluated.extend(iterable)
+            self.evaluated.extend(iterable)
         else:
-            self._gen = itertools.chain(self._gen, iterable)
+            self.unevaluated = itertools.chain(self.unevaluated, iterable)
         return
 
-    def _full_evaluate(self):
-        self._evaluated.extend(self._gen)
+    def eval_all(self):
+        self.evaluated.extend(self.unevaluated)
         return
 
     def __add__(self, iterable):
-        self._gen = itertools.chain(self._gen, iterable)
+        self.unevaluated = itertools.chain(self.unevaluated, iterable)
         return self
 
 
@@ -55,11 +58,13 @@ class _list_builder(syntax.Syntax):
                 return LazyList(list_gen(lst[0], inf * inc, inc))
             elif len(lst) == 3 and lst[1] is Ellipsis:
                 # [x, ..., y]
-                return LazyList(list_gen(lst[0], [2], 1))
+                return LazyList(list_gen(lst[0], lst[2], 1))
             elif len(lst) == 4 and lst[3] is Ellipsis:
                 # [x, y, ..., z]
                 inc = lst[1] - lst[0]
                 return LazyList(list_gen(lst[0], lst[3], inc))
+            else:
+                raise SyntaxError("Invalid list comprehension")
         return LazyList(lst)
 
 
@@ -70,7 +75,7 @@ L = _list_builder("Syntax error in list comprehension")
 
 def _seq_show(self):
     # this needs to be better
-    return str(list(self._evaluated))[:-1] + "...]"
+    return str(list(self.evaluated))[:-1] + "...]"
 
 
 def _seq_fmap(self, fn):
@@ -86,18 +91,19 @@ def _seq_bind(self, fn):
 
 
 def _seq_next(self):
-    next_iter = next(self._gen)
-    self._evaluated.append(next_iter)
+    next_iter = next(self.unevaluated)
+    self.evaluated.append(next_iter)
     return next_iter
 
 
 def _seq_iter(self):
     count = 0
-    for item in itertools.chain(self._evaluated, self._gen):
-        if count > len(self._evaluated):
-            self._evaluated.append(item)
+    for item in itertools.chain(self.evaluated, self.unevaluated):
+        if count > len(self.evaluated):
+            self.evaluated.append(item)
         count += 1
         yield item
+
 
 def _seq_getitem(self, ix):
     # if we have a negative index, evaluate the entire sequence
@@ -108,13 +114,13 @@ def _seq_getitem(self, ix):
             i = ix
 
         if i >= 0:
-            while (i+1) > len(self._evaluated):
+            while (i+1) > len(self.evaluated):
                 next(self)
         else:
-            self._full_evaluate()
+            self.eval_all()
 
         # bad typecasting is bad (and inefficient)
-        return list(self._evaluated)[ix]
+        return list(self.evaluated)[ix]
     except (StopIteration, IndexError):
         raise IndexError("LazyList index out of range: %s" % i)
 
@@ -123,14 +129,15 @@ Show(LazyList, _seq_show)
 Functor(LazyList, _seq_fmap)
 Applicative(LazyList, _seq_pure)
 Monad(LazyList, _seq_bind)
-Traversable(LazyList, _seq_next, _seq_iter)
+Foldable(LazyList, None)
+Traversable(LazyList, _seq_iter)
+Iterator(LazyList, _seq_next)
 Ix(LazyList, _seq_getitem)
-
 
 
 ## todo:
 
-# more testing
+# more testing - something is wrong
 
 # do something interesting with itertools.filter - maybe just overwrite it with
 # a version that uses itertools.filter and returns a LazyList?

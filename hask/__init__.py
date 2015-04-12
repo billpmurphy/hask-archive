@@ -1,14 +1,20 @@
+__version__ = "0.0.1"
+
 # Core language
 from hask.lang.type_system import in_typeclass
 
 from hask.lang.typeclasses import Show
 from hask.lang.typeclasses import Eq
+from hask.lang.typeclasses import Ord
+from hask.lang.typeclasses import Bounded
 from hask.lang.typeclasses import Num
 from hask.lang.typeclasses import Functor
 from hask.lang.typeclasses import Applicative
 from hask.lang.typeclasses import Monad
 from hask.lang.typeclasses import Traversable
 from hask.lang.typeclasses import Ix
+from hask.lang.typeclasses import Foldable
+from hask.lang.typeclasses import Iterator
 
 from hask.stdlib import caseof
 
