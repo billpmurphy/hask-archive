@@ -170,7 +170,7 @@ class TestLazyList(unittest.TestCase):
     def test_functor(self):
         test_f = lambda x: x ** 2 - 1
 
-        self.assertEquals(map(test_f, LazyList(9)),
+        self.assertEquals(map(test_f, LazyList(range(9))),
                           list(LazyList(range(9)) * test_f))
         self.assertEquals(map(test_f, range(9)),
                           list(LazyList(range(9)) * test_f))
