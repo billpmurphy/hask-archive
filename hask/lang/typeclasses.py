@@ -1,4 +1,5 @@
 import type_system
+from type_system import Typeable
 
 
 class Show(type_system.Typeclass):

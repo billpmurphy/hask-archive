@@ -18,8 +18,8 @@ class Typeable(Typeclass):
     checker to understand higher-kinded types.
     """
     def __init__(self, cls, __type__):
-        type_system.add_attr(cls, "__type__", __repr__)
-        type_system.add_typeclass_flag(cls, self.__class__)
+        add_attr(cls, "__type__", __type__)
+        add_typeclass_flag(cls, self.__class__)
         return
 
 

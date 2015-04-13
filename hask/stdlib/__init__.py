@@ -20,4 +20,6 @@ from either import Left
 from either import Right
 from either import in_either
 
-import builtins
+from builtins import Int
+from builtins import Float
+from builtins import String

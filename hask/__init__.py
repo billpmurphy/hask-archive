@@ -5,6 +5,7 @@ from hask.lang.type_system import in_typeclass
 from hask.lang.type_system import typ
 from hask.lang.type_system import arity
 from hask.lang.type_system import sig
+from hask.lang.type_system import Typeable
 
 from hask.lang.typeclasses import Show
 from hask.lang.typeclasses import Eq
@@ -24,6 +25,10 @@ from hask.lang.hof import flip
 from hask.lang.hof import curry
 from hask.lang.hof import id
 from hask.lang.hof import F
+
+from hask.stdlib import Int
+from hask.stdlib import Float
+from hask.stdlib import String
 
 from hask.stdlib import caseof
 

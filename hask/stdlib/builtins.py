@@ -2,6 +2,11 @@ from ..lang.typeclasses import Show
 from ..lang.typeclasses import Eq
 from ..lang.typeclasses import Num
 
+# Wrappers for builtins (for cosmetic purposes only)
+
+Int = int
+Float = float
+String = str
 
 # Builtin type typeclass instances
 

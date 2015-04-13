@@ -13,6 +13,7 @@ from hask import filter as hfilter
 from hask import id as hid
 from hask import Maybe, Just, Nothing, in_maybe
 from hask import Either, Left, Right, in_either
+from hask import Typeable
 from hask import Show, Eq, Ord, Bounded, Num
 from hask import Functor, Applicative, Monad
 from hask import Traversable, Ix, Foldable, Iterator
