@@ -26,32 +26,26 @@ def curry(func):
 class F(object):
     """
     Haskell-ified wrapper around function objects that is always curried, an
-    instance of functor, and composable with `.`
+    instance of functor, and composable with `*`
     """
-    def __init__(self, func, *args, **kwargs):
-        self.func = curry(func)(*args, **kwargs)
-
-    def __ensure_callable(self, f):
-        return self.__class__(*f) if isinstance(f, tuple) else f
+    def __init__(self, func):
+        self.func = func
 
     def __call__(self, *args, **kwargs):
         return self.func.__call__(*args, **kwargs)
 
-    def __getattr__(self, other):
-        return _func_fmap(self, other)
+    def fmap(self, other):
+        if not isinstance(other, self.__class__):
+            other = self.__class__(other)
+
+        def _composed(*args, **kwargs):
+            return other.func(self.func(*args, **kwargs))
+
+        return self.__class__(_composed)
 
 
-def _func_fmap(self, other):
-    if type(other) != _f:
-        other = _f(other)
+Functor(F, F.fmap)
 
-    def _apply(*args, **kwargs):
-        return other(self(*args, **kwargs))
-
-    return self.__class__(_apply)
-
-
-Functor(F, _func_fmap)
 
 @F
 def flip(f):
@@ -61,6 +55,7 @@ def flip(f):
     def _flipped(x1, x2, *args, **kwargs):
         return f(x2, x1, *args, **kwargs)
     return _flipped
+
 
 @F
 def const(a, b):

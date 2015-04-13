@@ -76,7 +76,6 @@ def add_attr(cls, attr_name, attr):
 
 def sig(*ty_args):
     def decorate(func):
-
         @functools.wraps(func)
         def _wrapper(*args, **kwargs):
             assertions = zip(ty_args, args)

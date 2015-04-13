@@ -5,25 +5,16 @@ from hask import in_typeclass
 from hask import guard, c
 from hask import caseof
 from hask import data
-
-from hask import curry
-from hask import F
-
 from hask import LazyList, L
+from hask import F, curry, const, flip
+from hask import map as hmap
+from hask import filter as hfilter
+from hask import id as hid
 from hask import Maybe, Just, Nothing, in_maybe
 from hask import Either, Left, Right, in_either
-
-from hask import Show
-from hask import Eq
-from hask import Ord
-from hask import Bounded
-from hask import Num
-from hask import Functor
-from hask import Applicative
-from hask import Monad
-from hask import Traversable
-from hask import Ix
-from hask import Foldable
+from hask import Show, Eq, Ord, Bounded, Num
+from hask import Functor, Applicative, Monad
+from hask import Traversable, Ix, Foldable, Iterator
 
 
 class TestSyntax(unittest.TestCase):
@@ -93,6 +84,32 @@ class TestHOF(unittest.TestCase):
         self.assertEqual(prod3(1, 2, 3), dprod3(1)(2, 3))
         self.assertEqual(prod3(1, 2, 3), dprod3(1)(2)(3))
 
+    def test_F(self):
+        pass
+
+    def test_F_functor(self):
+        f = lambda x: (x + 100) % 75
+        g = lambda x: x * 21
+        h = lambda x: (x - 31) / 3
+
+        self.assertEquals(f(56), (hid * f)(56))
+        self.assertEquals(h(g(f(56))), (hid * f * g * h)(56))
+
+    def test_hid(self):
+        self.assertEquals(3, hid(3))
+        self.assertEquals(3, (hid * hid * hid)(3))
+
+    def test_const(self):
+        self.assertEquals(1, const(1, 2))
+        self.assertEquals("foo", const("foo", 2))
+
+    def test_flip(self):
+        test_f1 = lambda x, y: x - y
+        test_f2 = lambda x, y, z: (x - y) / z
+
+        self.assertEquals(test_f1(9, 1), flip(test_f1)(1, 9))
+        self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10, 91, 2))
+
 
 class TestMaybe(unittest.TestCase):
 
@@ -120,6 +137,7 @@ class TestMaybe(unittest.TestCase):
         self.assertNotEqual(Just(1), Just(3))
         self.assertNotEqual(Just(1), Just("1"))
         self.assertNotEqual(Nothing, Just(3))
+        #self.assertNotEqual(Nothing, None)
 
         self.assertTrue(Nothing == Nothing or Nothing != Nothing)
         self.assertTrue(Just(1) == Just(1) or Just(1) != Just(1))
@@ -165,7 +183,11 @@ class TestLazyList(unittest.TestCase):
         with self.assertRaises(ie): LazyList((i for i in range(3)))[-4]
 
     def test_eq(self):
-        self.assertTrue(list(range(10)), list(LazyList(range(10))))
+        self.assertEquals(list(range(10)), list(LazyList(range(10))))
+        self.assertEquals(LazyList(range(10)), LazyList(range(10)))
+        self.assertEquals(L[range(10)], LazyList(range(10)))
+        self.assertEquals(LazyList(range(10)),
+                          LazyList((i for i in range(10))))
 
     def test_functor(self):
         test_f = lambda x: x ** 2 - 1
@@ -182,8 +204,16 @@ class TestLazyList(unittest.TestCase):
         self.assertEquals(L[0, ...][:10], range(10)[:10])
         self.assertEquals(L[-10, ...][:10], range(-10, 0)[:10])
 
-        #self.assertEquals(11, len(L[-5, ..., 5]))
+        self.assertEquals(11, len(L[-5, ..., 5]))
         self.assertEquals(L[-5, ..., 5][:10], range(-5, 5)[:10])
+
+    def test_hmap(self):
+        test_f = lambda x: (x + 100) / 2
+        self.assertEquals(map(test_f, range(20)), list(hmap(test_f, range(20))))
+
+    def test_hfilter(self):
+        test_f = lambda x: x % 2 == 0
+        self.assertEquals(filter(test_f, range(20)), list(hfilter(test_f, range(20))))
 
 
 if __name__ == '__main__':

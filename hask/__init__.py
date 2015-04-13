@@ -32,6 +32,8 @@ from hask.stdlib import data
 
 from hask.stdlib import L
 from hask.stdlib import LazyList
+from hask.stdlib import map
+from hask.stdlib import filter
 
 from hask.stdlib import Maybe
 from hask.stdlib import Just

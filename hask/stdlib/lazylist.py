@@ -45,7 +45,7 @@ class _list_builder(syntax.Syntax):
 
         inf = float("inf")
         def list_gen(start, stop, inc):
-            while start < stop:
+            while start <= stop:
                 yield start
                 start += inc
 
@@ -114,11 +114,7 @@ def _seq_iter(self):
 def _seq_getitem(self, ix):
     # if we have a negative index, evaluate the entire sequence
     try:
-        if type(ix) == slice:
-            i = ix.stop
-        else:
-            i = ix
-
+        i = ix.stop if isinstance(ix, slice) else ix
         if i >= 0:
             while (i+1) > len(self.evaluated):
                 next(self)
@@ -142,15 +138,11 @@ Iterator(LazyList, _seq_next)
 Ix(LazyList, _seq_getitem)
 
 
-## todo:
+## Haskellified versions of map and filter
 
-# more testing - something is wrong
+def map(fn, iterable):
+    return LazyList(itertools.imap(fn, iterable))
 
-# do something interesting with itertools.filter - maybe just overwrite it with
-# a version that uses itertools.filter and returns a LazyList?
 
-# add folds and Foldable typeclasses
-
-# actually...just spend a lot of time reading this and seeing how best to make
-# Haskell out of it
-# https://docs.python.org/2/library/itertools.html
+def filter(fn, iterable):
+    return LazyList(itertools.ifilter(fn, iterable))
