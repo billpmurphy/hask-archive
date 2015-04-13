@@ -1,19 +1,7 @@
 import functools
-import inspect
 
+from ..lang.type_system import arity
 from ..lang.typeclasses import Functor
-
-
-def arity(f):
-    """
-    Find the arity of a function, including functools.partial objects.
-    """
-    count = 0
-    while isinstance(f, functools.partial):
-        if f.args:
-            count += len(f.args)
-        f = f.func
-    return len(inspect.getargspec(f).args) - count
 
 
 def curry(func):
@@ -45,7 +33,6 @@ class F(object):
     def fmap(self, other):
         if not isinstance(other, self.__class__):
             other = self.__class__(other)
-
         return self.__class__(lambda x, *a, **kw: self.f(other.f(x, *a, **kw)))
 
 

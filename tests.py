@@ -1,6 +1,7 @@
+import functools
 import unittest
 
-from hask import in_typeclass
+from hask import in_typeclass, arity, sig, typ
 
 from hask import guard, c
 from hask import caseof
@@ -15,6 +16,64 @@ from hask import Either, Left, Right, in_either
 from hask import Show, Eq, Ord, Bounded, Num
 from hask import Functor, Applicative, Monad
 from hask import Traversable, Ix, Foldable, Iterator
+
+
+class TestTypeSystem(unittest.TestCase):
+
+    def test_arity(self):
+        self.assertEquals(0, arity(lambda: "foo"))
+        self.assertEquals(1, arity(lambda **kwargs: kwargs))
+        self.assertEquals(1, arity(lambda *args: args))
+        self.assertEquals(1, arity(lambda x: 0))
+        self.assertEquals(1, arity(lambda x, *args: 0))
+        self.assertEquals(1, arity(lambda x, *args, **kw: 0))
+        self.assertEquals(1, arity(lambda x: x + 1))
+        self.assertEquals(2, arity(lambda x, y: x + y))
+        self.assertEquals(2, arity(lambda x, y, *args: x + y + z))
+        self.assertEquals(2, arity(lambda x, y, *args, **kw: x + y + z))
+        self.assertEquals(3, arity(lambda x, y, z: x + y + z))
+        self.assertEquals(3, arity(lambda x, y, z, *args: x + y + z))
+        self.assertEquals(3, arity(lambda x, y, z, *args, **kw: x + y + z))
+
+        self.assertEquals(1, arity(lambda x: lambda y: x))
+        self.assertEquals(1, arity(functools.partial(lambda x,y: x+y, 2)))
+        self.assertEquals(2, arity(functools.partial(lambda x,y: x+y)))
+        self.assertEquals(2, arity(functools.partial(lambda x, y, z: x+y, 2)))
+
+    def test_sig(self):
+        te = TypeError
+
+        @sig(int, int)
+        def f(x):
+            return x + 4
+
+        self.assertEquals(9, f(5))
+        with self.assertRaises(te): f(1.0)
+        with self.assertRaises(te): f("foo")
+        with self.assertRaises(te): f(5, 4)
+        with self.assertRaises(te): f()
+
+        with self.assertRaises(te):
+            @sig(int)
+            def g(x):
+                return x / 2
+
+        with self.assertRaises(te):
+            @sig(int, int, int)
+            def g(x):
+                return x / 2
+
+        with self.assertRaises(te):
+            @sig(float, float)
+            def g(x):
+                return x / 2
+            g(9)
+
+        with self.assertRaises(te):
+            @sig(int, int)
+            def g(x):
+                return x / 2.0
+            g(1)
 
 
 class TestSyntax(unittest.TestCase):

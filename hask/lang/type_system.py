@@ -1,6 +1,7 @@
 import abc
 import inspect
 import functools
+import re
 import types
 
 
@@ -8,6 +9,18 @@ import types
 
 class Typeclass(object):
     __metaclass__ = abc.ABCMeta
+    __instances__ = []
+
+
+class Typeable(Typeclass):
+    """
+    Typeclass for objects that have a type within Hask. This allows the type
+    checker to understand higher-kinded types.
+    """
+    def __init__(self, cls, __type__):
+        type_system.add_attr(cls, "__type__", __repr__)
+        type_system.add_typeclass_flag(cls, self.__class__)
+        return
 
 
 def is_builtin(cls):
@@ -32,12 +45,10 @@ def is_builtin(cls):
 def in_typeclass(cls, typeclass):
     """
     Return True if cls is a member of typeclass, and False otherwise.
+    Python builtins cannot be typeclasses.
     """
     if is_builtin(typeclass):
-        # builtins are never typeclasses, even if they are subclasses of
-        # Typeclass. This is because builtins inherit typeclasses to signify
-        # their membership
-        return False
+       return False
     elif is_builtin(cls):
         try:
             return issubclass(cls, typeclass)
@@ -64,7 +75,8 @@ def add_typeclass_flag(cls, typeclass):
 
 def add_attr(cls, attr_name, attr):
     """
-    Add an attribute to a class. If the class is a builtin, do nothing.
+    Modify an existing class to add an attribute. If the class is a builtin, do
+    nothing.
     """
     if not is_builtin(cls):
         setattr(cls, attr_name, attr)
@@ -74,15 +86,74 @@ def add_attr(cls, attr_name, attr):
 ## Type system
 
 
+class typ(object):
+    """
+    Wrapper for tuple that represents types, including higher-kinded types.
+    """
+    def __init__(self, *args):
+        if not args:
+            raise TypeError("Cannot have empty typ()")
+
+        for arg in args:
+            if not isinstance(arg, type):
+                raise TypeError("%s is not a type")
+
+        self.kind = len(args)
+        self.hkt = args if self.kind > 1 else args[0]
+
+    def __eq__(self, other):
+        if other.__class__ == typ:
+            return self.hkt == other.hkt
+        return self.hkt == other
+
+    def __repr__(self):
+        if self.kind == 1:
+            return str(self.hkt)
+        return " ".join(map(lambda x: x.__name__, self.hkt))
+
+
+def arity(f):
+    """
+    Find the arity of a function, including functools.partial objects.
+    """
+    count = 0
+    while isinstance(f, functools.partial):
+        if f.args:
+            count += len(f.args)
+        f = f.func
+    spec = inspect.getargspec(f)
+    args = spec.args
+
+    var = 0
+    if not args and (spec.varargs is not None or spec.keywords is not None):
+        var = 1
+
+    argcount = len(spec.args) + var
+    return argcount - count
+
+
 def sig(*ty_args):
+    """
+    Typechecking without currying.
+    """
     def decorate(func):
+        if not len(ty_args) == arity(func) + 1:
+            raise TypeError("Signature and function have different arity")
+
         @functools.wraps(func)
         def _wrapper(*args, **kwargs):
+            # typecheck arguments
             assertions = zip(ty_args, args)
             for t, v in assertions:
-                if type(v) != t:
+                if not isinstance(v, t):
                     raise TypeError("Typecheck failed: {v} :: {t}"
                                     .format(v=v, t=t))
-            return func(*args, **kwargs)
+
+            # typecheck return value
+            result = func(*args, **kwargs)
+            if not isinstance(result, ty_args[-1]):
+                raise TypeError("Typecheck failed: {v} :: {t}".format(v=v,t=t))
+            else:
+                return result
         return _wrapper
     return decorate
