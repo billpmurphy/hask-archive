@@ -79,13 +79,30 @@ class TestHOF(unittest.TestCase):
         self.assertEqual(prod3(1, 2, 3), cprod3(1, 2)(3))
         self.assertEqual(prod3(1, 2, 3), cprod3(1)(2, 3))
         self.assertEqual(prod3(1, 2, 3), cprod3(1)(2)(3))
+
         self.assertEqual(prod3(1, 2, 3), dprod3(1, 2, 3))
         self.assertEqual(prod3(1, 2, 3), dprod3(1, 2)(3))
         self.assertEqual(prod3(1, 2, 3), dprod3(1)(2, 3))
         self.assertEqual(prod3(1, 2, 3), dprod3(1)(2)(3))
 
     def test_F(self):
-        pass
+        # regular version
+        def sum3(x, y, z):
+            return x * y * z
+
+        @F # version wrapped using decorator
+        def dsum3(x, y, z):
+            return x * y * z
+
+        self.assertEqual(sum3(1, 2, 3), F(sum3)(1, 2, 3))
+        self.assertEqual(sum3(1, 2, 3), F(sum3)(1, 2)(3))
+        self.assertEqual(sum3(1, 2, 3), F(sum3)(1)(2, 3))
+        self.assertEqual(sum3(1, 2, 3), F(sum3)(1)(2)(3))
+
+        self.assertEqual(sum3(1, 2, 3), dsum3(1, 2, 3))
+        self.assertEqual(sum3(1, 2, 3), dsum3(1, 2)(3))
+        self.assertEqual(sum3(1, 2, 3), dsum3(1)(2, 3))
+        self.assertEqual(sum3(1, 2, 3), dsum3(1)(2)(3))
 
     def test_F_functor(self):
         f = lambda x: (x + 100) % 75
@@ -93,21 +110,26 @@ class TestHOF(unittest.TestCase):
         h = lambda x: (x - 31) / 3
 
         self.assertEquals(f(56), (hid * f)(56))
-        self.assertEquals(h(g(f(56))), (hid * f * g * h)(56))
+        self.assertEquals(f(g(h(56))), (hid * f * g * h)(56))
 
     def test_hid(self):
         self.assertEquals(3, hid(3))
+        self.assertEquals(3, hid(hid(hid(3))))
+        self.assertEquals(3, hid.fmap(hid).fmap(hid)(3))
         self.assertEquals(3, (hid * hid * hid)(3))
 
     def test_const(self):
         self.assertEquals(1, const(1, 2))
+        self.assertEquals(1, const(1)(2))
         self.assertEquals("foo", const("foo", 2))
+        self.assertEquals(1, (const(1) * const(2) * const(3))(4))
 
     def test_flip(self):
         test_f1 = lambda x, y: x - y
         test_f2 = lambda x, y, z: (x - y) / z
 
         self.assertEquals(test_f1(9, 1), flip(test_f1)(1, 9))
+        #self.assertEquals(test_f1(9, 1), flip(test_f1)(1)(9))
         self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10, 91, 2))
 
 
@@ -124,6 +146,7 @@ class TestMaybe(unittest.TestCase):
         self.assertFalse(in_typeclass(Maybe, Foldable))
         self.assertFalse(in_typeclass(Maybe, Traversable))
         self.assertFalse(in_typeclass(Maybe, Ix))
+        self.assertFalse(in_typeclass(Maybe, Iterator))
 
     def test_show(self):
         self.assertEqual("Just(3)", Just(3).__repr__())

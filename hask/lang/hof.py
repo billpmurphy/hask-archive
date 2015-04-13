@@ -4,20 +4,25 @@ import inspect
 from ..lang.typeclasses import Functor
 
 
+def arity(f):
+    """
+    Find the arity of a function, including functools.partial objects.
+    """
+    count = 0
+    while isinstance(f, functools.partial):
+        if f.args:
+            count += len(f.args)
+        f = f.func
+    return len(inspect.getargspec(f).args) - count
+
+
 def curry(func):
     """
     Curry decorator from fn.py. Needs some upgrades.
     """
-    #@wraps(func) # need to do something about this
+    #@functools.wraps(func) # need to do something about this
     def _curried(*args, **kwargs):
-        f = func
-        count = 0
-        while isinstance(f, functools.partial):
-            if f.args:
-                count += len(f.args)
-            f = f.func
-        spec = inspect.getargspec(f)
-        if count == len(spec.args) - len(args):
+        if arity(func) == len(args):
             return func(*args, **kwargs)
         return curry(functools.partial(func, *args, **kwargs))
     return _curried
@@ -28,23 +33,28 @@ class F(object):
     Haskell-ified wrapper around function objects that is always curried, an
     instance of functor, and composable with `*`
     """
-    def __init__(self, func):
-        self.func = func
+    def __init__(self, func=lambda x: x, *a, **kw):
+        self.f = functools.partial(func, *a, **kw) if any([a, kw]) else func
 
     def __call__(self, *args, **kwargs):
-        return self.func.__call__(*args, **kwargs)
+        if arity(self.f) == len(args):
+            return self.f(*args, **kwargs)
+        else:
+            return self.__class__(self.f, *args, **kwargs)
 
     def fmap(self, other):
         if not isinstance(other, self.__class__):
             other = self.__class__(other)
 
-        def _composed(*args, **kwargs):
-            return other.func(self.func(*args, **kwargs))
-
-        return self.__class__(_composed)
+        return self.__class__(lambda x, *a, **kw: self.f(other.f(x, *a, **kw)))
 
 
 Functor(F, F.fmap)
+
+
+@F
+def id(a):
+    return a
 
 
 @F
@@ -59,8 +69,4 @@ def flip(f):
 
 @F
 def const(a, b):
-    return a
-
-@F
-def id(a):
     return a
