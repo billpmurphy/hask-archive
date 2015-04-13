@@ -1,7 +1,7 @@
 import functools
 import unittest
 
-from hask import in_typeclass, arity, sig, typ
+from hask import in_typeclass, arity, sig, typ, H
 
 from hask import guard, c
 from hask import caseof
@@ -41,18 +41,24 @@ class TestTypeSystem(unittest.TestCase):
         self.assertEquals(2, arity(functools.partial(lambda x,y: x+y)))
         self.assertEquals(2, arity(functools.partial(lambda x, y, z: x+y, 2)))
 
-    def test_sig(self):
+    def test_plain_sig(self):
         te = TypeError
 
-        @sig(int, int)
-        def f(x):
+        @sig(H() >> int >> int)
+        def f1(x):
             return x + 4
 
-        self.assertEquals(9, f(5))
-        with self.assertRaises(te): f(1.0)
-        with self.assertRaises(te): f("foo")
-        with self.assertRaises(te): f(5, 4)
-        with self.assertRaises(te): f()
+        self.assertEquals(9, f1(5))
+        with self.assertRaises(te): f1(1.0)
+        with self.assertRaises(te): f1("foo")
+        with self.assertRaises(te): f1(5, 4)
+        with self.assertRaises(te): f1()
+
+        @sig(H() >> int >> int >> float)
+        def f2(x, y):
+            return (x + y) / 2.0
+
+        self.assertEquals(20.0, f2(20, 20))
 
         with self.assertRaises(te):
             @sig(int)
@@ -60,21 +66,19 @@ class TestTypeSystem(unittest.TestCase):
                 return x / 2
 
         with self.assertRaises(te):
-            @sig(int, int, int)
+            @sig(H() >> int >> int >> int)
             def g(x):
                 return x / 2
 
-        with self.assertRaises(te):
-            @sig(float, float)
-            def g(x):
-                return x / 2
-            g(9)
+        @sig(H() >> float >> float)
+        def g(x):
+            return x / 2
+        with self.assertRaises(te): g(9)
 
-        with self.assertRaises(te):
-            @sig(int, int)
-            def g(x):
-                return x / 2.0
-            g(1)
+        @sig(H() >> int >> int)
+        def g(x):
+            return x / 2.0
+        with self.assertRaises(te): g(1)
 
 
 class TestSyntax(unittest.TestCase):
@@ -172,6 +176,21 @@ class TestHOF(unittest.TestCase):
         self.assertEquals(f(56), (hid * f)(56))
         self.assertEquals(f(g(h(56))), (hid * f * g * h)(56))
 
+        f2, g2, h2 = map(F, (f, g, h))
+        self.assertEquals(f(56), (hid * f2)(56))
+        self.assertEquals(f2(56), (hid * f2)(56))
+        self.assertEquals(f2(g2(h2(56))), (hid * f2 * g * h2)(56))
+        self.assertEquals(f2(g2(h2(56))), (hid * f * g * h2)(56))
+        self.assertEquals(f2(g2(h2(56))), (hid * f2 * g * h2)(56))
+
+        f3, g3, h3 = map(F, (f2, g2, h2))
+        self.assertEquals(f(56), (hid * f3)(56))
+        self.assertEquals(f3(56), (hid * f3)(56))
+        self.assertEquals(f3(g3(h3(56))), (hid * f3 * g * h3)(56))
+        self.assertEquals(f3(g3(h3(56))), (hid * f * g * h3)(56))
+        self.assertEquals(f3(g3(h3(56))), (hid * f3 * g * h3)(56))
+        self.assertEquals(f3(g3(h3(56))), (hid * f3 * g2 * h3)(56))
+
     def test_hid(self):
         self.assertEquals(3, hid(3))
         self.assertEquals(3, hid(hid(hid(3))))
@@ -196,6 +215,7 @@ class TestHOF(unittest.TestCase):
 class TestMaybe(unittest.TestCase):
 
     def test_instances(self):
+        self.assertTrue(in_typeclass(Maybe, Typeable))
         self.assertTrue(in_typeclass(Maybe, Show))
         self.assertTrue(in_typeclass(Maybe, Eq))
         self.assertTrue(in_typeclass(Maybe, Functor))
@@ -292,11 +312,13 @@ class TestLazyList(unittest.TestCase):
 
     def test_hmap(self):
         test_f = lambda x: (x + 100) / 2
-        self.assertEquals(map(test_f, range(20)), list(hmap(test_f, range(20))))
+        self.assertEquals(map(test_f, range(20)),
+                          list(hmap(test_f, range(20))))
 
     def test_hfilter(self):
         test_f = lambda x: x % 2 == 0
-        self.assertEquals(filter(test_f, range(20)), list(hfilter(test_f, range(20))))
+        self.assertEquals(filter(test_f, range(20)),
+                          list(hfilter(test_f, range(20))))
 
 
 if __name__ == '__main__':

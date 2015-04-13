@@ -2,7 +2,10 @@ import abc
 import inspect
 import functools
 import re
+import string
 import types
+
+import syntax
 
 
 ## Typeclass infrastructure
@@ -85,8 +88,25 @@ def add_attr(cls, attr_name, attr):
 
 ## Type system
 
+class Poly(object):
+    """
+    Class that represents a polymorphic type, identified by a single character.
+    """
+    def __init__(self, name):
+        if name not in string.lowercase:
+            raise SyntaxError("Polymorphic var must be lowercase letter")
+        self.name = name
+        self.derived_type = None
+        self.__name__ = self.name
 
-class typ(object):
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __repr__(self):
+        return "Poly(%s)" % self.name
+
+
+class typ(syntax.Syntax):
     """
     Wrapper for tuple that represents types, including higher-kinded types.
     """
@@ -94,12 +114,18 @@ class typ(object):
         if not args:
             raise TypeError("Cannot have empty typ()")
 
-        for arg in args:
-            if not isinstance(arg, type):
-                raise TypeError("%s is not a type")
+        args = list(args)
+        for i, arg in enumerate(args):
+            if isinstance(arg, str):
+                args[i] = Poly(arg)
+            elif not isinstance(arg, type):
+                raise TypeError("%s is not a type or a type variable" % arg)
 
         self.kind = len(args)
         self.hkt = args if self.kind > 1 else args[0]
+
+        syntax_err_msg = "Syntax error in `typ`"
+        super(self.__class__, self).__init__(syntax_err_msg)
 
     def __eq__(self, other):
         if other.__class__ == typ:
@@ -111,6 +137,31 @@ class typ(object):
             return str(self.hkt)
         return " ".join(map(lambda x: x.__name__, self.hkt))
 
+
+class H(object):
+    """
+    Wrapper for list tuple the represents a chain of types in a type signature,
+    e.g. "a -> b -> c". Used for cosmetic purposes, so that we can write e.g.
+    "typ(a) >> str"
+    """
+    def __init__(self):
+        self.ty_args = []
+
+    def __rshift__(self, other):
+        self.ty_args.append(other)
+        return self
+
+    def __iter__(self):
+        return iter(self.ty_args)
+
+    def __len__(self):
+        return len(self.ty_args)
+
+    def __getitem__(self, ix):
+        return self.ty_args[ix]
+
+
+## type checking
 
 def arity(f):
     """
@@ -132,7 +183,7 @@ def arity(f):
     return argcount - count
 
 
-def sig(*ty_args):
+def sig(ty_args):
     """
     Typechecking without currying.
     """

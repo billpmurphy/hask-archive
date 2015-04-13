@@ -38,7 +38,7 @@ class Maybe(object):
         return "Just(%s)" % self._value
 
     def __type__(self):
-        return typ(self.__class__, self._value.__class__)
+        return typ(Maybe, self._value.__class__)
 
     def fmap(self, fn):
         return Nothing if self._is_nothing else Just(fn(self._value))

@@ -22,6 +22,9 @@ class F(object):
     instance of functor, and composable with `*`
     """
     def __init__(self, func=lambda x: x, *a, **kw):
+        if isinstance(func, self.__class__):
+            func = func.f
+
         self.f = functools.partial(func, *a, **kw) if any([a, kw]) else func
 
     def __call__(self, *args, **kwargs):
