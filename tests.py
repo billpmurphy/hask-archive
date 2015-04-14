@@ -3,6 +3,7 @@ import unittest
 
 from hask import in_typeclass, arity, sig, typ, H
 
+from hask.lang.syntax import Syntax
 from hask import guard, c
 from hask import caseof
 from hask import data
@@ -83,14 +84,84 @@ class TestTypeSystem(unittest.TestCase):
 
 class TestSyntax(unittest.TestCase):
 
+    def test_syntax(self):
+        se = SyntaxError
+        s = Syntax("err")
+
+        #with self.assertRaises(se): s.foo
+        #with self.assertRaises(se): s.foo = 1
+        #with self.assertRaises(se): del s.foo
+        with self.assertRaises(se): len(s)
+        with self.assertRaises(se): s[0]
+        with self.assertRaises(se): s[1]
+        with self.assertRaises(se): del s["foo"]
+        with self.assertRaises(se): iter(s)
+        with self.assertRaises(se): reversed(s)
+        with self.assertRaises(se): 1 in s
+        with self.assertRaises(se): 1 not in s
+        with self.assertRaises(se): s("f")
+        with self.assertRaises(se):
+            with s as b: pass
+        with self.assertRaises(se): s > 0
+        with self.assertRaises(se): s < 0
+        with self.assertRaises(se): s >= 0
+        with self.assertRaises(se): s <= 0
+        with self.assertRaises(se): s == 0
+        with self.assertRaises(se): s != 0
+        with self.assertRaises(se): abs(s)
+        with self.assertRaises(se): ~s
+        with self.assertRaises(se): +s
+        with self.assertRaises(se): -s
+
+        with self.assertRaises(se): s + 1
+        with self.assertRaises(se): s - 1
+        with self.assertRaises(se): s * 1
+        with self.assertRaises(se): s ** 1
+        with self.assertRaises(se): s / 1
+        with self.assertRaises(se): s % 1
+        with self.assertRaises(se): s << 1
+        with self.assertRaises(se): s >> 1
+        with self.assertRaises(se): s & 1
+        with self.assertRaises(se): s | 1
+        with self.assertRaises(se): s ^ 1
+
+        with self.assertRaises(se): 1 + s
+        with self.assertRaises(se): 1 - s
+        with self.assertRaises(se): 1 * s
+        with self.assertRaises(se): 1 ** s
+        with self.assertRaises(se): 1 / s
+        with self.assertRaises(se): 1 % s
+        with self.assertRaises(se): 1 << s
+        with self.assertRaises(se): 1 >> s
+        with self.assertRaises(se): 1 & s
+        with self.assertRaises(se): 1 | s
+        with self.assertRaises(se): 1 ^ s
+
+        with self.assertRaises(se): s += 1
+        with self.assertRaises(se): s -= 1
+        with self.assertRaises(se): s *= 1
+        with self.assertRaises(se): s **= 1
+        with self.assertRaises(se): s /= 1
+        with self.assertRaises(se): s %= 1
+        with self.assertRaises(se): s <<= 1
+        with self.assertRaises(se): s >>= 1
+        with self.assertRaises(se): s &= 1
+        with self.assertRaises(se): s |= 1
+        with self.assertRaises(se): s ^= 1
+
+
+
     def test_guard(self):
         # syntax checks
         se = SyntaxError
         with self.assertRaises(se): c(lambda x: x == 10) + c(lambda _: 1)
         with self.assertRaises(se): c(lambda x: x == 10) - c(lambda _: 1)
+        with self.assertRaises(se): c(lambda x: x == 10) * c(lambda _: 1)
+        with self.assertRaises(se): c(lambda x: x == 10) / c(lambda _: 1)
+        with self.assertRaises(se): c(lambda x: x == 10) % c(lambda _: 1)
         with self.assertRaises(se): c(lambda x: x == 10) << c(lambda _: 1)
+        with self.assertRaises(se): c(lambda x: x == 10) >> c(lambda _: 1)
         with self.assertRaises(se): c(lambda x: x == 10) & c(lambda _: 1)
-
         with self.assertRaises(se): c(lambda x: x > 1) | c(lambda x: x < 1)
         with self.assertRaises(se): c(lambda x: x == 10) >> "1" >> "2"
         with self.assertRaises(se): "1" >> c(lambda x: x == 10)
@@ -98,6 +169,7 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): guard(1) | (lambda x: x > 1)
         with self.assertRaises(se): ~guard(1) | (lambda x: x > 1)
         with self.assertRaises(se): ~guard(1)
+        #with self.assertRaises(se): (not guard(1))
 
         # matching checks
 
@@ -208,9 +280,14 @@ class TestHOF(unittest.TestCase):
         test_f2 = lambda x, y, z: (x - y) / z
 
         self.assertEquals(test_f1(9, 1), flip(test_f1)(1, 9))
-        #self.assertEquals(test_f1(9, 1), flip(test_f1)(1)(9))
-        self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10, 91, 2))
+        self.assertEquals(test_f1(9, 1), flip(test_f1, 1)(9))
+        self.assertEquals(test_f1(9, 1), flip(test_f1, 1, 9))
+        self.assertEquals(test_f1(9, 1), flip(test_f1)(1)(9))
+        self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10, 91)(2))
+        self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10)(91)(2))
 
+        # what to do about this case?
+        #self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10)(91, 2))
 
 class TestMaybe(unittest.TestCase):
 

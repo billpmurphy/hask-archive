@@ -29,6 +29,9 @@ class F(object):
     def __call__(self, *args, **kwargs):
         if arity(self.f) == len(args):
             return self.f(*args, **kwargs)
+        elif arity(self.f) < len(args):
+            return TypeError("Number of arguments ({a}) > arity ({f})"
+                             .format(f=arity(self.f), a=len(args)))
         else:
             return self.__class__(self.f, *args, **kwargs)
 
@@ -53,13 +56,11 @@ def id(a):
 
 
 @F
-def flip(f):
+def flip(f, x1, x2):
     """
     flip(f) takes its (first) two arguments in the reverse order of f.
     """
-    def _flipped(x1, x2, *args, **kwargs):
-        return f(x2, x1, *args, **kwargs)
-    return _flipped
+    return F(f)(x2, x1)
 
 
 @F

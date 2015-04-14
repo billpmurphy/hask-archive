@@ -16,8 +16,8 @@ class c(syntax.Syntax):
             raise ValueError("Guard condition must be callable")
         self._func = fn
 
-        syntax_err_msg = "Syntax error in guard condition"
-        super(self.__class__, self).__init__(syntax_err_msg)
+        self.syntax_err_msg = "Syntax error in guard condition"
+        super(self.__class__, self).__init__(self.syntax_err_msg)
 
     def has_return_value(self):
         return hasattr(self, "_return_value")
@@ -28,12 +28,16 @@ class c(syntax.Syntax):
         else:
             return self._return_value
 
-    def __call__(self, *args, **kwargs):
+    def check(self, *args, **kwargs):
         return self._func(*args, **kwargs)
 
     def __rshift__(self, value):
+        if isinstance(value, c):
+            raise SyntaxError(self.syntax_err_msg)
+
         if self.has_return_value():
             raise SyntaxError("Multiple return values in guard condition")
+
         self._return_value = value
         return self
 
@@ -45,11 +49,11 @@ class guard(syntax.Syntax):
     """
     Usage:
 
-    ~(guard(8)
-        | c(lambda x: x < 5) >> "less than 5"
-        | c(lambda x: x < 9) >> "less than 9"
-        | otherwise          >> "unsure"
-    )
+    >>> ~(guard(8)
+    ...    | c(lambda x: x < 5) >> "less than 5"
+    ...    | c(lambda x: x < 9) >> "less than 9"
+    ...    | otherwise          >> "unsure"
+    ... )
     """
     def __init__(self, value):
         self._value = value
@@ -71,7 +75,7 @@ class guard(syntax.Syntax):
         if not cond.has_return_value():
             raise SyntaxError("Condition expression is missing return value")
 
-        if cond(self._value):
+        if cond.check(self._value):
             self._guard_satisfied = True
             self._return_value = cond.return_value()
         return self
@@ -83,5 +87,3 @@ class guard(syntax.Syntax):
         if self._guard_satisfied:
             return self._return_value
         raise NoGuardMatchException("No match found in guard")
-
-
