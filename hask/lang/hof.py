@@ -24,7 +24,6 @@ class F(object):
     def __init__(self, func=lambda x: x, *a, **kw):
         if isinstance(func, self.__class__):
             func = func.f
-
         self.f = functools.partial(func, *a, **kw) if any([a, kw]) else func
 
     def __call__(self, *args, **kwargs):
@@ -37,6 +36,12 @@ class F(object):
         if not isinstance(other, self.__class__):
             other = self.__class__(other)
         return self.__class__(lambda x, *a, **kw: self.f(other.f(x, *a, **kw)))
+
+    def __mod__(self, *args):
+        """
+        `%` is apply operator, equivalent to `$` in Haskell.
+        """
+        return self.f(*args)
 
 
 Functor(F, F.fmap)
