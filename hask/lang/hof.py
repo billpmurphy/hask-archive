@@ -27,11 +27,18 @@ class F(object):
         self.f = functools.partial(func, *a, **kw) if any([a, kw]) else func
 
     def __call__(self, *args, **kwargs):
-        if arity(self.f) == len(args):
+        f_arity, arglen = arity(self.f), len(args)
+        if f_arity == arglen:
             return self.f(*args, **kwargs)
-        elif arity(self.f) < len(args):
-            return TypeError("Number of arguments ({a}) > arity ({f})"
-                             .format(f=arity(self.f), a=len(args)))
+        elif f_arity < arglen:
+            app = self.f(*args[:f_arity], **kwargs)
+            if arity(app) == 0:
+                return TypeError("Number of arguments ({a}) > arity ({f})"
+                                 .format(f=f_arity, a=arglen))
+            elif arity(app) == len(args[f_arity:]):
+                return app(*args[f_arity:])
+            else:
+                return self.__class__(app, *args[f_arity:])
         else:
             return self.__class__(self.f, *args, **kwargs)
 

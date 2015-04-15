@@ -23,6 +23,11 @@ from hask import Traversable, Ix, Foldable, Iterator
 class TestTypeSystem(unittest.TestCase):
 
     def test_arity(self):
+        self.assertEquals(0, arity(1))
+        self.assertEquals(0, arity("foo"))
+        self.assertEquals(0, arity([1, 2, 3]))
+        self.assertEquals(0, arity((1, 1)))
+        self.assertEquals(0, arity((lambda x: x + 1, 1)))
         self.assertEquals(0, arity(lambda: "foo"))
         self.assertEquals(1, arity(lambda **kwargs: kwargs))
         self.assertEquals(1, arity(lambda *args: args))
@@ -263,6 +268,9 @@ class TestHOF(unittest.TestCase):
         self.assertEquals(f3(g3(h3(56))), (hid * f3 * g * h3)(56))
         self.assertEquals(f3(g3(h3(56))), (hid * f3 * g2 * h3)(56))
 
+        self.assertEquals(5, F(lambda x: lambda y: y + x)(1)(4))
+        self.assertEquals(5, F(lambda x: lambda y: y + x)(1, 4))
+
     def test_hid(self):
         self.assertEquals(3, hid(3))
         self.assertEquals(3, hid(hid(hid(3))))
@@ -286,8 +294,7 @@ class TestHOF(unittest.TestCase):
         self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10, 91)(2))
         self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10)(91)(2))
 
-        # what to do about this case?
-        #self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10)(91, 2))
+        self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10)(91, 2))
 
 class TestMaybe(unittest.TestCase):
 

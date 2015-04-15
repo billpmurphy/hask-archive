@@ -167,6 +167,9 @@ def arity(f):
     """
     Find the arity of a function, including functools.partial objects.
     """
+    if not hasattr(f, "__call__"):
+        return 0
+
     count = 0
     while isinstance(f, functools.partial):
         if f.args:
