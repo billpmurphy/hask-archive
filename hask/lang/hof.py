@@ -4,6 +4,18 @@ from ..lang.type_system import arity
 from ..lang.typeclasses import Functor
 
 
+def _apply(wrapper, f, *args, **kwargs):
+    f_arity, arglen = arity(f), len(args)
+    if f_arity == arglen:
+        result = f(*args, **kwargs)
+        return wrapper(result) if hasattr(result, "__call__") else result
+    elif f_arity == 0:
+        raise TypeError("Too many arguments")
+    elif f_arity < arglen:
+        return _apply(wrapper, f(*args[:f_arity], **kwargs), *args[f_arity:])
+    return wrapper(f, *args, **kwargs)
+
+
 def curry(func):
     """
     Curry decorator from fn.py. Needs some upgrades.
@@ -24,26 +36,15 @@ class F(object):
     def __init__(self, func=lambda x: x, *a, **kw):
         if isinstance(func, self.__class__):
             func = func.f
-        self.f = functools.partial(func, *a, **kw) if any([a, kw]) else func
+
+        self.f = _apply(functools.partial, func, *a, **kw) \
+                 if any([a, kw]) else func
+
+        #self.f = functools.partial(func, *a, **kw) if any([a, kw]) else func
 
     def __call__(self, *args, **kwargs):
-        f_arity, arglen = arity(self.f), len(args)
-        if f_arity == arglen:
-            return self.f(*args, **kwargs)
-        elif f_arity < arglen:
-            app = self.f(*args[:f_arity], **kwargs)
-            if arity(app) == 0:
-                return TypeError("Number of arguments ({a}) > arity ({f})"
-                                 .format(f=f_arity, a=arglen))
-            elif arity(app) == len(args[f_arity:]):
-                return app(*args[f_arity:])
-            else:
-                return self.__class__(app, *args[f_arity:])
-        else:
-            return self.__class__(self.f, *args, **kwargs)
+        return _apply(self.__class__, self.f, *args, **kwargs)
 
-    def _apply(self, f, *args, **kwargs):
-        pass
     def fmap(self, other):
         if not isinstance(other, self.__class__):
             other = self.__class__(other)

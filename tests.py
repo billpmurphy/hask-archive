@@ -1,9 +1,10 @@
 import functools
 import unittest
 
-from hask import in_typeclass, arity, sig, typ, H
-
 from hask.lang.syntax import Syntax
+from hask.lang.hof import _apply
+
+from hask import in_typeclass, arity, sig, typ, H
 from hask import guard, c
 from hask import caseof
 from hask import data
@@ -226,6 +227,8 @@ class TestHOF(unittest.TestCase):
         self.assertEqual(prod3(1, 2, 3), dprod3(1)(2)(3))
 
     def test_F(self):
+        te = TypeError
+
         # regular version
         def sum3(x, y, z):
             return x * y * z
@@ -236,7 +239,7 @@ class TestHOF(unittest.TestCase):
 
         self.assertEqual(sum3(1, 2, 3), F(sum3, 1, 2)(3))
         self.assertEqual(sum3(1, 2, 3), F(sum3, 1)(2)(3))
-        #self.assertEqual(sum3(1, 2, 3), F(sum3, 1, 2, 3))
+        self.assertEqual(sum3(1, 2, 3), F(sum3, 1, 2, 3))
         self.assertEqual(sum3(1, 2, 3), F(sum3)(1, 2, 3))
         self.assertEqual(sum3(1, 2, 3), F(sum3)(1, 2)(3))
         self.assertEqual(sum3(1, 2, 3), F(sum3)(1)(2, 3))
@@ -244,7 +247,7 @@ class TestHOF(unittest.TestCase):
 
         self.assertEqual(sum3(1, 2, 3), dsum3(1, 2)(3))
         self.assertEqual(sum3(1, 2, 3), dsum3(1)(2)(3))
-        #self.assertEqual(sum3(1, 2, 3), dsum3(1, 2, 3))
+        self.assertEqual(sum3(1, 2, 3), dsum3(1, 2, 3))
         self.assertEqual(sum3(1, 2, 3), dsum3(1, 2, 3))
         self.assertEqual(sum3(1, 2, 3), dsum3(1, 2)(3))
         self.assertEqual(sum3(1, 2, 3), dsum3(1)(2, 3))
@@ -255,13 +258,16 @@ class TestHOF(unittest.TestCase):
         self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1, 4, 2))
         self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1, 4)(2))
         self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1)(4, 2))
+        self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1)(4)(2))
         self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1, 4, 2))
         self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1, 4)(2))
         self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1)(4, 2))
         self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1)(4)(2))
 
-        #self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1)(4)(2))
-
+        self.assertTrue(isinstance(F, F(lambda x, y: x + y, 1)))
+        self.assertTrue(isinstance(F, F(lambda x, y: x + y)(1)))
+        self.assertTrue(isinstance(F, F(lambda x: lambda y: x + y, 1)))
+        self.assertTrue(isinstance(F, F(lambda x: lambda y: x + y)(1)))
 
     def test_F_functor(self):
         f = lambda x: (x + 100) % 75
