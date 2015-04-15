@@ -14,7 +14,7 @@ from hask import filter as hfilter
 from hask import id as hid
 from hask import Maybe, Just, Nothing, in_maybe
 from hask import Either, Left, Right, in_either
-from hask import Typeable
+from hask import Typeable, Typeclass
 from hask import Show, Eq, Ord, Bounded, Num
 from hask import Functor, Applicative, Monad
 from hask import Traversable, Ix, Foldable, Iterator
@@ -43,6 +43,7 @@ class TestTypeSystem(unittest.TestCase):
         self.assertEquals(3, arity(lambda x, y, z, *args, **kw: x + y + z))
 
         self.assertEquals(1, arity(lambda x: lambda y: x))
+        self.assertEquals(2, arity(lambda x, z: lambda y: x))
         self.assertEquals(1, arity(functools.partial(lambda x,y: x+y, 2)))
         self.assertEquals(2, arity(functools.partial(lambda x,y: x+y)))
         self.assertEquals(2, arity(functools.partial(lambda x, y, z: x+y, 2)))
@@ -154,8 +155,6 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): s |= 1
         with self.assertRaises(se): s ^= 1
 
-
-
     def test_guard(self):
         # syntax checks
         se = SyntaxError
@@ -235,15 +234,34 @@ class TestHOF(unittest.TestCase):
         def dsum3(x, y, z):
             return x * y * z
 
+        self.assertEqual(sum3(1, 2, 3), F(sum3, 1, 2)(3))
+        self.assertEqual(sum3(1, 2, 3), F(sum3, 1)(2)(3))
+        #self.assertEqual(sum3(1, 2, 3), F(sum3, 1, 2, 3))
         self.assertEqual(sum3(1, 2, 3), F(sum3)(1, 2, 3))
         self.assertEqual(sum3(1, 2, 3), F(sum3)(1, 2)(3))
         self.assertEqual(sum3(1, 2, 3), F(sum3)(1)(2, 3))
         self.assertEqual(sum3(1, 2, 3), F(sum3)(1)(2)(3))
 
+        self.assertEqual(sum3(1, 2, 3), dsum3(1, 2)(3))
+        self.assertEqual(sum3(1, 2, 3), dsum3(1)(2)(3))
+        #self.assertEqual(sum3(1, 2, 3), dsum3(1, 2, 3))
         self.assertEqual(sum3(1, 2, 3), dsum3(1, 2, 3))
         self.assertEqual(sum3(1, 2, 3), dsum3(1, 2)(3))
         self.assertEqual(sum3(1, 2, 3), dsum3(1)(2, 3))
         self.assertEqual(sum3(1, 2, 3), dsum3(1)(2)(3))
+
+        self.assertEquals(5, F(lambda x: lambda y: y + x)(1)(4))
+        self.assertEquals(5, F(lambda x: lambda y: y + x)(1, 4))
+        self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1, 4, 2))
+        self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1, 4)(2))
+        self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1)(4, 2))
+        self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1, 4, 2))
+        self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1, 4)(2))
+        self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1)(4, 2))
+        self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1)(4)(2))
+
+        #self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1)(4)(2))
+
 
     def test_F_functor(self):
         f = lambda x: (x + 100) % 75
@@ -252,36 +270,67 @@ class TestHOF(unittest.TestCase):
 
         self.assertEquals(f(56), (hid * f)(56))
         self.assertEquals(f(g(h(56))), (hid * f * g * h)(56))
+        self.assertEquals(f(g(h(56))), ((hid * f) * g * h)(56))
+        self.assertEquals(f(g(h(56))), ((hid * f * g) * h)(56))
 
         f2, g2, h2 = map(F, (f, g, h))
         self.assertEquals(f(56), (hid * f2)(56))
         self.assertEquals(f2(56), (hid * f2)(56))
-        self.assertEquals(f2(g2(h2(56))), (hid * f2 * g * h2)(56))
+        self.assertEquals(f2(g2(h2(56))), (hid * f2 * g * h)(56))
         self.assertEquals(f2(g2(h2(56))), (hid * f * g * h2)(56))
         self.assertEquals(f2(g2(h2(56))), (hid * f2 * g * h2)(56))
 
         f3, g3, h3 = map(F, (f2, g2, h2))
         self.assertEquals(f(56), (hid * f3)(56))
         self.assertEquals(f3(56), (hid * f3)(56))
-        self.assertEquals(f3(g3(h3(56))), (hid * f3 * g * h3)(56))
+        self.assertEquals(f3(g3(h3(56))), (hid * f3 * g * h)(56))
         self.assertEquals(f3(g3(h3(56))), (hid * f * g * h3)(56))
         self.assertEquals(f3(g3(h3(56))), (hid * f3 * g * h3)(56))
         self.assertEquals(f3(g3(h3(56))), (hid * f3 * g2 * h3)(56))
 
-        self.assertEquals(5, F(lambda x: lambda y: y + x)(1)(4))
-        self.assertEquals(5, F(lambda x: lambda y: y + x)(1, 4))
+    def test_F_apply(self):
+        f = lambda x: (x + 100) % 75
+        g = lambda x: x * 21
+        h = lambda x: (x - 31) / 3
 
-    def test_hid(self):
+        self.assertEquals(f(56), hid * f % 56)
+        self.assertEquals(f(g(h(56))), hid * f * g * h % 56)
+        self.assertEquals(f(g(h(56))), (hid * f) * g * h % 56)
+        self.assertEquals(f(g(h(56))), (hid * f * g) * h % 56)
+
+        f2, g2, h2 = map(F, (f, g, h))
+        self.assertEquals(f(56), hid * f2 % 56)
+        self.assertEquals(f2(56), hid * f2 % 56)
+        self.assertEquals(f2(g2(h2(56))), hid * f2 * g * h % 56)
+        self.assertEquals(f2(g2(h2(56))), hid * (f2 * g) * h % 56)
+        self.assertEquals(f2(g2(h2(56))), hid * f * g * h2 % 56)
+        self.assertEquals(f2(g2(h2(56))), hid * f2 * g * h2 % 56)
+        self.assertEquals(f2(g2(h2(56))), hid * (f2 * g) * h2 % 56)
+
+        f3, g3, h3 = map(F, (f2, g2, h2))
+        self.assertEquals(f(56), hid * f3 % 56)
+        self.assertEquals(f3(56), hid * f3 % 56)
+        self.assertEquals(f3(g3(h3(56))), hid * f3 * g * h % 56)
+        self.assertEquals(f3(g3(h3(56))), hid * f * g * h3 % 56)
+        self.assertEquals(f3(g3(h3(56))), hid * f3 * g * h3 % 56)
+        self.assertEquals(f3(g3(h3(56))), hid * f3 * g2 * h3 % 56)
+
+    def test_id(self):
         self.assertEquals(3, hid(3))
         self.assertEquals(3, hid(hid(hid(3))))
         self.assertEquals(3, hid.fmap(hid).fmap(hid)(3))
         self.assertEquals(3, (hid * hid * hid)(3))
+        self.assertEquals(3, hid * hid * hid % 3)
+        self.assertEquals(3, hid * hid * hid % hid(3))
 
     def test_const(self):
         self.assertEquals(1, const(1, 2))
         self.assertEquals(1, const(1)(2))
         self.assertEquals("foo", const("foo", 2))
         self.assertEquals(1, (const(1) * const(2) * const(3))(4))
+
+        self.assertEquals(1, const(hid, 2)(1))
+        self.assertEquals(1, const(hid)(2)(1))
 
     def test_flip(self):
         test_f1 = lambda x, y: x - y
@@ -296,6 +345,7 @@ class TestHOF(unittest.TestCase):
 
         self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10)(91, 2))
 
+
 class TestMaybe(unittest.TestCase):
 
     def test_instances(self):
@@ -306,6 +356,7 @@ class TestMaybe(unittest.TestCase):
         self.assertTrue(in_typeclass(Maybe, Applicative))
         self.assertTrue(in_typeclass(Maybe, Monad))
 
+        self.assertFalse(in_typeclass(Maybe, Typeclass))
         self.assertFalse(in_typeclass(Maybe, Num))
         self.assertFalse(in_typeclass(Maybe, Foldable))
         self.assertFalse(in_typeclass(Maybe, Traversable))
@@ -323,7 +374,8 @@ class TestMaybe(unittest.TestCase):
 
         self.assertNotEqual(Just(1), Just(3))
         self.assertNotEqual(Just(1), Just("1"))
-        self.assertNotEqual(Nothing, Just(3))
+        self.assertNotEqual(Just(3), Nothing)
+        self.assertNotEqual(Nothing, Just(0))
         #self.assertNotEqual(Nothing, None)
 
         self.assertTrue(Nothing == Nothing or Nothing != Nothing)
@@ -338,8 +390,20 @@ class TestMaybe(unittest.TestCase):
 
     def test_bind(self):
         # add more
-        self.assertEqual(Just(10), Just(1) >> (lambda x: Just(x * 10)))
         self.assertEqual(Just("1"), Just(1) >> (lambda x: Just(str(x))))
+        self.assertEqual(Just(10), Just(1) >> (lambda x: Just(x * 10)))
+        self.assertEqual(Just(10), Just(1) >> F(lambda x: Just(x * 10)))
+        self.assertEqual(Just(1000), Just(1) >>
+                (lambda x: Just(x * 10)) >>
+                (lambda x: Just(x * 10)) >>
+                (lambda x: Just(x * 10)))
+        self.assertEqual(Nothing, Nothing >>
+                F(lambda x: Just(x * 10)) >>
+                F(lambda x: Just(x * 10)))
+        self.assertEqual(Nothing, Just(1) >>
+                F(lambda x: Nothing) >>
+                F(lambda x: Just(x * 10)))
+
 
 
 class TestLazyList(unittest.TestCase):

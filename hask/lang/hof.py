@@ -42,6 +42,8 @@ class F(object):
         else:
             return self.__class__(self.f, *args, **kwargs)
 
+    def _apply(self, f, *args, **kwargs):
+        pass
     def fmap(self, other):
         if not isinstance(other, self.__class__):
             other = self.__class__(other)
