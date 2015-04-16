@@ -40,10 +40,7 @@ def curry2(func):
 def F(func, *args, **kwargs):
     if isinstance(func, Func):
         func = func.f
-
-    if arity(func) == len(args):
-        return func(*args, **kwargs)
-    return Func(func, *args, **kwargs)
+    return _apply(Func, func, *args, **kwargs)
 
 
 class Func(object):
