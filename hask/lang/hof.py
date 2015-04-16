@@ -6,6 +6,7 @@ from ..lang.typeclasses import Functor
 
 def _apply(wrapper, f, *args, **kwargs):
     f_arity, arglen = arity(f), len(args)
+    #print f, type(f), "arglen: %s, arity: %s" % (arglen, f_arity)
     if f_arity == arglen:
         result = f(*args, **kwargs)
         return wrapper(result) if hasattr(result, "__call__") else result
@@ -17,15 +18,6 @@ def _apply(wrapper, f, *args, **kwargs):
 
 
 def curry(func):
-    """
-    Curry decorator from fn.py. Needs some upgrades.
-    """
-    def _curried(*args, **kwargs):
-        return _apply(functools.partial, func, *args, **kwargs)
-    return _curried
-
-
-def curry2(func):
     """
     Curry decorator from fn.py. Needs some upgrades.
     """
@@ -49,6 +41,8 @@ class Func(object):
     instance of functor, and composable with `*`
     """
     def __init__(self, func=lambda x: x, *a, **kw):
+        if isinstance(func, self.__class__):
+            func = func.f
         self.f = _apply(functools.partial, func, *a, **kw) \
                  if a or kw else func
 
@@ -69,19 +63,12 @@ class Func(object):
 
 Functor(Func, Func.fmap)
 
-
-@F
-def id(a):
-    return a
+id = Func()
 
 
 @F
-def flip(f, x1, x2):
-    """
-    flip(f) takes its (first) two arguments in the reverse order of f.
-    """
-    return F(f)(x2, x1)
-
+def flip(f, *args):
+    raise NotImplementedError()
 
 @F
 def const(a, b):

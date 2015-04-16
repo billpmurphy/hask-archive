@@ -95,9 +95,6 @@ class TestSyntax(unittest.TestCase):
         se = SyntaxError
         s = Syntax("err")
 
-        #with self.assertRaises(se): s.foo
-        #with self.assertRaises(se): s.foo = 1
-        #with self.assertRaises(se): del s.foo
         with self.assertRaises(se): len(s)
         with self.assertRaises(se): s[0]
         with self.assertRaises(se): s[1]
@@ -238,6 +235,7 @@ class TestHOF(unittest.TestCase):
             return x * y * z
 
         self.assertEqual(sum3(1, 2, 3), F(sum3, 1, 2)(3))
+        self.assertEqual(sum3(1, 2, 3), F(sum3, 1)(2, 3))
         self.assertEqual(sum3(1, 2, 3), F(sum3, 1)(2)(3))
         self.assertEqual(sum3(1, 2, 3), F(sum3, 1, 2, 3))
         self.assertEqual(sum3(1, 2, 3), F(sum3)(1, 2, 3))
@@ -245,9 +243,6 @@ class TestHOF(unittest.TestCase):
         self.assertEqual(sum3(1, 2, 3), F(sum3)(1)(2, 3))
         self.assertEqual(sum3(1, 2, 3), F(sum3)(1)(2)(3))
 
-        self.assertEqual(sum3(1, 2, 3), dsum3(1, 2)(3))
-        self.assertEqual(sum3(1, 2, 3), dsum3(1)(2)(3))
-        self.assertEqual(sum3(1, 2, 3), dsum3(1, 2, 3))
         self.assertEqual(sum3(1, 2, 3), dsum3(1, 2, 3))
         self.assertEqual(sum3(1, 2, 3), dsum3(1, 2)(3))
         self.assertEqual(sum3(1, 2, 3), dsum3(1)(2, 3))
@@ -255,19 +250,33 @@ class TestHOF(unittest.TestCase):
 
         self.assertEquals(5, F(lambda x: lambda y: y + x)(1)(4))
         self.assertEquals(5, F(lambda x: lambda y: y + x)(1, 4))
+        self.assertEquals(5, F(lambda x: lambda y: y + x, 1, 4))
+        self.assertEquals(5, F(lambda x: lambda y: y + x, 1)(4))
+
+        self.assertEquals(7, F(lambda x: lambda y,z: y + x + z, 1, 4, 2))
+        self.assertEquals(7, F(lambda x: lambda y,z: y + x + z, 1, 4)(2))
+        self.assertEquals(7, F(lambda x: lambda y,z: y + x + z, 1)(4, 2))
+        self.assertEquals(7, F(lambda x: lambda y,z: y + x + z, 1)(4)(2))
         self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1, 4, 2))
         self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1, 4)(2))
         self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1)(4, 2))
         self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1)(4)(2))
+
         self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1, 4, 2))
         self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1, 4)(2))
         self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1)(4, 2))
         self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1)(4)(2))
+        self.assertEquals(7, F(lambda x,y: lambda z: y + x + z, 1, 4, 2))
+        self.assertEquals(7, F(lambda x,y: lambda z: y + x + z, 1, 4)(2))
+        self.assertEquals(7, F(lambda x,y: lambda z: y + x + z, 1)(4, 2))
+        self.assertEquals(7, F(lambda x,y: lambda z: y + x + z, 1)(4)(2))
 
         self.assertTrue(isinstance(F(lambda x, y: x + y, 1), Func))
         self.assertTrue(isinstance(F(lambda x, y: x + y)(1), Func))
         self.assertTrue(isinstance(F(lambda x: lambda y: x + y, 1), Func))
         self.assertTrue(isinstance(F(lambda x: lambda y: x + y)(1), Func))
+
+        self.assertEquals(4, F(lambda: 4))
 
     def test_F_functor(self):
         f = lambda x: (x + 100) % 75
@@ -334,9 +343,11 @@ class TestHOF(unittest.TestCase):
         self.assertEquals(1, const(1)(2))
         self.assertEquals("foo", const("foo", 2))
         self.assertEquals(1, (const(1) * const(2) * const(3))(4))
+        self.assertEquals(1, const(1) * const(2) * const(3) % 4)
 
         self.assertEquals(1, const(hid, 2)(1))
         self.assertEquals(1, const(hid)(2)(1))
+        self.assertEquals(1, const(hid)(2) % 1)
 
     def test_flip(self):
         test_f1 = lambda x, y: x - y
@@ -348,7 +359,6 @@ class TestHOF(unittest.TestCase):
         self.assertEquals(test_f1(9, 1), flip(test_f1)(1)(9))
         self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10, 91)(2))
         self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10)(91)(2))
-
         self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10)(91, 2))
 
 
@@ -382,7 +392,7 @@ class TestMaybe(unittest.TestCase):
         self.assertNotEqual(Just(1), Just("1"))
         self.assertNotEqual(Just(3), Nothing)
         self.assertNotEqual(Nothing, Just(0))
-        #self.assertNotEqual(Nothing, None)
+        self.assertNotEqual(Nothing, None)
 
         self.assertTrue(Nothing == Nothing or Nothing != Nothing)
         self.assertTrue(Just(1) == Just(1) or Just(1) != Just(1))

@@ -20,8 +20,8 @@ class Typeable(Typeclass):
     Typeclass for objects that have a type within Hask. This allows the type
     checker to understand higher-kinded types.
     """
-    def __init__(self, cls, __type__):
-        add_attr(cls, "__type__", __type__)
+    def __init__(self, cls, _type):
+        add_attr(cls, "_type", _type)
         add_typeclass_flag(cls, self.__class__)
         return
 
@@ -60,6 +60,12 @@ def in_typeclass(cls, typeclass):
     elif hasattr(cls, "__typeclasses__"):
         return typeclass in cls.__typeclasses__
     return False
+
+
+def _t(obj):
+    if hasattr(obj, "_type"):
+        return obj._type()
+    return type(obj)
 
 
 def add_typeclass_flag(cls, typeclass):
@@ -131,6 +137,9 @@ class typ(syntax.Syntax):
         if other.__class__ == typ:
             return self.hkt == other.hkt
         return self.hkt == other
+
+    def __ne__(self, other):
+        return not self == other
 
     def __repr__(self):
         if self.kind == 1:

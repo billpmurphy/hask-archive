@@ -1,4 +1,4 @@
-from ..lang.type_system import typ
+from ..lang.type_system import typ, _t
 from ..lang.typeclasses import Typeable
 from ..lang.typeclasses import Show
 from ..lang.typeclasses import Eq
@@ -25,8 +25,13 @@ class Maybe(object):
         nothing._is_nothing = True
         return nothing
 
+    def _type(self):
+        return typ(Maybe, self._value.__class__)
+
     def __eq__(self, other):
-        if self._is_nothing and other._is_nothing:
+        if _t(self) != _t(other):
+            return False
+        elif self._is_nothing and other._is_nothing:
             return True
         elif not self._is_nothing and not other._is_nothing:
             return self._value == other._value
@@ -36,9 +41,6 @@ class Maybe(object):
         if self._is_nothing:
             return "Nothing"
         return "Just(%s)" % self._value
-
-    def __type__(self):
-        return typ(Maybe, self._value.__class__)
 
     def fmap(self, fn):
         return Nothing if self._is_nothing else Just(fn(self._value))
@@ -58,7 +60,7 @@ class Just(Maybe):
 
 Nothing = Maybe._make_nothing()
 
-Typeable(Maybe, Maybe.__type__)
+Typeable(Maybe, Maybe._type)
 Show(Maybe, Maybe.__repr__)
 Eq(Maybe, Maybe.__eq__)
 Functor(Maybe, Maybe.fmap)
