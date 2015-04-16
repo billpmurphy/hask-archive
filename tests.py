@@ -9,7 +9,7 @@ from hask import guard, c
 from hask import caseof
 from hask import data
 from hask import LazyList, L
-from hask import F, curry, const, flip
+from hask import F, curry, const, flip, Func
 from hask import map as hmap
 from hask import filter as hfilter
 from hask import id as hid
@@ -264,10 +264,10 @@ class TestHOF(unittest.TestCase):
         self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1)(4, 2))
         self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1)(4)(2))
 
-        self.assertTrue(isinstance(F, F(lambda x, y: x + y, 1)))
-        self.assertTrue(isinstance(F, F(lambda x, y: x + y)(1)))
-        self.assertTrue(isinstance(F, F(lambda x: lambda y: x + y, 1)))
-        self.assertTrue(isinstance(F, F(lambda x: lambda y: x + y)(1)))
+        self.assertTrue(isinstance(F(lambda x, y: x + y, 1), Func))
+        self.assertTrue(isinstance(F(lambda x, y: x + y)(1), Func))
+        self.assertTrue(isinstance(F(lambda x: lambda y: x + y, 1), Func))
+        self.assertTrue(isinstance(F(lambda x: lambda y: x + y)(1), Func))
 
     def test_F_functor(self):
         f = lambda x: (x + 100) % 75

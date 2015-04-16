@@ -27,6 +27,7 @@ from hask.lang.hof import flip
 from hask.lang.hof import curry
 from hask.lang.hof import id
 from hask.lang.hof import F
+from hask.lang.hof import Func
 
 from hask.stdlib import Int
 from hask.stdlib import Float

@@ -20,6 +20,15 @@ def curry(func):
     """
     Curry decorator from fn.py. Needs some upgrades.
     """
+    def _curried(*args, **kwargs):
+        return _apply(functools.partial, func, *args, **kwargs)
+    return _curried
+
+
+def curry2(func):
+    """
+    Curry decorator from fn.py. Needs some upgrades.
+    """
     #@functools.wraps(func) # need to do something about this
     def _curried(*args, **kwargs):
         if arity(func) == len(args):
@@ -28,19 +37,23 @@ def curry(func):
     return _curried
 
 
-class F(object):
+def F(func, *args, **kwargs):
+    if isinstance(func, Func):
+        func = func.f
+
+    if arity(func) == len(args):
+        return func(*args, **kwargs)
+    return Func(func, *args, **kwargs)
+
+
+class Func(object):
     """
     Haskell-ified wrapper around function objects that is always curried, an
     instance of functor, and composable with `*`
     """
     def __init__(self, func=lambda x: x, *a, **kw):
-        if isinstance(func, self.__class__):
-            func = func.f
-
         self.f = _apply(functools.partial, func, *a, **kw) \
-                 if any([a, kw]) else func
-
-        #self.f = functools.partial(func, *a, **kw) if any([a, kw]) else func
+                 if a or kw else func
 
     def __call__(self, *args, **kwargs):
         return _apply(self.__class__, self.f, *args, **kwargs)
@@ -57,7 +70,7 @@ class F(object):
         return self.f(*args)
 
 
-Functor(F, F.fmap)
+Functor(Func, Func.fmap)
 
 
 @F
