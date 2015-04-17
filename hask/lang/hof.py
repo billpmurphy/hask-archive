@@ -67,8 +67,8 @@ id = Func()
 
 
 @F
-def flip(f, *args):
-    raise NotImplementedError()
+def flip(f, x, y, *a):
+    return f(y, x, *a)
 
 @F
 def const(a, b):
