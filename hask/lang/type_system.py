@@ -63,6 +63,9 @@ def in_typeclass(cls, typeclass):
 
 
 def _t(obj):
+    """
+    Returns the type of an object. Similar to `:t` in Haskell.
+    """
     if hasattr(obj, "_type"):
         return obj._type()
     return type(obj)
@@ -94,13 +97,17 @@ def add_attr(cls, attr_name, attr):
 
 ## Type system
 
+class Constraint(object):
+    pass
+
 class Poly(object):
     """
-    Class that represents a polymorphic type, identified by a single character.
+    Class that represents a polymorphic type, identified by a word.
     """
     def __init__(self, name):
-        if name not in string.lowercase:
-            raise SyntaxError("Polymorphic var must be lowercase letter")
+        for letter in name:
+            if letter not in string.lowercase:
+                raise SyntaxError("Illegal name for polymorphic variable")
         self.name = name
         self.derived_type = None
         self.__name__ = self.name
@@ -112,7 +119,7 @@ class Poly(object):
         return "Poly(%s)" % self.name
 
 
-class typ(syntax.Syntax):
+class TypeObject(syntax.Syntax):
     """
     Wrapper for tuple that represents types, including higher-kinded types.
     """
@@ -147,9 +154,13 @@ class typ(syntax.Syntax):
         return " ".join(map(lambda x: x.__name__, self.hkt))
 
 
+typ = TypeObject
+con = Constraint
+
+
 class H(object):
     """
-    Wrapper for list tuple the represents a chain of types in a type signature,
+    Wrapper for list that represents a chain of types in a type signature,
     e.g. "a -> b -> c". Used for cosmetic purposes, so that we can write e.g.
     "typ(a) >> str"
     """

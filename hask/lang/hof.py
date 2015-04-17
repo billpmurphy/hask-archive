@@ -54,6 +54,12 @@ class Func(object):
             other = self.__class__(other)
         return self.__class__(lambda x, *a, **kw: self.f(other.f(x, *a, **kw)))
 
+
+    def __rmul__(self, other):
+        # override __rmul__ so that we can say `f * g` and compose correctly
+        # even if `f` is not a Func object
+        return self.fmap(other)
+
     def __mod__(self, *args):
         """
         `%` is apply operator, equivalent to `$` in Haskell.

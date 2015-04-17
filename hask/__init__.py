@@ -38,6 +38,7 @@ from hask.stdlib import caseof
 
 from hask.stdlib import guard
 from hask.stdlib import c
+from hask.stdlib import otherwise
 from hask.stdlib import NoGuardMatchException
 
 from hask.stdlib import data

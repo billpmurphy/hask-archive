@@ -2,10 +2,9 @@ import functools
 import unittest
 
 from hask.lang.syntax import Syntax
-from hask.lang.hof import _apply
 
 from hask import in_typeclass, arity, sig, typ, H
-from hask import guard, c
+from hask import guard, c, otherwise, NoGuardMatchException
 from hask import caseof
 from hask import data
 from hask import LazyList, L
@@ -156,24 +155,49 @@ class TestSyntax(unittest.TestCase):
     def test_guard(self):
         # syntax checks
         se = SyntaxError
+        me = NoGuardMatchException
         with self.assertRaises(se): c(lambda x: x == 10) + c(lambda _: 1)
         with self.assertRaises(se): c(lambda x: x == 10) - c(lambda _: 1)
         with self.assertRaises(se): c(lambda x: x == 10) * c(lambda _: 1)
         with self.assertRaises(se): c(lambda x: x == 10) / c(lambda _: 1)
         with self.assertRaises(se): c(lambda x: x == 10) % c(lambda _: 1)
+        with self.assertRaises(se): c(lambda x: x == 10) ** c(lambda _: 1)
         with self.assertRaises(se): c(lambda x: x == 10) << c(lambda _: 1)
-        with self.assertRaises(se): c(lambda x: x == 10) >> c(lambda _: 1)
         with self.assertRaises(se): c(lambda x: x == 10) & c(lambda _: 1)
+        with self.assertRaises(se): c(lambda x: x == 10) ^ c(lambda _: 1)
+
+        with self.assertRaises(se): c(lambda x: x == 10) >> c(lambda _: 1)
         with self.assertRaises(se): c(lambda x: x > 1) | c(lambda x: x < 1)
+        with self.assertRaises(se): otherwise() >> c(lambda _: 1)
+        with self.assertRaises(se): otherwise() | c(lambda x: x < 1)
+        with self.assertRaises(se): otherwise >> c(lambda _: 1)
+        with self.assertRaises(se): otherwise | c(lambda x: x < 1)
+
         with self.assertRaises(se): c(lambda x: x == 10) >> "1" >> "2"
         with self.assertRaises(se): "1" >> c(lambda x: x == 10)
         with self.assertRaises(se): guard(1) | c(lambda x: x > 1)
         with self.assertRaises(se): guard(1) | (lambda x: x > 1)
         with self.assertRaises(se): ~guard(1) | (lambda x: x > 1)
         with self.assertRaises(se): ~guard(1)
-        #with self.assertRaises(se): (not guard(1))
+        with self.assertRaises(se): otherwise() >> "1" >> "2"
+        with self.assertRaises(se): "1" >> otherwise()
+        with self.assertRaises(se): guard(1) | otherwise()
+        with self.assertRaises(se): guard(1) | otherwise
 
         # matching checks
+        self.assertTrue(~(guard(1)
+            | c(lambda x: x == 1) >> True
+            | otherwise()         >> False))
+        self.assertFalse(~(guard(2)
+            | c(lambda y: y == 1) >> True
+            | otherwise()         >> False))
+        self.assertFalse(~(guard(2)
+            | otherwise() >> False))
+        self.assertFalse(~(guard(2)
+            | otherwise()         >> False
+            | c(lambda x: x == 2) >> True))
+
+        with self.assertRaises(me): ~(guard(1) | c(lambda x: x == 2) >> 1)
 
     def test_caseof(self):
         pass
@@ -351,15 +375,10 @@ class TestHOF(unittest.TestCase):
 
     def test_flip(self):
         test_f1 = lambda x, y: x - y
-        test_f2 = lambda x, y, z: (x - y) / z
-
         self.assertEquals(test_f1(9, 1), flip(test_f1)(1, 9))
         self.assertEquals(test_f1(9, 1), flip(test_f1, 1)(9))
         self.assertEquals(test_f1(9, 1), flip(test_f1, 1, 9))
         self.assertEquals(test_f1(9, 1), flip(test_f1)(1)(9))
-        #self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10, 91)(2))
-        #self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10)(91)(2))
-        #self.assertEquals(test_f2(91, 10, 2), flip(test_f2)(10)(91, 2))
 
 
 class TestMaybe(unittest.TestCase):
@@ -458,7 +477,14 @@ class TestLazyList(unittest.TestCase):
 
     def test_functor(self):
         test_f = lambda x: x ** 2 - 1
+        test_g = F(lambda y: y / 4 + 9)
 
+        # functor laws
+        self.assertEquals(LazyList(range(10)), LazyList(range(10)) * hid)
+        self.assertEquals(LazyList(range(20)) * (test_f * test_g),
+                          LazyList(range(20)) * test_f * test_g)
+
+        # `fmap` == `map` for LazyLists
         self.assertEquals(map(test_f, list(LazyList(range(9)))),
                           list(LazyList(range(9)) * test_f))
         self.assertEquals(map(test_f, LazyList(range(9))),
@@ -476,6 +502,8 @@ class TestLazyList(unittest.TestCase):
 
     def test_hmap(self):
         test_f = lambda x: (x + 100) / 2
+
+        # `map` == `hmap` for LazyLists
         self.assertEquals(map(test_f, range(20)),
                           list(hmap(test_f, range(20))))
 

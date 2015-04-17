@@ -2,6 +2,7 @@ from caseof import caseof
 
 from guard import c
 from guard import guard
+from guard import otherwise
 from guard import NoGuardMatchException
 
 from data import data

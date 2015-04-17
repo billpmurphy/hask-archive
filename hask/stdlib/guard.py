@@ -1,12 +1,13 @@
 from ..lang import syntax
 
+
 ## Guards! Guards!
 
 class NoGuardMatchException(Exception):
     pass
 
 
-class c(syntax.Syntax):
+class GuardCondition(syntax.Syntax):
     """
     Guard condition.
     """
@@ -14,35 +15,38 @@ class c(syntax.Syntax):
     def __init__(self, fn):
         if not hasattr(fn, "__call__"):
             raise ValueError("Guard condition must be callable")
-        self._func = fn
-
-        self.syntax_err_msg = "Syntax error in guard condition"
-        super(self.__class__, self).__init__(self.syntax_err_msg)
+        self.__func = fn
+        self.__return_value = None
+        self.__has_return_value = False
+        self.__syntax_err_msg = "Syntax error in guard condition"
+        super(self.__class__, self).__init__(self.__syntax_err_msg)
 
     def has_return_value(self):
-        return hasattr(self, "_return_value")
+        return self.__has_return_value
 
     def return_value(self):
         if not self.has_return_value():
             raise SyntaxError("Guard condition does not have return value")
         else:
-            return self._return_value
+            return self.__return_value
 
     def check(self, *args, **kwargs):
-        return self._func(*args, **kwargs)
+        return self.__func(*args, **kwargs)
 
     def __rshift__(self, value):
         if isinstance(value, c):
-            raise SyntaxError(self.syntax_err_msg)
+            raise SyntaxError(self.__syntax_err_msg)
 
         if self.has_return_value():
             raise SyntaxError("Multiple return values in guard condition")
 
-        self._return_value = value
+        self.__return_value = value
+        self.__has_return_value = True
         return self
 
 
-otherwise = c(lambda _: True)
+c = GuardCondition
+otherwise = lambda: c(lambda _: True)
 
 
 class guard(syntax.Syntax):
@@ -56,18 +60,18 @@ class guard(syntax.Syntax):
     ... )
     """
     def __init__(self, value):
-        self._value = value
-        self._tried_to_match = False
-        self._guard_satisfied = False
+        self.__value = value
+        self.__tried_to_match = False
+        self.__guard_satisfied = False
 
-        syntax_err_msg = "Syntax error in guard"
-        super(self.__class__, self).__init__(syntax_err_msg)
+        self.__syntax_err_msg = "Syntax error in guard"
+        super(self.__class__, self).__init__(self.__syntax_err_msg)
 
     def __or__(self, cond):
-        if self._guard_satisfied:
+        if self.__guard_satisfied:
             return self
 
-        self._tried_to_match = True
+        self.__tried_to_match = True
 
         if not isinstance(cond, c):
             raise SyntaxError("Guard expression contains non-condition")
@@ -75,15 +79,15 @@ class guard(syntax.Syntax):
         if not cond.has_return_value():
             raise SyntaxError("Condition expression is missing return value")
 
-        if cond.check(self._value):
-            self._guard_satisfied = True
-            self._return_value = cond.return_value()
+        if cond.check(self.__value):
+            self.__guard_satisfied = True
+            self.__return_value = cond.return_value()
         return self
 
     def __invert__(self):
-        if not self._tried_to_match:
+        if not self.__tried_to_match:
             raise SyntaxError("No conditions in guard expression")
 
-        if self._guard_satisfied:
-            return self._return_value
+        if self.__guard_satisfied:
+            return self.__return_value
         raise NoGuardMatchException("No match found in guard")
