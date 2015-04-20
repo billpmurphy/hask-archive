@@ -6,7 +6,7 @@ from hask.lang.syntax import Syntax
 from hask import in_typeclass, arity, sig, typ, H
 from hask import guard, c, otherwise, NoGuardMatchException
 from hask import caseof
-from hask import data
+from hask import data, d, deriving
 from hask import LazyList, L
 from hask import F, curry, const, flip, Func
 from hask import map as hmap
@@ -208,17 +208,24 @@ class TestSyntax(unittest.TestCase):
         pass
 
     def test_data(self):
-        # come back to this after building out type_system
         se = SyntaxError
 
-        with self.assertRaises(se): data("My_ADT")
         with self.assertRaises(se): data(1, "a")
         with self.assertRaises(se): data("My_adt", 1)
+        with self.assertRaises(se): data("my_adt")
         with self.assertRaises(se): data("my_adt", "a")
         with self.assertRaises(se): data("my_adt", chr(110))
         with self.assertRaises(se): data("My_ADT", "a", "a")
-        with self.assertRaises(se): data("My_ADT", "a", "cc")
+        with self.assertRaises(se): data("My_ADT", "B")
         with self.assertRaises(se): data("My_ADT", "a", "B")
+
+        with self.assertRaises(se): d("Just", "a") | 1
+        with self.assertRaises(se): d("Just", "a") | Nothing
+        with self.assertRaises(se): d("Just", "a") | d("Just", "a")
+        with self.assertRaises(se): d("Just", "a") | d("Just")
+        with self.assertRaises(se): d("just", "a")
+
+        a = data("M", "a") == d("J", "a") | d("N") & deriving(Eq)
 
         #with self.assertRaises(se): data("My_ADT", "a") == "1"
         #with self.assertRaises(se): data("My_ADT", "a") == typ("A") | "1"

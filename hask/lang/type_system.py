@@ -100,6 +100,7 @@ def add_attr(cls, attr_name, attr):
 class Constraint(object):
     pass
 
+
 class Poly(object):
     """
     Class that represents a polymorphic type, identified by a word.

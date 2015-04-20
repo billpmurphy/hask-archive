@@ -42,6 +42,8 @@ from hask.stdlib import otherwise
 from hask.stdlib import NoGuardMatchException
 
 from hask.stdlib import data
+from hask.stdlib import d
+from hask.stdlib import deriving
 
 from hask.stdlib import L
 from hask.stdlib import LazyList

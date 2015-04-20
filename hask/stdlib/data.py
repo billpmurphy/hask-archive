@@ -2,53 +2,75 @@ import re
 import string
 
 from ..lang import syntax
+from ..lang import typeclasses
 
 
 class data(syntax.Syntax):
 
     def __init__(self, dt_name, *type_args):
         if type(dt_name) != str:
-            raise SyntaxError("Data type name must be string")
+            raise SyntaxError("Data type name must be str, not %s"
+                              % type(dt_name))
 
-        if not type_args:
-            raise SyntaxError("No type arguments provided in type constructor")
-
-        if not re.match("^[A-Z]\w+$", dt_name):
+        if not re.match("^[A-Z]\w*$", dt_name):
             raise SyntaxError("Invalid ADT name.")
 
         for type_arg in type_args:
             if type(type_arg) != str:
                 raise SyntaxError("Data type name must be string")
 
-            if type_arg not in string.lowercase:
-                raise SyntaxError("Invalid type variable %s" % type_arg)
+            for letter in type_arg:
+                if letter not in string.lowercase:
+                    raise SyntaxError("Invalid type variable %s" % type_arg)
 
         if len(set(type_args)) != len(type_args):
-            msg = "Cannot use the same type variable twice in type constructor"
-            raise SyntaxError(msg)
+            raise SyntaxError("Conflicting definitions for type variable")
 
         self.dt_name = dt_name
         self.type_args = type_args
-
-        self._data_constrs = []
 
         syntax_err_msg = "Syntax error in `data`"
         super(self.__class__, self).__init__(syntax_err_msg)
         return
 
-    def __eq__(self, data_constructor):
-        if type(data_constructor) == typ:
-            self._data_constrs.append(data_constructor)
-
-        elif type(data_constructor) == typs:
-            for t in data_constructor:
-                self._data_constrs.append(t)
-        else:
-            raise SyntaxError("Use `typ` to create a data constructor")
-
-        # do a lot of checking
-        # then figure out whether we want to modify globals()/locals()
+    def __eq__(self, constructors):
         return self
 
 
 
+class d(syntax.Syntax):
+    def __init__(self, dconstructor, *typeargs):
+        self.dconstructors = [(dconstructor, typeargs)]
+        self.derives = None
+
+    def __or__(self, other):
+        if type(other) == str:
+            return self.__or__(self.__class__(other))
+        elif type(other) == self.__class__:
+            self.dconstructors += other.dconstructors
+
+            # Check for duplicate data constructors
+            dconst_names = set(zip(*self.dconstructors)[0])
+            if len(dconst_names) < len(self.dconstructors):
+                raise SyntaxError("Illegal duplicate data constructors")
+        else:
+            raise SyntaxError("Illegal `%s` in data statement" % other)
+        return self
+
+    def __and__(self, derives):
+        self.derives = derives.derived_classes()
+        return self
+
+
+class deriving(syntax.Syntax):
+    __supported__ = (typeclasses.Show, typeclasses.Eq, typeclasses.Ord)
+
+    def __init__(self, *tclasses):
+        for tclass in tclasses:
+            if tclass not in self.__class__.__supported__:
+                raise TypeError("Cannot derive typeclass %s" % tclass)
+        self.tclasses = tclasses
+        return
+
+    def derived_classes(self):
+        return self.tclasses
