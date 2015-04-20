@@ -6,7 +6,6 @@ from ..lang.typeclasses import Functor
 
 def _apply(wrapper, f, *args, **kwargs):
     f_arity, arglen = arity(f), len(args)
-    #print f, type(f), "arglen: %s, arity: %s" % (arglen, f_arity)
     if f_arity == arglen:
         result = f(*args, **kwargs)
         return wrapper(result) if hasattr(result, "__call__") else result
@@ -54,11 +53,10 @@ class Func(object):
             other = self.__class__(other)
         return self.__class__(lambda x, *a, **kw: self.f(other.f(x, *a, **kw)))
 
-
     def __rmul__(self, other):
         # override __rmul__ so that we can say `f * g` and compose correctly
         # even if `f` is not a Func object
-        return self.fmap(other)
+        return F(other).fmap(self)
 
     def __mod__(self, *args):
         """

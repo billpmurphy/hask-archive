@@ -196,6 +196,11 @@ class TestSyntax(unittest.TestCase):
         self.assertFalse(~(guard(2)
             | otherwise()         >> False
             | c(lambda x: x == 2) >> True))
+        self.assertEquals("foo", ~(guard(1)
+            | c(lambda x: x > 1)  >> "bar"
+            | c(lambda x: x < 1)  >> "baz"
+            | c(lambda x: x == 1) >> "foo"
+            | otherwise()         >> "Err"))
 
         with self.assertRaises(me): ~(guard(1) | c(lambda x: x == 2) >> 1)
 
@@ -303,6 +308,7 @@ class TestHOF(unittest.TestCase):
         self.assertEquals(4, F(lambda: 4))
 
     def test_F_functor(self):
+        te = TypeError
         f = lambda x: (x + 100) % 75
         g = lambda x: x * 21
         h = lambda x: (x - 31) / 3
@@ -315,17 +321,44 @@ class TestHOF(unittest.TestCase):
         f2, g2, h2 = map(F, (f, g, h))
         self.assertEquals(f(56), (hid * f2)(56))
         self.assertEquals(f2(56), (hid * f2)(56))
-        self.assertEquals(f2(g2(h2(56))), (hid * f2 * g * h)(56))
         self.assertEquals(f2(g2(h2(56))), (hid * f * g * h2)(56))
+        self.assertEquals(f2(g2(h2(56))), (hid * f * g2 * h)(56))
+        self.assertEquals(f2(g2(h2(56))), (hid * f * g2 * h2)(56))
+        self.assertEquals(f2(g2(h2(56))), (hid * f2 * g * h)(56))
         self.assertEquals(f2(g2(h2(56))), (hid * f2 * g * h2)(56))
+        self.assertEquals(f2(g2(h2(56))), (hid * f2 * g2 * h)(56))
+        self.assertEquals(f2(g2(h2(56))), (hid * f2 * g2 * h2)(56))
+
+        with self.assertRaises(te): self.assertEquals(f2(g2(h2(56))), (f * g * h2)(56))
+        self.assertEquals(f2(g2(h2(56))), (f * g2 * h)(56))
+        self.assertEquals(f2(g2(h2(56))), (f * g2 * h2)(56))
+        self.assertEquals(f2(g2(h2(56))), (f2 * g * h)(56))
+        self.assertEquals(f2(g2(h2(56))), (f2 * g * h2)(56))
+        self.assertEquals(f2(g2(h2(56))), (f2 * g2 * h)(56))
+        self.assertEquals(f2(g2(h2(56))), (f2 * g2 * h2)(56))
 
         f3, g3, h3 = map(F, (f2, g2, h2))
         self.assertEquals(f(56), (hid * f3)(56))
         self.assertEquals(f3(56), (hid * f3)(56))
-        self.assertEquals(f3(g3(h3(56))), (hid * f3 * g * h)(56))
         self.assertEquals(f3(g3(h3(56))), (hid * f * g * h3)(56))
+        self.assertEquals(f3(g3(h3(56))), (hid * f * g3 * h)(56))
+        self.assertEquals(f3(g3(h3(56))), (hid * f * g3 * h3)(56))
+        self.assertEquals(f3(g3(h3(56))), (hid * f3 * g * h)(56))
         self.assertEquals(f3(g3(h3(56))), (hid * f3 * g * h3)(56))
-        self.assertEquals(f3(g3(h3(56))), (hid * f3 * g2 * h3)(56))
+        self.assertEquals(f3(g3(h3(56))), (hid * f3 * g3 * h)(56))
+        self.assertEquals(f3(g3(h3(56))), (hid * f3 * g3 * h3)(56))
+
+        with self.assertRaises(te): self.assertEquals(f3(g3(h3(56))), (f * g * h3)(56))
+        self.assertEquals(f3(g3(h3(56))), (f * g3 * h)(56))
+        self.assertEquals(f3(g3(h3(56))), (f * g3 * h3)(56))
+        self.assertEquals(f3(g3(h3(56))), (f3 * g * h)(56))
+        self.assertEquals(f3(g3(h3(56))), (f3 * g * h3)(56))
+        self.assertEquals(f3(g3(h3(56))), (f3 * g3 * h)(56))
+        self.assertEquals(f3(g3(h3(56))), (f3 * g3 * h3)(56))
+
+        self.assertEquals(f3(g3(h3(56))), (f3 * g * h2)(56))
+        self.assertEquals(f3(g3(h3(56))), (f3 * g2 * h)(56))
+        self.assertEquals(f3(g3(h3(56))), (f3 * g2 * h3)(56))
 
     def test_F_apply(self):
         f = lambda x: (x + 100) % 75
@@ -440,7 +473,6 @@ class TestMaybe(unittest.TestCase):
                 F(lambda x: Just(x * 10)))
 
 
-
 class TestLazyList(unittest.TestCase):
 
     def test_instances(self):
@@ -482,7 +514,7 @@ class TestLazyList(unittest.TestCase):
         # functor laws
         self.assertEquals(LazyList(range(10)), LazyList(range(10)) * hid)
         self.assertEquals(LazyList(range(20)) * (test_f * test_g),
-                          LazyList(range(20)) * test_f * test_g)
+                          (LazyList(range(20)) * test_g * test_f))
 
         # `fmap` == `map` for LazyLists
         self.assertEquals(map(test_f, list(LazyList(range(9)))),
@@ -498,7 +530,7 @@ class TestLazyList(unittest.TestCase):
         self.assertEquals(L[-10, ...][:10], range(-10, 0)[:10])
 
         self.assertEquals(11, len(L[-5, ..., 5]))
-        self.assertEquals(L[-5, ..., 5][:10], range(-5, 5)[:10])
+        self.assertEquals(list(L[-5, ..., 5]), list(range(-5, 6)))
 
     def test_hmap(self):
         test_f = lambda x: (x + 100) / 2
