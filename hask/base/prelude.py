@@ -14,3 +14,11 @@ def iterate(f, x):
         x = f(x)
 
 
+def error(msg):
+    raise Exception(msg)
+
+
+def undefined():
+    error("Prelude.undefined")
+
+## IO ops

@@ -2,12 +2,31 @@ import type_system
 from type_system import Typeable
 
 
+class Read(type_system.Typeclass):
+
+    def __init__(self, cls, read):
+        type_system.add_attr(cls, "read", classmethod(read))
+        type_system.add_typeclass_flag(cls, self.__class__)
+        return
+
+    @staticmethod
+    def read(string, _return):
+        if _return is not None:
+            return _return.__class_.read(string)
+        else:
+            return eval(string)
+
+
 class Show(type_system.Typeclass):
 
     def __init__(self, cls, __repr__):
         type_system.add_attr(cls, "__repr__", __repr__)
         type_system.add_typeclass_flag(cls, self.__class__)
         return
+
+    @staticmethod
+    def show(a):
+        return str(a)
 
 
 class Eq(type_system.Typeclass):
@@ -36,16 +55,26 @@ class Ord(type_system.Typeclass):
         return
 
 
-class Enum(type_system.Typeclass):
-    pass
-
-
 class Bounded(type_system.Typeclass):
     def __init__(self, cls, minBound, maxBound):
         type_system.add_attr(cls, "minBound", minBound)
         type_system.add_attr(cls, "maxBound", maxBound)
         type_system.add_typeclass_flag(cls, self.__class__)
         return
+
+    @staticmethod
+    def maxBound(a):
+        # handle builtins
+        if type_system.is_builtin(type(a)):
+            return NotImplemented
+        return a.maxBound()
+
+    @staticmethod
+    def minBound(a):
+        # handle builtins
+        if type_system.is_builtin(type(a)):
+            return NotImplemented
+        return a.minBound()
 
 
 class Num(type_system.Typeclass):
@@ -61,6 +90,84 @@ class Num(type_system.Typeclass):
 
         type_system.add_typeclass_flag(cls, self.__class__)
         return
+
+
+class RealFloat(type_system.Typeclass):
+
+    def __init__(self, cls):
+        if not type_system.in_typeclass(cls, Num):
+            raise TypeError("Class must be a member of Num")
+
+        type_system.add_typeclass_flag(cls, self.__class__)
+        return
+
+
+class Enum(type_system.Typeclass):
+    def __init__(self, cls, toEnum, fromEnum):
+        type_system.add_attr(cls, "toEnum", toEnum)
+        type_system.add_attr(cls, "fromEnum", fromEnum)
+        type_system.add_typeclass_flag(cls, self.__class__)
+        return
+
+    @staticmethod
+    def toEnum(a):
+        # handle builtins
+        if type_system.is_builtin(type(a)):
+            if type_system.in_typeclass(type(a), Num):
+                return a
+            elif type(a) == str:
+                return ord(a)
+
+        # handle everything else
+        return a.toEnum()
+
+    @staticmethod
+    def fromEnum(a, _return=None):
+        # handle builtins
+        if type_system.is_builtin(type(a)):
+            if type_system.in_typeclass(_return, Num):
+                return a
+            elif _return == str:
+                return chr(a)
+
+        # handle everything else
+        elif _return is not None:
+            return _return.from_Enum(a)
+        return a.fromEnum()
+
+    @staticmethod
+    def succ(a):
+        return Enum.fromEnum(Enum.toEnum(a) + 1, type(a))
+
+    @staticmethod
+    def pred(a):
+        return Enum.fromEnum(Enum.toEnum(a) - 1, type(a))
+
+    @staticmethod
+    def enumFromThen(start, second):
+        pointer = Enum.toEnum(start)
+        step = Enum.toEnum(second) - pointer
+        while True:
+            yield Enum.fromEnum(pointer, type(start))
+            pointer += step
+        return
+
+    @staticmethod
+    def enumFrom(start):
+        return Enum.enumFromThen(start, succ(start))
+
+    @staticmethod
+    def enumFromThenTo(start, second, end):
+        pointer, end = Enum.toEnum(start), Enum.toEnum(end)
+        step = Enum.toEnum(second) - pointer
+        while pointer <= stop:
+            yield Enum.fromEnum(pointer, type(start))
+            pointer += step
+        return
+
+    @staticmethod
+    def enumFromTo(start, end):
+        return Enum.enumFromThenTo(start, Enum.succ(start), end)
 
 
 class Functor(type_system.Typeclass):
@@ -84,6 +191,10 @@ class Functor(type_system.Typeclass):
         type_system.add_typeclass_flag(cls, self.__class__)
         return
 
+    @staticmethod
+    def fmap(fn, functor):
+        return functor.fmap(fn)
+
 
 class Applicative(type_system.Typeclass):
 
@@ -99,9 +210,13 @@ class Applicative(type_system.Typeclass):
             # later, will do some typechecking here
             return __pure__(self, value)
 
-        type_system.add_attr(cls, "pure", _pure)
+        type_system.add_attr(cls, "pure", classmethod(_pure))
         type_system.add_typeclass_flag(cls, self.__class__)
         return
+
+    @staticmethod
+    def pure(value, app):
+        return app.__class__.pure(value)
 
 
 class Monad(type_system.Typeclass):
@@ -127,6 +242,11 @@ class Monad(type_system.Typeclass):
         type_system.add_attr(cls, "__rshift__", _rshift)
         type_system.add_typeclass_flag(cls, self.__class__)
         return
+
+    @staticmethod
+    def bind(m, fn):
+        return m.bind(fn)
+
 
 
 class Foldable(type_system.Typeclass):
@@ -179,6 +299,10 @@ class Ix(type_system.Typeclass):
 
         type_system.add_typeclass_flag(cls, self.__class__)
         return
+
+    @staticmethod
+    def length(a):
+        return a.__len__()
 
 
 class Iterator(type_system.Typeclass):

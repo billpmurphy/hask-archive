@@ -36,21 +36,31 @@ Key features of Haskell I am forgetting:
 * ???????
 
 
+More notes:
+
+`import hask` should give you everything in the language (including all
+typeclasses) plus everything in the Prelude. Therefore, you can do `hask.map`
+but not `hask.permutations`. To import things in the Base libraries that are
+not also in the Prelude, use `from hask import Data` and then
+`Data.List.permutations`.
+
+
 Haskell API status table
 
 | Haskell Feature        | Pythaskell Name | Status |
 | :--------------------- | :-------------- | :----: |
 | *Syntax*               |                 |        |
 | type signatures        | sig             | part   |
-| guards                 | guard           | good   |
 | pattern matching (case)| caseof          | idea   |
 | data (defining ADTs)   | data            | part   |
 | type (type synonym)    |                 | ?      |
 | newtype (type wrapper) |                 | nix    |
 | list comprehensions    | L (see below)   | part   |
+| slicing (e.g. `(+1)`)  | `(__+1)`        |        |
+| guards                 | guard           | good   |
 | *Typeclasses*          |                 |        |
 | Show                   | Show            | good   |
-|   show                 |   show          |        |
+| &nbsp;&nbsp;show       | &nbsp;&nbsp;show|        |
 | Read                   |                 | ?      |
 | Eq                     | Eq              | good   |
 | Ord                    | Ord             | good   |

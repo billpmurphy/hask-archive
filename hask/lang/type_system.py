@@ -15,17 +15,6 @@ class Typeclass(object):
     __instances__ = []
 
 
-class Typeable(Typeclass):
-    """
-    Typeclass for objects that have a type within Hask. This allows the type
-    checker to understand higher-kinded types.
-    """
-    def __init__(self, cls, _type):
-        add_attr(cls, "_type", _type)
-        add_typeclass_flag(cls, self.__class__)
-        return
-
-
 def is_builtin(cls):
     """
     Return True if a type is a Python builtin type, and False otherwise.
@@ -62,13 +51,14 @@ def in_typeclass(cls, typeclass):
     return False
 
 
-def _t(obj):
+def add_attr(cls, attr_name, attr):
     """
-    Returns the type of an object. Similar to `:t` in Haskell.
+    Modify an existing class to add an attribute. If the class is a builtin, do
+    nothing.
     """
-    if hasattr(obj, "_type"):
-        return obj._type()
-    return type(obj)
+    if not is_builtin(cls):
+        setattr(cls, attr_name, attr)
+    return
 
 
 def add_typeclass_flag(cls, typeclass):
@@ -85,14 +75,24 @@ def add_typeclass_flag(cls, typeclass):
     return
 
 
-def add_attr(cls, attr_name, attr):
+class Typeable(Typeclass):
     """
-    Modify an existing class to add an attribute. If the class is a builtin, do
-    nothing.
+    Typeclass for objects that have a type within Hask. This allows the type
+    checker to understand higher-kinded types.
     """
-    if not is_builtin(cls):
-        setattr(cls, attr_name, attr)
-    return
+    def __init__(self, cls, _type):
+        add_attr(cls, "_type", _type)
+        add_typeclass_flag(cls, self.__class__)
+        return
+
+
+def _t(obj):
+    """
+    Returns the type of an object. Similar to `:t` in Haskell.
+    """
+    if hasattr(obj, "_type"):
+        return obj._type()
+    return type(obj)
 
 
 ## Type system

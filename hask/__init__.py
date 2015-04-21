@@ -10,11 +10,13 @@ from hask.lang.type_system import sig
 from hask.lang.type_system import Typeable
 from hask.lang.type_system import Typeclass
 
+from hask.lang.typeclasses import Read
 from hask.lang.typeclasses import Show
 from hask.lang.typeclasses import Eq
 from hask.lang.typeclasses import Ord
 from hask.lang.typeclasses import Bounded
 from hask.lang.typeclasses import Num
+from hask.lang.typeclasses import Enum
 from hask.lang.typeclasses import Functor
 from hask.lang.typeclasses import Applicative
 from hask.lang.typeclasses import Monad
@@ -22,6 +24,18 @@ from hask.lang.typeclasses import Traversable
 from hask.lang.typeclasses import Ix
 from hask.lang.typeclasses import Foldable
 from hask.lang.typeclasses import Iterator
+
+read = Read.read
+show = Show.show
+succ = Enum.succ
+pred = Enum.pred
+toEnum = Enum.toEnum
+fromEnum = Enum.fromEnum
+enumFrom = Enum.enumFrom
+enumFromThen = Enum.enumFromThen
+enumFromTo = Enum.enumFromTo
+enumFromThenTo = Enum.enumFromThenTo
+fmap = Functor.fmap
 
 from hask.lang.hof import const
 from hask.lang.hof import flip
