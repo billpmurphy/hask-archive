@@ -138,7 +138,7 @@ Iterator(LazyList, _seq_next)
 Ix(LazyList, _seq_getitem)
 
 
-## Haskellified versions of map and filter
+## Haskellified versions of basic list functions
 
 def map(fn, iterable):
     return LazyList(itertools.imap(fn, iterable))

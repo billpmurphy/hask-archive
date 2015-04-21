@@ -34,3 +34,28 @@ What needs work:
 
 Key features of Haskell I am forgetting:
 * ???????
+
+
+Haskell API status table
+
+| Thing       | Status |
+| :---------- | :----: |
+| Typeclasses |        |
+| ----------- | ------ |
+| Show        | x      |
+| Read        | ?      |
+| Eq          | x      |
+| Ord         | x      |
+| Enum        |        |
+| Bounded     |        |
+| Num         | part   |
+| Integral    | ?      |
+| Functor     | x      |
+| Applicative | x      |
+| Monad       | x      |
+| Foldable    |        |
+| Traversable | x      |
+| Ix          | x      |
+| _Iterator_  | x      |
+| Prelude     |        |
+| ----------- | ------ |

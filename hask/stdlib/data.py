@@ -47,6 +47,7 @@ class d(syntax.Syntax):
         if type(other) == str:
             return self.__or__(self.__class__(other))
         elif type(other) == self.__class__:
+            self.derives = other.derives
             self.dconstructors += other.dconstructors
 
             # Check for duplicate data constructors
