@@ -38,24 +38,215 @@ Key features of Haskell I am forgetting:
 
 Haskell API status table
 
-| Thing       | Status |
-| :---------- | :----: |
-| Typeclasses |        |
-| ----------- | ------ |
-| Show        | x      |
-| Read        | ?      |
-| Eq          | x      |
-| Ord         | x      |
-| Enum        |        |
-| Bounded     |        |
-| Num         | part   |
-| Integral    | ?      |
-| Functor     | x      |
-| Applicative | x      |
-| Monad       | x      |
-| Foldable    |        |
-| Traversable | x      |
-| Ix          | x      |
-| _Iterator_  | x      |
-| Prelude     |        |
-| ----------- | ------ |
+| Haskell Feature        | Pythaskell Name | Status |
+| :--------------------- | :-------------- | :----: |
+| *Syntax*               |                 |        |
+| type signatures        | sig             | part   |
+| guards                 | guard           | good   |
+| pattern matching (case)| caseof          | idea   |
+| data (defining ADTs)   | data            | part   |
+| type (type synonym)    |                 | ?      |
+| newtype (type wrapper) |                 | nix    |
+| list comprehensions    | L (see below)   | part   |
+| *Typeclasses*          |                 |        |
+| Show                   | Show            | good   |
+|   show                 |   show          |        |
+| Read                   |                 | ?      |
+| Eq                     | Eq              | good   |
+| Ord                    | Ord             | good   |
+| Enum                   | Enum            |        |
+| Bounded                | Bounded         |        |
+| Num                    | Num             | part   |
+| Integral               |                 | ?      |
+| Fractional             |                 | ?      |
+| Floating               |                 | ?      |
+| RealFloat              |                 | ?      |
+| Real                   |                 | ?      |
+| RealFrac               |                 | ?      |
+| Functor                | Functor         | good   |
+|   fmap                 |   fmap          | good   |
+| Applicative            | Applicative     | good   |
+|   pure                 |   pure          | good   |
+| Monad                  | Monad           | good   |
+|   >>=                  | >> / bind       | good   |
+| Foldable               | Foldable        |        |
+| Traversable            | Traversable     | good   |
+| Ix                     | Ix              | good   |
+|                        | _Iterator_      | good   |
+| *Prelude*              |                 |        |
+|                        |                 |        |
+| *Control.Applicative*  |                 |        |
+|                        |                 |        |
+| *Control.Monad*        |                 |        |
+| >>=                    | >>              | good   |
+| >>                     |                 | ?      |
+| return                 | pure            | import |
+| fail                   |                 |        |
+| MonadPlus              |                 |        |
+|   mzero                |                 |        |
+|   mplus                |                 |        |
+| mapM                   |                 |        |
+| mapM\_                 |                 |        |
+| forM                   |                 |        |
+| forM\_                 |                 |        |
+| sequence               |                 |        |
+| sequence\_             |                 |        |
+| =<<                    |                 |        |
+| >=>                    |                 |        |
+| forever                |                 |        |
+| void                   |                 |        |
+| join                   |                 |        |
+| msum                   |                 |        |
+| mfilter                |                 |        |
+| filterM                |                 |        |
+| mapAndUnzipM           |                 |        |
+| zipWithM               |                 |        |
+| zipWithM\_             |                 |        |
+| foldM                  |                 |        |
+| foldM\_                |                 |        |
+| replicateM             |                 |        |
+| replicateM\_           |                 |        |
+| guard                  |                 |        |
+| when                   |                 |        |
+| unless                 |                 |        |
+| liftM                  |                 |        |
+| liftM2 .. liftM5       |                 |        |
+| ap                     |                 |        |
+| <\$!>                  |                 |        |
+| *Data.Either*          |                 |        |
+| Either                 | Either          |        |
+| Left a                 | Left(a)         |        |
+| Right a                | Right(a)        |        |
+| either                 |                 |        |
+| lefts                  |                 |        |
+| rights                 |                 |        |
+| isLeft                 |                 |        |
+| isRight                |                 |        |
+| partitionEithers       |                 |        |
+| *Data.List*            |                 |        |
+| ++                     |                 |        |
+| head                   |                 |        |
+| last                   |                 |        |
+| tail                   |                 |        |
+| init                   |                 |        |
+| uncons                 |                 |        |
+| null                   |                 |        |
+| length                 |                 |        |
+| map                    |                 |        |
+| reverse                |                 |        |
+| intersperse            |                 |        |
+| intercalate            |                 |        |
+| transpose              |                 |        |
+| subsequences           |                 |        |
+| permutations           |                 |        |
+| foldl                  |                 |        |
+| foldl'                 |                 |        |
+| foldl1                 |                 |        |
+| foldr                  |                 |        |
+| foldr1                 |                 |        |
+| concat                 |                 |        |
+| and                    |                 |        |
+| or                     |                 |        |
+| any                    |                 |        |
+| all                    |                 |        |
+| sum                    |                 |        |
+| product                |                 |        |
+| maximum                |                 |        |
+| minimum                |                 |        |
+| scanl                  |                 |        |
+| scanl'                 |                 |        |
+| scanl1                 |                 |        |
+| scanr                  |                 |        |
+| scanr1                 |                 |        |
+| mapAccumL              |                 |        |
+| mapAccumR              |                 |        |
+| iterate                |                 |        |
+| repeat                 |                 |        |
+| replicate              |                 |        |
+| cycle                  |                 |        |
+| unfoldr                |                 |        |
+| take                   |                 |        |
+| drop                   |                 |        |
+| splitAt                |                 |        |
+| takeWhile              |                 |        |
+| dropWhile              |                 |        |
+| dropWhileEnd           |                 |        |
+| span                   |                 |        |
+| break                  |                 |        |
+| stripPrefix            |                 |        |
+| group                  |                 |        |
+| inits                  |                 |        |
+| tails                  |                 |        |
+| isPrefixOf             |                 |        |
+| isSuffixOf             |                 |        |
+| isInfixOf              |                 |        |
+| isSubsequenceOf        |                 |        |
+| elem                   |                 |        |
+| notElem                |                 |        |
+| lookup                 |                 |        |
+| find                   |                 |        |
+| filter                 |                 |        |
+| partition              |                 |        |
+| !!                     |                 | python |
+| elemIndex              |                 |        |
+| elemIndicies           |                 |        |
+| findIndex              |                 |        |
+| findIndicies           |                 |        |
+| zip                    |                 |        |
+| zip3 .. zip7           |                 |        |
+| zipWith                |                 |        |
+| zipWith3 .. zipWith7   |                 |        |
+| unzip                  |                 |        |
+| unzip3 .. unzip7       |                 |        |
+| lines                  | lines           | import |
+| words                  | words           | import |
+| unlines                | unlines         | import |
+| unwords                | unwords         | import |
+| nub                    |                 |        |
+| delete                 |                 |        |
+| \\\\                   |                 |        |
+| union                  |                 |        |
+| intersect              |                 |        |
+| sort                   |                 |        |
+| sortOn                 |                 |        |
+| insert                 |                 |        |
+| nubBy                  |                 |        |
+| deleteBy               |                 |        |
+| deleteFirstBy          |                 |        |
+| unionBy                |                 |        |
+| intersectBy            |                 |        |
+| groupBy                |                 |        |
+| sortBy                 |                 |        |
+| insertBy               |                 |        |
+| maximumBy              |                 |        |
+| minimumBy              |                 |        |
+| genericLength          |                 | nix    |
+| genericTake            |                 | nix    |
+| genericDrop            |                 | nix    |
+| genericSplitAt         |                 | nix    |
+| genericIndex           |                 | nix    |
+| genericReplicate       |                 | nix    |
+| *Data.Maybe*           |                 |        |
+| Maybe                  | Maybe           | import |
+| Nothing                | Nothing         | import |
+| Just a                 | Just(a)         | import |
+| maybe                  | maybe           |        |
+| isJust                 | isJust          |        |
+| isNothing              | isNothing       |        |
+| fromJust               | fromJust        |        |
+| fromMaybe              | fromMaybe       |        |
+| listToMaybe            | listToMaybe     |        |
+| maybeToList            | maybeToList     |        |
+| catMaybes              | catMaybes       |        |
+| mapMaybe               | mapMaybe        |        |
+| *Data.String*          |                 |        |
+| lines                  | lines           |        |
+| words                  | words           |        |
+| unlines                | unlines         |        |
+| unwords                | unwords         |        |
+| *Data.Tuple*           |                 |        |
+| fst                    | fst             |        |
+| snd                    | snd             |        |
+| curry                  | curry           |        |
+| uncurry                | uncurry         |        |
+| swap                   | swap            |        |
