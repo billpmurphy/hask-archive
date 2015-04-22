@@ -550,6 +550,8 @@ class TestLazyList(unittest.TestCase):
         self.assertEquals(L[-10, ...][:10], range(-10, 0)[:10])
         self.assertEquals(11, len(L[-5, ..., 5]))
         self.assertEquals(list(L[-5, ..., 5]), list(range(-5, 6)))
+        self.assertEquals(list(L[-5, -4, ..., 5]), list(range(-5, 6)))
+        self.assertEquals(list(L[-5, -3, ..., 5]), list(range(-5, 6, 2)))
         self.assertEquals(L[1, 3, 5, 7], L[1, 3, ...][:4])
         self.assertEquals(L[1, 3, 5, 7], L[1, 3, ..., 7])
         self.assertEquals(L[1, 3, 5, 7], L[1, 3, ..., 8])
