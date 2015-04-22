@@ -4,7 +4,9 @@ from type_system import Typeable
 
 class Read(type_system.Typeclass):
 
-    def __init__(self, cls, read):
+    def __init__(self, cls, read=None):
+        if read is None:
+            read = lambda string: eval(string)
         type_system.add_attr(cls, "read", classmethod(read))
         type_system.add_typeclass_flag(cls, self.__class__)
         return

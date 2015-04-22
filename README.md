@@ -45,6 +45,9 @@ not also in the Prelude, use `from hask import Data` and then
 `Data.List.permutations`.
 
 
+Add more corner case tests for LazyList indexing.
+
+
 Haskell API status table
 
 | Haskell Feature        | Pythaskell Name | Status |

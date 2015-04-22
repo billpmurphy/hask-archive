@@ -6,6 +6,7 @@ from hask.lang.syntax import Syntax
 from hask import in_typeclass, arity, sig, typ, H
 from hask import guard, c, otherwise, NoGuardMatchException
 from hask import caseof
+from hask import __
 from hask import data, d, deriving
 from hask import LazyList, L
 from hask import F, curry, const, flip, Func
@@ -134,6 +135,7 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): s ** 1
         with self.assertRaises(se): s / 1
         with self.assertRaises(se): s % 1
+        with self.assertRaises(se): divmod(s, 1)
         with self.assertRaises(se): s << 1
         with self.assertRaises(se): s >> 1
         with self.assertRaises(se): s & 1
@@ -163,6 +165,55 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): s &= 1
         with self.assertRaises(se): s |= 1
         with self.assertRaises(se): s ^= 1
+
+    def test_section(self):
+        # add more
+
+        # basic sections
+        self.assertEquals(4, (__ + 1)(3))
+        self.assertEquals(4, (1 + __)(3))
+        self.assertEquals(3, (__ - 5)(8))
+        self.assertEquals(3, (8 - __)(5))
+        self.assertEquals(8, (__ * 2)(4))
+        self.assertEquals(8, (2 * __)(4))
+        self.assertEquals(1, (__ % 4)(5))
+        self.assertEquals(1, (5 % __)(4))
+
+        self.assertTrue((__ < 4)(3))
+        self.assertTrue((5 < __)(9))
+        self.assertTrue((__ > 4)(5))
+        self.assertTrue((5 > __)(4))
+        self.assertTrue((__ == 4)(4))
+        self.assertTrue((5 == __)(5))
+        self.assertTrue((__ != 4)(3))
+        self.assertTrue((5 != __)(8))
+        self.assertTrue((__ >= 4)(5))
+        self.assertTrue((5 >= __)(5))
+        self.assertTrue((__ <= 4)(4))
+        self.assertTrue((5 <= __)(8))
+        self.assertFalse((__ < 4)(4))
+        self.assertFalse((5 < __)(2))
+        self.assertFalse((__ > 4)(3))
+        self.assertFalse((5 > __)(5))
+        self.assertFalse((__ == 4)(9))
+        self.assertFalse((5 == __)(8))
+        self.assertFalse((__ != 4)(4))
+        self.assertFalse((5 != __)(5))
+        self.assertFalse((__ >= 4)(1))
+        self.assertFalse((5 >= __)(6))
+        self.assertFalse((__ <= 4)(6))
+        self.assertFalse((5 <= __)(4))
+
+        # double sections
+        self.assertEquals(3, (__+__)(1, 2))
+        self.assertEquals(1, (__-__)(2, 1))
+        self.assertEquals(4, (__*__)(1, 4))
+        self.assertEquals(3, (__/__)(12, 4))
+
+        # sections composed with `fmap`
+        self.assertEquals(3, ((__+1) * (__+1) * (1+__))(0))
+        self.assertEquals(3, (__+1) * (__+1) * (1+__) % 0)
+        self.assertEquals(4, (__ + 1) * (__ * 3) % 1)
 
     def test_guard(self):
         # syntax checks
@@ -217,11 +268,10 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(me): ~(guard(1) | c(lambda x: x == 2) >> 1)
 
     def test_caseof(self):
-        pass
+        self.assertTrue(~(caseof(1) / 1 % True))
 
     def test_data(self):
         se = SyntaxError
-
         with self.assertRaises(se): data(1, "a")
         with self.assertRaises(se): data("My_adt", 1)
         with self.assertRaises(se): data("my_adt")
@@ -504,6 +554,8 @@ class TestLazyList(unittest.TestCase):
         self.assertTrue(in_typeclass(LazyList, Ix))
 
     def test_ix(self):
+        # add more corner cases
+
         ie = IndexError
         self.assertEqual(3, LazyList(range(10))[3])
         self.assertEqual(3, LazyList(range(4))[-1])
@@ -553,6 +605,10 @@ class TestLazyList(unittest.TestCase):
         self.assertEquals(list(L[-5, -4, ..., 5]), list(range(-5, 6)))
         self.assertEquals(list(L[-5, -3, ..., 5]), list(range(-5, 6, 2)))
         self.assertEquals(L[1, 3, 5, 7], L[1, 3, ...][:4])
+        self.assertEquals(L[3, 5, 7], L[1, 3, ...][1:4])
+        self.assertEquals(L[5, 7], L[1, 3, ...][2:4])
+        self.assertEquals([], list(L[1, 3, ...][4:4]))
+        self.assertEquals([], list(L[1, 3, ...][5:4]))
         self.assertEquals(L[1, 3, 5, 7], L[1, 3, ..., 7])
         self.assertEquals(L[1, 3, 5, 7], L[1, 3, ..., 8])
         self.assertEquals([], list(L[6, ..., 4]))

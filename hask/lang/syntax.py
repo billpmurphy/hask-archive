@@ -14,76 +14,76 @@ class Syntax(object):
         else:
             raise SyntaxError("Syntax error in `%s`" % self.__name__)
 
-    #def __getattr__(self, attr): self._raise_invalid()
-    #def __setattr__(self, attr, value): self._raise_invalid()
+    __syntaxerr__ = lambda s, *a: s._raise_invalid()
 
-    def __len__(self): self._raise_invalid()
-    def __getitem__(self, _): self._raise_invalid()
-    def __setitem__(self, _): self._raise_invalid()
-    def __delitem__(self, _): self._raise_invalid()
-    def __iter__(self): self._raise_invalid()
-    def __reversed__(self): self._raise_invalid()
-    def __contains__(self, _): self._raise_invalid()
-    def __missing__(self, _): self._raise_invalid()
+    __len__ = __syntaxerr__
+    __getitem__ = __syntaxerr__
+    __setitem__ = __syntaxerr__
+    __delitem__ = __syntaxerr__
+    __iter__ = __syntaxerr__
+    __reversed__ = __syntaxerr__
+    __contains__ = __syntaxerr__
+    __missing__ = __syntaxerr__
 
-    def __call__(self, _): self._raise_invalid()
-    def __enter__(self): self._raise_invalid()
-    def __exit__(self, exception_type, exception_value, traceback):
-        self._raise_invalid()
+    __call__ = __syntaxerr__
+    __enter__ = __syntaxerr__
+    __exit__ = __syntaxerr__
 
-    def __cmp__(self, _): self._raise_invalid()
-    def __eq__(self, _): self._raise_invalid()
-    def __gt__(self, _): self._raise_invalid()
-    def __lt__(self, _): self._raise_invalid()
-    def __ge__(self, _): self._raise_invalid()
-    def __le__(self, _): self._raise_invalid()
-    def __pos__(self): self._raise_invalid()
-    def __neg__(self): self._raise_invalid()
-    def __abs__(self): self._raise_invalid()
-    def __invert__(self): self._raise_invalid()
-    def __round__(self, _): self._raise_invalid()
-    def __floor__(self): self._raise_invalid()
-    def __ceil__(self): self._raise_invalid()
-    def __trunc__(self): self._raise_invalid()
+    __eq__ = __syntaxerr__
+    __ne__ = __syntaxerr__
+    __gt__ = __syntaxerr__
+    __lt__ = __syntaxerr__
+    __ge__ = __syntaxerr__
+    __le__ = __syntaxerr__
+    __pos__ = __syntaxerr__
+    __neg__ = __syntaxerr__
+    __abs__ = __syntaxerr__
+    __invert__ = __syntaxerr__
+    __round__ = __syntaxerr__
+    __floor__ = __syntaxerr__
+    __ceil__ = __syntaxerr__
+    __trunc__ = __syntaxerr__
 
-    def __add__(self, _): self._raise_invalid()
-    def __sub__(self, _): self._raise_invalid()
-    def __mul__(self, _): self._raise_invalid()
-    def __floordiv__(self, _): self._raise_invalid()
-    def __div__(self, _): self._raise_invalid()
-    def __mod__(self, _): self._raise_invalid()
-    def __divmod__(self, _): self._raise_invalid()
-    def __pow__(self, _): self._raise_invalid()
-    def __lshift__(self, _): self._raise_invalid()
-    def __rshift__(self, _): self._raise_invalid()
-    def __or__(self, _): self._raise_invalid()
-    def __and__(self, _): self._raise_invalid()
-    def __xor__(self, _): self._raise_invalid()
+    __add__ = __syntaxerr__
+    __sub__ = __syntaxerr__
+    __mul__ = __syntaxerr__
+    __div__ = __syntaxerr__
+    __truediv__ = __syntaxerr__
+    __floordiv__ = __syntaxerr__
+    __mod__ = __syntaxerr__
+    __divmod__ = __syntaxerr__
+    __pow__ = __syntaxerr__
+    __lshift__ = __syntaxerr__
+    __rshift__ = __syntaxerr__
+    __or__ = __syntaxerr__
+    __and__ = __syntaxerr__
+    __xor__ = __syntaxerr__
 
-    def __radd__(self, _): self._raise_invalid()
-    def __rsub__(self, _): self._raise_invalid()
-    def __rmul__(self, _): self._raise_invalid()
-    def __rfloordiv__(self, _): self._raise_invalid()
-    def __rdiv__(self, _): self._raise_invalid()
-    def __rmod__(self, _): self._raise_invalid()
-    def __rdivmod__(self, _): self._raise_invalid()
-    def __rpow__(self, _): self._raise_invalid()
-    def __rlshift__(self, _): self._raise_invalid()
-    def __rrshift__(self, _): self._raise_invalid()
-    def __ror__(self, _): self._raise_invalid()
-    def __rand__(self, _): self._raise_invalid()
-    def __rxor__(self, _): self._raise_invalid()
+    __radd__ = __syntaxerr__
+    __rsub__ = __syntaxerr__
+    __rmul__ = __syntaxerr__
+    __rdiv__ = __syntaxerr__
+    __rtruediv__ = __syntaxerr__
+    __rfloordiv__ = __syntaxerr__
+    __rmod__ = __syntaxerr__
+    __rdivmod__ = __syntaxerr__
+    __rpow__ = __syntaxerr__
+    __rlshift__ = __syntaxerr__
+    __rrshift__ = __syntaxerr__
+    __ror__ = __syntaxerr__
+    __rand__ = __syntaxerr__
+    __rxor__ = __syntaxerr__
 
-    def __iadd__(self, _): self._raise_invalid()
-    def __isub__(self, _): self._raise_invalid()
-    def __imul__(self, _): self._raise_invalid()
-    def __ifloordiv__(self, _): self._raise_invalid()
-    def __idiv__(self, _): self._raise_invalid()
-    def __imod__(self, _): self._raise_invalid()
-    def __idivmod__(self, _): self._raise_invalid()
-    def __irpow__(self, _): self._raise_invalid()
-    def __ilshift__(self, _): self._raise_invalid()
-    def __irshift__(self, _): self._raise_invalid()
-    def __ior__(self, _): self._raise_invalid()
-    def __iand__(self, _): self._raise_invalid()
-    def __ixor__(self, _): self._raise_invalid()
+    __iadd__ = __syntaxerr__
+    __isub__ = __syntaxerr__
+    __imul__ = __syntaxerr__
+    __ifloordiv__ = __syntaxerr__
+    __idiv__ = __syntaxerr__
+    __imod__ = __syntaxerr__
+    __idivmod__ = __syntaxerr__
+    __irpow__ = __syntaxerr__
+    __ilshift__ = __syntaxerr__
+    __irshift__ = __syntaxerr__
+    __ior__ = __syntaxerr__
+    __iand__ = __syntaxerr__
+    __ixor__ = __syntaxerr__

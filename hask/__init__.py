@@ -44,6 +44,8 @@ from hask.lang.hof import id
 from hask.lang.hof import F
 from hask.lang.hof import Func
 
+from hask.lang.section import __
+
 from hask.stdlib import Int
 from hask.stdlib import Float
 from hask.stdlib import String
