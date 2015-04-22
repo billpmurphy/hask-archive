@@ -2,6 +2,7 @@ import collections
 import itertools
 
 from ..lang import syntax
+from ..lang.typeclasses import Enum
 from ..lang.typeclasses import Show
 from ..lang.typeclasses import Eq
 from ..lang.typeclasses import Functor
@@ -43,27 +44,19 @@ class _list_builder(syntax.Syntax):
 
     def __getitem__(self, lst):
 
-        inf = float("inf")
-        def list_gen(start, stop, inc):
-            while start <= stop:
-                yield start
-                start += inc
-
         if type(lst) in (tuple, list) and len(lst) < 5 and Ellipsis in lst:
             if len(lst) == 2 and lst[1] is Ellipsis:
                 # [x, ...]
-                return LazyList(list_gen(lst[0], inf, 1))
+                return LazyList(Enum.enumFrom(lst[0]))
             elif len(lst) == 3 and lst[2] is Ellipsis:
                 # [x, y, ...]
-                inc = lst[1] - lst[0]
-                return LazyList(list_gen(lst[0], inf * inc, inc))
+                return LazyList(Enum.enumFromThen(lst[0], lst[1]))
             elif len(lst) == 3 and lst[1] is Ellipsis:
                 # [x, ..., y]
-                return LazyList(list_gen(lst[0], lst[2], 1))
-            elif len(lst) == 4 and lst[3] is Ellipsis:
+                return LazyList(Enum.enumFromTo(lst[0], lst[2]))
+            elif len(lst) == 4 and lst[2] is Ellipsis:
                 # [x, y, ..., z]
-                inc = lst[1] - lst[0]
-                return LazyList(list_gen(lst[0], lst[3], inc))
+                return LazyList(Enum.enumFromThenTo(lst[0], lst[1], lst[3]))
             else:
                 raise SyntaxError("Invalid list comprehension")
         return LazyList(lst)

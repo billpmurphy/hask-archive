@@ -154,11 +154,11 @@ class Enum(type_system.Typeclass):
 
     @staticmethod
     def enumFrom(start):
-        return Enum.enumFromThen(start, succ(start))
+        return Enum.enumFromThen(start, Enum.succ(start))
 
     @staticmethod
     def enumFromThenTo(start, second, end):
-        pointer, end = Enum.toEnum(start), Enum.toEnum(end)
+        pointer, stop = Enum.toEnum(start), Enum.toEnum(end)
         step = Enum.toEnum(second) - pointer
         while pointer <= stop:
             yield Enum.fromEnum(pointer, type(start))

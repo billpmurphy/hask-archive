@@ -544,12 +544,22 @@ class TestLazyList(unittest.TestCase):
                           list(LazyList(range(9)) * test_f))
 
     def test_list_comp(self):
+        # numeric lists
         self.assertEquals(10, len(L[0, ...][:10]))
         self.assertEquals(L[0, ...][:10], range(10)[:10])
         self.assertEquals(L[-10, ...][:10], range(-10, 0)[:10])
-
         self.assertEquals(11, len(L[-5, ..., 5]))
         self.assertEquals(list(L[-5, ..., 5]), list(range(-5, 6)))
+        self.assertEquals(L[1, 3, 5, 7], L[1, 3, ...][:4])
+        self.assertEquals(L[1, 3, 5, 7], L[1, 3, ..., 7])
+        self.assertEquals(L[1, 3, 5, 7], L[1, 3, ..., 8])
+        self.assertEquals([], list(L[6, ..., 4]))
+        self.assertEquals([], list(L[2, 3, ..., 1]))
+
+        # character lists
+        #self.assertEquals(10, len(L["a", ...][:10]))
+        #self.assertEquals("abcdefghij", L["a", ...][:10])
+        #self.assertEquals(11, len(L["a", ..., "k"]))
 
     def test_hmap(self):
         test_f = lambda x: (x + 100) / 2
@@ -557,11 +567,17 @@ class TestLazyList(unittest.TestCase):
         # `map` == `hmap` for LazyLists
         self.assertEquals(map(test_f, range(20)),
                           list(hmap(test_f, range(20))))
+        self.assertEquals(map(test_f, range(20)),
+                          map(test_f, range(20)))
+
 
     def test_hfilter(self):
         test_f = lambda x: x % 2 == 0
         self.assertEquals(filter(test_f, range(20)),
                           list(hfilter(test_f, range(20))))
+        self.assertEquals(filter(test_f, range(20)),
+                          filter(test_f, range(20)))
+
 
 
 if __name__ == '__main__':
