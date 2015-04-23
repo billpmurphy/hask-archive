@@ -346,6 +346,10 @@ class TestHOF(unittest.TestCase):
         self.assertEqual(sum3(1, 2, 3), dsum3(1)(2, 3))
         self.assertEqual(sum3(1, 2, 3), dsum3(1)(2)(3))
 
+        self.assertEqual(sum3(1, 2, 3), F(dsum3, 1, 2)(3))
+        self.assertEqual(sum3(1, 2, 3), F(dsum3, 1)(2, 3))
+        self.assertEqual(sum3(1, 2, 3), F(dsum3, 1)(2)(3))
+        self.assertEqual(sum3(1, 2, 3), F(dsum3, 1, 2, 3))
         self.assertEqual(sum3(1, 2, 3), F(dsum3)(1, 2, 3))
         self.assertEqual(sum3(1, 2, 3), F(dsum3)(1, 2)(3))
         self.assertEqual(sum3(1, 2, 3), F(dsum3)(1)(2, 3))
@@ -394,6 +398,11 @@ class TestHOF(unittest.TestCase):
         self.assertTrue(isinstance(F(lambda x: lambda y: x + y)(1), Func))
 
         self.assertEquals(4, F(lambda: 4))
+        self.assertEquals(4, F(lambda: lambda: 4))
+        self.assertEquals(4, F(lambda: lambda: lambda: lambda: lambda: 4))
+        self.assertEquals(4, F(F(lambda: lambda: lambda: 4)))
+        self.assertEquals(4, F(4))
+        self.assertEquals(4, F(F(F(4))))
 
     def test_F_functor(self):
         te = TypeError
@@ -417,7 +426,8 @@ class TestHOF(unittest.TestCase):
         self.assertEquals(f2(g2(h2(56))), (hid * f2 * g2 * h)(56))
         self.assertEquals(f2(g2(h2(56))), (hid * f2 * g2 * h2)(56))
 
-        with self.assertRaises(te): self.assertEquals(f2(g2(h2(56))), (f * g * h2)(56))
+        with self.assertRaises(te):
+            self.assertEquals(f2(g2(h2(56))), (f * g * h2)(56))
         self.assertEquals(f2(g2(h2(56))), (f * g2 * h)(56))
         self.assertEquals(f2(g2(h2(56))), (f * g2 * h2)(56))
         self.assertEquals(f2(g2(h2(56))), (f2 * g * h)(56))
@@ -498,11 +508,13 @@ class TestHOF(unittest.TestCase):
 
     def test_flip(self):
         test_f1 = lambda x, y: x - y
+        self.assertEquals(test_f1(9, 1), flip(flip(test_f1))(9, 1))
         self.assertEquals(test_f1(9, 1), flip(test_f1)(1, 9))
         self.assertEquals(test_f1(9, 1), flip(test_f1, 1)(9))
         self.assertEquals(test_f1(9, 1), flip(test_f1, 1, 9))
         self.assertEquals(test_f1(9, 1), flip(test_f1)(1)(9))
 
+        self.assertEquals(test_f1(9, 1), flip(flip(F(test_f1)))(9, 1))
         self.assertEquals(test_f1(9, 1), flip(F(test_f1))(1, 9))
         self.assertEquals(test_f1(9, 1), flip(F(test_f1), 1)(9))
         self.assertEquals(test_f1(9, 1), flip(F(test_f1), 1, 9))
@@ -518,12 +530,14 @@ class TestHOF(unittest.TestCase):
         self.assertEquals(test_f2(9, 1, 2), flip(F(test_f2), 1, 9, 2))
         self.assertEquals(test_f2(9, 1, 2), flip(F(test_f2))(1)(9, 2))
 
-        #self.assertEquals(test_f2(9, 1, 2), flip(test_f2)(1, 9, 2))
-
+        self.assertEquals(test_f2(9, 1, 2), flip(test_f2)(1, 9, 2))
         self.assertEquals(test_f2(9, 1, 2), flip(test_f2)(1, 9)(2))
-        self.assertEquals(test_f2(9, 1, 2), flip(test_f2, 1)(9)(2))
-        self.assertEquals(test_f2(9, 1, 2), flip(test_f2, 1, 9)(2))
+        self.assertEquals(test_f2(9, 1, 2), flip(test_f2)(1)(9, 2))
         self.assertEquals(test_f2(9, 1, 2), flip(test_f2)(1)(9)(2))
+        self.assertEquals(test_f2(9, 1, 2), flip(test_f2, 1, 9, 2))
+        self.assertEquals(test_f2(9, 1, 2), flip(test_f2, 1, 9)(2))
+        self.assertEquals(test_f2(9, 1, 2), flip(test_f2, 1)(9, 2))
+        self.assertEquals(test_f2(9, 1, 2), flip(test_f2, 1)(9)(2))
 
 
 class TestMaybe(unittest.TestCase):

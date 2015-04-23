@@ -5,34 +5,43 @@ from ..lang.typeclasses import Functor
 
 
 def _apply(wrapper, f, *args, **kwargs):
+    """
+    Apply a callable `f` to a set of arguments. If the result is a callable,
+    wrap it in `wrapper`. Otherwise, return the result.
+    If not enough arguments are supplied, partially apply the given arguments
+    and wrap the resulting curried function in `wrapper`.
+    If too many arguments are supplied, apply the correct number, and if the
+    result is a callable, continue to apply the rest of the arguments
+    (recursively).
+    """
+    if not hasattr(f, "__call__"):
+        return f
+
+
     f_arity, arglen = arity(f), len(args)
-    if f_arity == arglen:
+    if f_arity == arglen == 0:
+        return _apply(wrapper, f(), *args, **kwargs)
+    elif f_arity == arglen:
         result = f(*args, **kwargs)
         return wrapper(result) if hasattr(result, "__call__") else result
     elif f_arity == 0:
-        raise TypeError("Too many arguments")
+        raise TypeError("Too many arguments supplied")
     elif f_arity < arglen:
         applied = wrapper(f(*args[:f_arity], **kwargs))
         return applied(*args[f_arity:])
     return wrapper(f, *args, **kwargs)
 
 
+#deprecate?
 def curry(func):
     """
     Curry decorator from fn.py. Needs some upgrades.
     """
-    #@functools.wraps(func) # need to do something about this
     def _curried(*args, **kwargs):
         if arity(func) == len(args):
             return func(*args, **kwargs)
         return curry(functools.partial(func, *args, **kwargs))
     return _curried
-
-
-def F(func, *args, **kwargs):
-    if isinstance(func, Func):
-        func = func.f
-    return _apply(Func, func, *args, **kwargs)
 
 
 class Func(object):
@@ -41,7 +50,7 @@ class Func(object):
     instance of functor, and composable with `*`
     """
     def __init__(self, func=lambda x: x, *a, **kw):
-        if isinstance(func, self.__class__):
+        while isinstance(func, self.__class__):
             func = func.f
         self.f = _apply(functools.partial, func, *a, **kw) \
                  if a or kw else func
@@ -67,6 +76,21 @@ class Func(object):
         `%` is apply operator, equivalent to `$` in Haskell.
         """
         return self.f(*args)
+
+
+def F(func, *args, **kwargs):
+    if not hasattr(func, "__call__"):
+        return func
+
+    # unroll nested instances of Func
+    while isinstance(func, Func):
+        func = func.f
+
+    # unroll nested functions of no arguments
+    #while arity(func) == 0:
+    #    F(func())
+
+    return _apply(Func, func, *args, **kwargs)
 
 
 Functor(Func, Func.fmap)
