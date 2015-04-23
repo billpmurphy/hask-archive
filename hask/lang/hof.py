@@ -12,7 +12,8 @@ def _apply(wrapper, f, *args, **kwargs):
     elif f_arity == 0:
         raise TypeError("Too many arguments")
     elif f_arity < arglen:
-        return _apply(wrapper, f(*args[:f_arity], **kwargs), *args[f_arity:])
+        applied = wrapper(f(*args[:f_arity], **kwargs))
+        return applied(*args[f_arity:])
     return wrapper(f, *args, **kwargs)
 
 
@@ -46,6 +47,9 @@ class Func(object):
                  if a or kw else func
 
     def __call__(self, *args, **kwargs):
+        if isinstance(self.f, self.__class__):
+            self.f = self.f.f
+            return self.__call__(*args, **kwargs)
         return _apply(self.__class__, self.f, *args, **kwargs)
 
     def fmap(self, other):
@@ -72,7 +76,7 @@ id = Func()
 
 @F
 def flip(f, x, y, *a):
-    return f(y, x, *a)
+    return F(f)(y, x, *a)
 
 @F
 def const(a, b):

@@ -346,10 +346,20 @@ class TestHOF(unittest.TestCase):
         self.assertEqual(sum3(1, 2, 3), dsum3(1)(2, 3))
         self.assertEqual(sum3(1, 2, 3), dsum3(1)(2)(3))
 
+        self.assertEqual(sum3(1, 2, 3), F(dsum3)(1, 2, 3))
+        self.assertEqual(sum3(1, 2, 3), F(dsum3)(1, 2)(3))
+        self.assertEqual(sum3(1, 2, 3), F(dsum3)(1)(2, 3))
+        self.assertEqual(sum3(1, 2, 3), F(dsum3)(1)(2)(3))
+
         self.assertEquals(5, F(lambda x: lambda y: y + x)(1)(4))
         self.assertEquals(5, F(lambda x: lambda y: y + x)(1, 4))
         self.assertEquals(5, F(lambda x: lambda y: y + x, 1, 4))
         self.assertEquals(5, F(lambda x: lambda y: y + x, 1)(4))
+
+        self.assertEquals(5, F(lambda x: F(lambda y: y + x))(1)(4))
+        self.assertEquals(5, F(lambda x: F(lambda y: y + x))(1, 4))
+        self.assertEquals(5, F(lambda x: F(lambda y: y + x), 1, 4))
+        self.assertEquals(5, F(lambda x: F(lambda y: y + x), 1)(4))
 
         self.assertEquals(7, F(lambda x: lambda y,z: y + x + z, 1, 4, 2))
         self.assertEquals(7, F(lambda x: lambda y,z: y + x + z, 1, 4)(2))
@@ -359,6 +369,15 @@ class TestHOF(unittest.TestCase):
         self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1, 4)(2))
         self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1)(4, 2))
         self.assertEquals(7, F(lambda x: lambda y,z: y + x + z)(1)(4)(2))
+
+        self.assertEquals(7, F(lambda x: F(lambda y,z: y + x + z), 1, 4, 2))
+        self.assertEquals(7, F(lambda x: F(lambda y,z: y + x + z), 1, 4)(2))
+        self.assertEquals(7, F(lambda x: F(lambda y,z: y + x + z), 1)(4, 2))
+        self.assertEquals(7, F(lambda x: F(lambda y,z: y + x + z), 1)(4)(2))
+        self.assertEquals(7, F(lambda x: F(lambda y,z: y + x + z))(1, 4, 2))
+        self.assertEquals(7, F(lambda x: F(lambda y,z: y + x + z))(1, 4)(2))
+        self.assertEquals(7, F(lambda x: F(lambda y,z: y + x + z))(1)(4, 2))
+        self.assertEquals(7, F(lambda x: F(lambda y,z: y + x + z))(1)(4)(2))
 
         self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1, 4, 2))
         self.assertEquals(7, F(lambda x,y: lambda z: y + x + z)(1, 4)(2))
@@ -417,7 +436,9 @@ class TestHOF(unittest.TestCase):
         self.assertEquals(f3(g3(h3(56))), (hid * f3 * g3 * h)(56))
         self.assertEquals(f3(g3(h3(56))), (hid * f3 * g3 * h3)(56))
 
-        with self.assertRaises(te): self.assertEquals(f3(g3(h3(56))), (f * g * h3)(56))
+        with self.assertRaises(te):
+            self.assertEquals(f3(g3(h3(56))), (f * g * h3)(56))
+
         self.assertEquals(f3(g3(h3(56))), (f * g3 * h)(56))
         self.assertEquals(f3(g3(h3(56))), (f * g3 * h3)(56))
         self.assertEquals(f3(g3(h3(56))), (f3 * g * h)(56))
@@ -481,6 +502,28 @@ class TestHOF(unittest.TestCase):
         self.assertEquals(test_f1(9, 1), flip(test_f1, 1)(9))
         self.assertEquals(test_f1(9, 1), flip(test_f1, 1, 9))
         self.assertEquals(test_f1(9, 1), flip(test_f1)(1)(9))
+
+        self.assertEquals(test_f1(9, 1), flip(F(test_f1))(1, 9))
+        self.assertEquals(test_f1(9, 1), flip(F(test_f1), 1)(9))
+        self.assertEquals(test_f1(9, 1), flip(F(test_f1), 1, 9))
+        self.assertEquals(test_f1(9, 1), flip(F(test_f1))(1)(9))
+
+        test_f2 = lambda x, y, z: (x - y) / z
+        self.assertEquals(test_f2(9, 1, 2), flip(F(test_f2))(1, 9)(2))
+        self.assertEquals(test_f2(9, 1, 2), flip(F(test_f2), 1)(9)(2))
+        self.assertEquals(test_f2(9, 1, 2), flip(F(test_f2), 1, 9)(2))
+        self.assertEquals(test_f2(9, 1, 2), flip(F(test_f2))(1)(9)(2))
+        self.assertEquals(test_f2(9, 1, 2), flip(F(test_f2))(1, 9, 2))
+        self.assertEquals(test_f2(9, 1, 2), flip(F(test_f2), 1)(9, 2))
+        self.assertEquals(test_f2(9, 1, 2), flip(F(test_f2), 1, 9, 2))
+        self.assertEquals(test_f2(9, 1, 2), flip(F(test_f2))(1)(9, 2))
+
+        #self.assertEquals(test_f2(9, 1, 2), flip(test_f2)(1, 9, 2))
+
+        self.assertEquals(test_f2(9, 1, 2), flip(test_f2)(1, 9)(2))
+        self.assertEquals(test_f2(9, 1, 2), flip(test_f2, 1)(9)(2))
+        self.assertEquals(test_f2(9, 1, 2), flip(test_f2, 1, 9)(2))
+        self.assertEquals(test_f2(9, 1, 2), flip(test_f2)(1)(9)(2))
 
 
 class TestMaybe(unittest.TestCase):
