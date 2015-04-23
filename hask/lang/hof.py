@@ -79,16 +79,9 @@ class Func(object):
 
 
 def F(func, *args, **kwargs):
-    if not hasattr(func, "__call__"):
-        return func
-
     # unroll nested instances of Func
     while isinstance(func, Func):
         func = func.f
-
-    # unroll nested functions of no arguments
-    #while arity(func) == 0:
-    #    F(func())
 
     return _apply(Func, func, *args, **kwargs)
 
