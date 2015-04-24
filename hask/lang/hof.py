@@ -78,7 +78,7 @@ class Func(object):
         return self.f(*args)
 
 
-def F(func, *args, **kwargs):
+def F(func=Func(), *args, **kwargs):
     # unroll nested instances of Func
     while isinstance(func, Func):
         func = func.f

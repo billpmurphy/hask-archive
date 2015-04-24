@@ -1,5 +1,152 @@
 [![Build Status](https://magnum.travis-ci.com/billpmurphy/pythaskell.svg?token=ReCFhAz7SQAeN6Fi4dBx&branch=master)](https://magnum.travis-ci.com/billpmurphy/pythaskell)
 
+# Hask
+
+Wish you could use all those elegant Haskell features in Python? All you have
+to do is `import hask`!
+
+Hask is a pure-Python library that mimics most of the core language tools from
+Haskell, including:
+
+* Python port of Haskell's type system that supports type checking, function
+  type signatures, algebraic data types, and typeclasses
+* Easy creation of new algebraic datatypes and typeclasses
+* Pattern matching
+* Automagical function currying/partial application
+* Typeclasses from the Haskell `base` libraries, including `Functor`, `Monad`,
+  and all the rest
+* Algebraic datatypes from the Haskell `Prelude`, including `Maybe` and `Either`
+* Efficient, lazily evaluated lists with Haskell-style list comprehensions
+* Easier function composition and application, operator sections, guards, and
+  other nifty control flow tools
+* Full Python port of (some of) the standard libraries from Haskell's `base`,
+  including `Prelude`, `Control.Monad`, `Data.List`, and many more
+
+
+## Installation
+
+Just `git clone https://github.com/billpmurphy/hask` and then
+`python setup.py install`.
+
+To run the tests, just `python tests.py`.
+
+
+## Introduction
+
+
+```python
+>>> from hask import data, d, deriving
+>>> from hask import Read, Show, Eq, Ord
+
+>>> Maybe, Nothing, Just = data("Maybe", "a") == "Nothing" | d("Just", "a") \
+                            & deriving(Read, Show, Eq, Ord)
+```
+
+```python
+>>> Nothing
+Nothing
+
+>>> Just(10)
+Just(10)
+```
+
+You can view the type of an object with `_t` (equivalent to `:t` in ghci).
+
+```python
+>>> from hask import _t
+
+>>> \_t(Just("soylent green")
+Maybe str
+
+>>> \_t(1)
+int
+```
+
+
+Functors can be used with the infix `fmap` operator, `*`:
+
+```python
+>>> Just("hello") * (lambda x: x.upper()) * (lambda x: x + "!")
+Just(HELLO!)
+```
+
+If we have an instance of `Functor`, we can make it an instance of
+`Applicative` and then an instance of `Monad` by defining the appropriate
+methods.
+
+```python
+>>> from hask import Applicative, Monad
+
+>>> Applicative(Maybe, lambda x: Just(x))
+>>> Monad(Maybe, ...)
+```
+
+Of course, `bind` also has an infix form, which is `>>` in Hask.
+
+```python
+>>> Just(3) >> (lambda x: Nothing if x > 5 else Just(x + 5))
+Just(8)
+
+```
+
+We also have operator sections:
+
+```python
+>>> from hask import __
+
+>>> f = (__ - 20) * (2 ** __) * (__ + 3)
+>>> f(10)
+8172
+```
+
+
+If you don't need the full power of pattern matching and just want a neater
+switch statement, you can use guards, which also happen to play nicely with
+sections.
+
+```python
+>>> from hask import guard, c, otherwise
+
+>>> porridge_tempurature = 80
+
+>>> ~(guard(porridge_tempurature)
+...     | c(__ < 20)  >> "Porridge is too cold!"
+...     | c(__ < 90)  >> "Porridge is just right!"
+...     | c(__ < 150) >> "Porridge is too hot!"
+...     | otherwise() >> "Porridge has gone thermonuclear"
+... )
+'Porridge is just right!'
+```
+
+If no match is found (and an `otherwise()` clause is not present), a
+`NoGuardMatchException` will be raised. For more complex guards, you can also
+use lambdas or functions in your guard conditions.
+
+```python
+>>> def examine_password_security(password):
+...     analysis = ~(guard(password)
+...         | c(lambda x: len(x) > 20) >> "Wow, that's one secure password"
+...         | c(lambda x: len(x) < 5)  >> "You made Bruce Schneier cry"
+...         | c(__ == "12345")         >> "Same combination as my luggage!"
+...         | otherwise()              >> "Hope it's not `password`"
+...     )
+...     return analysis
+...
+
+>>> nuclear_launch_code = "12345"
+
+>>> examine_password_security(nuclear_lanch_code)
+'Same combination as my luggage!'
+```
+
+All of your favorite functions from `Prelude`, `Data.List`, `Data.Maybe`, `Data.Either`, `Data.String`, `Data.Tuple`, and `Control.Monad` are implemented too.
+
+
+```python
+```
+
+-------------------------------------------
+
 
 ***Notes y'all***
 
