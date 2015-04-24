@@ -19,6 +19,7 @@ Haskell, including:
 * Efficient, lazily evaluated lists with Haskell-style list comprehensions
 * Easier function composition and application, operator sections, guards, and
   other nifty control flow tools
+* Tail call optimization decorator
 * Full Python port of (some of) the standard libraries from Haskell's `base`,
   including `Prelude`, `Control.Monad`, `Data.List`, and many more
 
@@ -33,21 +34,71 @@ To run the tests, just `python tests.py`.
 
 ## Introduction
 
+### Building 'Maybe'
 
 ```python
 >>> from hask import data, d, deriving
 >>> from hask import Read, Show, Eq, Ord
 
 >>> Maybe, Nothing, Just = data("Maybe", "a") == "Nothing" | d("Just", "a") \
-                            & deriving(Read, Show, Eq, Ord)
+                                              & deriving(Read, Show, Eq, Ord)
 ```
 
+Let's break this down a bit. The syntax for defining a new type constructor is:
+
 ```python
+data("Type name", ...type arguments...)
+```
+
+This defines a new datatype (i.e., a class) with type parameters.
+
+To define data constructors for this type, use `d`. The name of the data
+constructor goes first, followed by its fields. Multiple data constructors
+should be separted by `|`. If your data constructor has no fields, you can omit
+`d`. There is no limit to the number of data constructors you can define, and
+there is no limit to the number of fields that each data constructor can have.
+
+
+```python
+d("Data constructor 1", "arg1") | d("Data constructor 2", "arg1")
+
+d("DC1", "arg1") | "DC2" | d("DC3, "arg1", "arg2", "arg3")
+
+```
+
+
+To automagically derive typeclass instances for the new ADT, just add `&
+deriving(...typeclasses...)` after the data constructor declarations.
+Currently, the only typeclasses that can be derived are `Eq`, `Show`, `Read`,
+and `Ord`.
+
+
+Putting it all together, here is an sample implementation of `Either`:
+
+```python
+Either, L, R = data("Either", "a", "b") == d("L", "a") | d("R", "b")
+                                           & deriving(Read, Show, Eq)
+```
+
+We can now use the data structures defined in a `data` statement to create instances of our new types. If our data structure takes no arguments, we can use it just like a variable.
+
+```python
+>>> Just(10)
+Just(10)
+
 >>> Nothing
 Nothing
 
->>> Just(10)
-Just(10)
+
+>>> Just(Just(10))
+Just(Just(10))
+
+>>> L(1)
+L(1)
+
+
+>>> R("a")
+R("a")
 ```
 
 You can view the type of an object with `_t` (equivalent to `:t` in ghci).
@@ -55,41 +106,89 @@ You can view the type of an object with `_t` (equivalent to `:t` in ghci).
 ```python
 >>> from hask import _t
 
->>> \_t(Just("soylent green")
-Maybe str
-
->>> \_t(1)
+>>> _t(1)
 int
+
+>>> _t(Just("soylent green")
+Maybe str
 ```
 
+```python
+>>> def maybe_fmap(maybe_value, fn):
+>>>     result =  ~(caseof(maybe_value)
+...         | Nothing         >> Nothing
+...         | m(Just, p("x")) >> Just(fn(p("x")))
+...     )
+...     return result
 
-Functors can be used with the infix `fmap` operator, `*`:
+>>> maybe_fmap(Just(10), lambda x: x * 2)
+Just(20)
+
+>>> maybe_fmap(Nothing, lambda x: x * 2)
+Nothing
+```
+
+We can now make `Maybe` an instance of `Functor`. This will modify the class
+`Maybe`, adding a method called `fmap` that will be set equal to our
+`maybe_fmap` function.
+
+```python
+>>> Functor(Maybe, maybe_fmap)
+
+>>> Just(10).fmap(float)
+Just(10.0)
+
+>>> Just(10).fmap(float).fmap(lambda x: x / 2)
+Just(5.0)
+```
+
+Any instance of `Functor` can be used with the infix `fmap` operator, `*`:
 
 ```python
 >>> Just("hello") * (lambda x: x.upper()) * (lambda x: x + "!")
-Just(HELLO!)
+Just('HELLO!')
 ```
 
 If we have an instance of `Functor`, we can make it an instance of
 `Applicative` and then an instance of `Monad` by defining the appropriate
-methods.
+methods. To implement `Applicative`, we just need to provide `pure`, which
+wraps a value in our type. To implement `Monad`, we need to provide `bind`.
 
 ```python
 >>> from hask import Applicative, Monad
 
 >>> Applicative(Maybe, lambda x: Just(x))
->>> Monad(Maybe, ...)
+
+>>> def maybe_bind(maybe_value, fn):
+...     return ~(caseof(maybe_value)
+...         | Nothing         >> Nothing
+...         | m(Just, p("x")) >> fn(p("x")))
+...
+
+>>> Monad(Maybe, maybe_bind)
 ```
 
 Of course, `bind` also has an infix form, which is `>>` in Hask.
 
 ```python
->>> Just(3) >> (lambda x: Nothing if x > 5 else Just(x + 5))
-Just(8)
+>>> f = lambda x: Nothing if x > 5 else Just(x + 5)
+>>> g = lambda x: Nothing if x < 1 else Just(2 * x)
+>>> h = lambda x: Nothing if x > 0 else Just(10)
 
+>>> Just(3) >> f >> g
+Just(16)
+
+>>> Nothing >> f >> g
+Nothing
+
+>>> Just(3) >> f >> h >> g
+Nothing
 ```
 
-We also have operator sections:
+### Other fun stuff
+
+Hask also supports operator sections (e.g. `(1+)` from Haskell), which create
+`Func` objects for ease of composition.
 
 ```python
 >>> from hask import __
@@ -160,14 +259,9 @@ What needs work:
 * the type system. this is #1 priority. need to design datatypes to represent
   higher-kinded types, type signatures, and do some basic typechecking to get
   things rolling, just to make sure no redesign of typeclasses is needed
-* the LazyList - tests are failing, figure out why and fix it. Also, do some
-  profiling and improve efficiency of some operations *(yo max you got this)*
-* HOF - needs more work, coming along though
 * ADTs - work on this after type system is built out
 * pattern matching (case of) - is there a better way of handling local binidng
   that horrid global state? in general, need to clean this filth up
-* immutable data strucures - again look at fn.py, but I think we can do better
-  here.
 * laziness everywhere - can generators/coroutines-made-from-generators do this?
 * immutable variables - can we mess with `globals()` to prevent regular
   assignment? or use coroutines somehow?
@@ -177,10 +271,6 @@ What needs work:
 * port more Haskell standard libraries (probably want to wait for later to do
   this)
 * arrows
-
-
-Key features of Haskell I am forgetting:
-* ???????
 
 
 More notes:

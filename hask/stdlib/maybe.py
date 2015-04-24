@@ -40,7 +40,7 @@ class Maybe(object):
     def __repr__(self):
         if self._is_nothing:
             return "Nothing"
-        return "Just(%s)" % self._value
+        return "Just(%s)" % repr(self._value)
 
     def fmap(self, fn):
         return Nothing if self._is_nothing else Just(fn(self._value))
