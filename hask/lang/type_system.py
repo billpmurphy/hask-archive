@@ -8,6 +8,10 @@ import types
 import syntax
 
 
+class ArityError(TypeError):
+    pass
+
+
 ## Typeclass infrastructure
 
 class Typeclass(object):

@@ -1,6 +1,7 @@
 import functools
 
 from ..lang.type_system import arity
+from ..lang.type_system import ArityError
 from ..lang.typeclasses import Functor
 
 
@@ -25,23 +26,11 @@ def _apply(wrapper, f, *args, **kwargs):
         result = f(*args, **kwargs)
         return wrapper(result) if hasattr(result, "__call__") else result
     elif f_arity == 0:
-        raise TypeError("Too many arguments supplied")
+        raise ArityError("Too many arguments supplied")
     elif f_arity < arglen:
         applied = wrapper(f(*args[:f_arity], **kwargs))
         return applied(*args[f_arity:])
     return wrapper(f, *args, **kwargs)
-
-
-#deprecate?
-def curry(func):
-    """
-    Curry decorator from fn.py. Needs some upgrades.
-    """
-    def _curried(*args, **kwargs):
-        if arity(func) == len(args):
-            return func(*args, **kwargs)
-        return curry(functools.partial(func, *args, **kwargs))
-    return _curried
 
 
 class Func(object):

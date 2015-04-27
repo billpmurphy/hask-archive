@@ -1,8 +1,62 @@
 import re
 import string
+from collections import namedtuple
 
 from ..lang import syntax
+from ..lang import type_system
 from ..lang import typeclasses
+
+
+def make_adt(name, typeargs, type_constructor):
+    base = namedtuple(name, ["i%s" % i for i, _ in enumerate(typeargs)])
+
+    def raise_fn(err):
+        raise err()
+
+    cls = type(name, (base, type_constructor), {})
+
+    # init
+    con = type_system.H() >> cls
+    for arg in typeargs:
+        con = con >> arg
+    init_sig = type_system.sig(con >> type(None))
+
+    cls.__init__ = init_sig(cls.__init__)
+    cls.__type__ = lambda self: type_constructor
+
+    cls.__iter__ = lambda self, other: raise_fn(TypeError)
+    cls.__contains__ = lambda self, other: raise_fn(TypeError)
+    cls.__add__ = lambda self, other: raise_fn(TypeError)
+    cls.__rmul__ = lambda self, other: raise_fn(TypeError)
+    cls.__mul__ = lambda self, other: raise_fn(TypeError)
+    cls.__lt__ = lambda self, other: raise_fn(TypeError)
+    cls.__gt__ = lambda self, other: raise_fn(TypeError)
+    cls.__le__ = lambda self, other: raise_fn(TypeError)
+    cls.__ge__ = lambda self, other: raise_fn(TypeError)
+    cls.__eq__ = lambda self, other: raise_fn(TypeError)
+    cls.__ne__ = lambda self, other: raise_fn(TypeError)
+    cls.__repr__ = object.__repr__
+    cls.__str__ = object.__str__
+
+    typeclasses.Typeable(cls, cls.__type__)
+    return cls
+
+
+def derive_eq(cls):
+    pass
+
+
+def derive_show(cls):
+    pass
+
+
+def derive_read(cls):
+    pass
+
+
+def derive_ord(cls):
+    pass
+
 
 
 class data(syntax.Syntax):

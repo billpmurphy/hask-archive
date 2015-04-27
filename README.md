@@ -10,16 +10,17 @@ Haskell, including:
 
 * Python port of Haskell's type system that supports type checking, function
   type signatures, algebraic data types, and typeclasses
-* Easy creation of new algebraic datatypes and typeclasses
+* Easy creation of new algebraic datatypes and typeclasses (immutable, of
+  course)
 * Pattern matching
 * Automagical function currying/partial application
 * Typeclasses from the Haskell `base` libraries, including `Functor`, `Monad`,
   and all the rest
 * Algebraic datatypes from the Haskell `Prelude`, including `Maybe` and `Either`
-* Efficient, lazily evaluated lists with Haskell-style list comprehensions
+* Efficient, immutable, lazily evaluated `List` type with Haskell-style list
+  comprehensions
 * Easier function composition and application, operator sections, guards, and
   other nifty control flow tools
-* Tail call optimization decorator
 * Full Python port of (some of) the standard libraries from Haskell's `base`,
   including `Prelude`, `Control.Monad`, `Data.List`, and many more
 
@@ -37,11 +38,11 @@ To run the tests, just `python tests.py`.
 ### Building 'Maybe'
 
 ```python
->>> from hask import data, d, deriving
->>> from hask import Read, Show, Eq, Ord
+from hask import data, d, deriving
+from hask import Read, Show, Eq, Ord
 
->>> Maybe, Nothing, Just = data("Maybe", "a") == "Nothing" | d("Just", "a") \
-                                              & deriving(Read, Show, Eq, Ord)
+data("Maybe", "a") == "Nothing" | d("Just", "a") \
+                      & deriving(Read, Show, Eq, Ord)
 ```
 
 Let's break this down a bit. The syntax for defining a new type constructor is:
@@ -76,8 +77,8 @@ and `Ord`.
 Putting it all together, here is an sample implementation of `Either`:
 
 ```python
-Either, L, R = data("Either", "a", "b") == d("L", "a") | d("R", "b")
-                                           & deriving(Read, Show, Eq)
+data("Either", "a", "b") == d("Left", "a") | d("Right", "b") \
+                            & deriving(Read, Show, Eq)
 ```
 
 We can now use the data structures defined in a `data` statement to create instances of our new types. If our data structure takes no arguments, we can use it just like a variable.

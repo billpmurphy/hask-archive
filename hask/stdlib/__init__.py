@@ -5,12 +5,13 @@ from guard import guard
 from guard import otherwise
 from guard import NoGuardMatchException
 
+from data import *
 from data import data
 from data import d
 from data import deriving
 
 from lazylist import L
-from lazylist import LazyList
+from lazylist import List
 from lazylist import map
 from lazylist import filter
 

@@ -39,7 +39,6 @@ fmap = Functor.fmap
 
 from hask.lang.hof import const
 from hask.lang.hof import flip
-from hask.lang.hof import curry
 from hask.lang.hof import id
 from hask.lang.hof import F
 from hask.lang.hof import Func
@@ -62,7 +61,7 @@ from hask.stdlib import d
 from hask.stdlib import deriving
 
 from hask.stdlib import L
-from hask.stdlib import LazyList
+from hask.stdlib import List
 from hask.stdlib import map
 from hask.stdlib import filter
 
