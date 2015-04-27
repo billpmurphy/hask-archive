@@ -5,10 +5,9 @@ from guard import guard
 from guard import otherwise
 from guard import NoGuardMatchException
 
-from data import *
-from data import data
-from data import d
-from data import deriving
+from adt import data
+from adt import d
+from adt import deriving
 
 from lazylist import L
 from lazylist import List

@@ -1,5 +1,7 @@
+import operator
 import re
 import string
+import types
 from collections import namedtuple
 
 from ..lang import syntax
@@ -7,21 +9,38 @@ from ..lang import type_system
 from ..lang import typeclasses
 
 
-def make_adt(name, typeargs, type_constructor):
-    base = namedtuple(name, ["i%s" % i for i, _ in enumerate(typeargs)])
+def _dc_items(dc):
+    return tuple((dc.__getattribute__(i) for i in dc.__class__._fields))
+
+
+def make_type_const(name, typeargs):
+    """
+    Build a new type constructor given a name and the type parameters.
+    This is simply a new class with a field `_params` that contains the list of
+    type parameter names.
+    """
+    cls = type(name, (object,), {"_params":tuple(typeargs)})
+    return cls
+
+
+def make_data_const(name, fields, type_constructor):
+    """
+    Build a data constructor given the name, the list of field types, and the
+    corresponding type constructor.
+
+    The general approach is to create a subclass of the type constructor and a
+    new class created with `namedtuple`, with some of the features from
+    `namedtuple` such as equality and comparison operators stripped out.
+    """
+    base = namedtuple(name, ["i%s" % i for i, _ in enumerate(fields)])
+    cls = type(name, (base, type_constructor), {})
 
     def raise_fn(err):
         raise err()
 
-    cls = type(name, (base, type_constructor), {})
-
-    # init
-    con = type_system.H() >> cls
-    for arg in typeargs:
-        con = con >> arg
-    init_sig = type_system.sig(con >> type(None))
-
-    cls.__init__ = init_sig(cls.__init__)
+    # TODO:
+    # make sure __init__ or __new__ is typechecked
+    cls.__init__ = base.__init__
     cls.__type__ = lambda self: type_constructor
 
     cls.__iter__ = lambda self, other: raise_fn(TypeError)
@@ -42,21 +61,51 @@ def make_adt(name, typeargs, type_constructor):
     return cls
 
 
-def derive_eq(cls):
+def derive_eq_data(data_constructor):
+    """
+    Add a default __eq__ method to a data constructor.
+    """
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and \
+               all((s == o for s, o in zip(_dc_items(self), _dc_items(other))))
+    data_constructor.__eq__ = __eq__
+    data_constructor.__ne__ = lambda self, other: not __eq__(self, other)
+    return data_constructor
+
+
+def derive_show_data(data_constructor):
+    """
+    Add a default __repr__ method to a data constructor.
+    """
+    def __repr__(self):
+        if len(self.__class__._fields) == 0:
+            return self.__class__.__name__
+        return "%s(%s)" % (self.__class__.__name__,
+                           ", ".join(map(repr, _dc_items(self))))
+    data_constructor.__repr__ = __repr__
+    return data_constructor
+
+
+def derive_read_data(data_constructor):
+    """
+    Add a default __read__ method to a data constructor.
+    """
     pass
 
 
-def derive_show(cls):
-    pass
+def derive_ord_data(data_constructor):
+    """
+    Add default comparison operators to a data constructor.
+    """
+    # compare all of the _fields of two objects
+    def zip_cmp(self, other, fn):
+        return all((fn(a, b) for a, b in zip(_dc_items(x), _dc_items(x))))
 
-
-def derive_read(cls):
-    pass
-
-
-def derive_ord(cls):
-    pass
-
+    data_constructor.__lt__ = lambda s, o: zip_cmp(s, o, operator.lt)
+    data_constructor.__gt__ = lambda s, o: zip_cmp(s, o, operator.gt)
+    data_constructor.__le__ = lambda s, o: zip_cmp(s, o, operator.le)
+    data_constructor.__ge__ = lambda s, o: zip_cmp(s, o, operator.ge)
+    return data_constructor
 
 
 class data(syntax.Syntax):
@@ -93,6 +142,7 @@ class data(syntax.Syntax):
 
 
 class d(syntax.Syntax):
+
     def __init__(self, dconstructor, *typeargs):
         self.dconstructors = [(dconstructor, typeargs)]
         self.derives = None
@@ -118,7 +168,8 @@ class d(syntax.Syntax):
 
 
 class deriving(syntax.Syntax):
-    __supported__ = (typeclasses.Show, typeclasses.Eq, typeclasses.Ord)
+    __supported__ = (typeclasses.Show, typeclasses.Eq, typeclasses.Ord,
+                     typeclasses.Read)
 
     def __init__(self, *tclasses):
         for tclass in tclasses:

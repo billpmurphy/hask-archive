@@ -195,6 +195,9 @@ def arity(f):
     if not hasattr(f, "__call__"):
         return 0
 
+    if isinstance(f, types.MethodType):
+        f = f.__func__
+
     count = 0
     while isinstance(f, functools.partial):
         if f.args:

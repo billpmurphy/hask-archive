@@ -3,6 +3,12 @@ import unittest
 
 from hask.lang.syntax import Syntax
 
+from hask.stdlib.adt import make_data_const
+from hask.stdlib.adt import derive_eq_data
+from hask.stdlib.adt import derive_show_data
+from hask.stdlib.adt import derive_read_data
+from hask.stdlib.adt import derive_ord_data
+
 from hask import in_typeclass, arity, sig, typ, H
 from hask import guard, c, otherwise, NoGuardMatchException
 from hask import caseof
@@ -45,10 +51,23 @@ class TestTypeSystem(unittest.TestCase):
         self.assertEquals(3, arity(lambda x, y, z, *args, **kw: x + y + z))
 
         self.assertEquals(1, arity(lambda x: lambda y: x))
+        self.assertEquals(1, arity(lambda x: lambda y: lambda z: x))
         self.assertEquals(2, arity(lambda x, z: lambda y: x))
         self.assertEquals(1, arity(functools.partial(lambda x,y: x+y, 2)))
         self.assertEquals(2, arity(functools.partial(lambda x,y: x+y)))
         self.assertEquals(2, arity(functools.partial(lambda x, y, z: x+y, 2)))
+
+        class X0(object):
+            def __init__(self):
+                pass
+
+        self.assertEquals(1, arity(X0.__init__))
+
+        class X1(object):
+            def __init__(self, a, b, c):
+                pass
+
+        self.assertEquals(4, arity(X1.__init__))
 
     def test_plain_sig(self):
         te = TypeError
@@ -90,6 +109,94 @@ class TestTypeSystem(unittest.TestCase):
         with self.assertRaises(te): g(1)
 
 
+class TestADTInternals(unittest.TestCase):
+
+    def setUp(self):
+        # dummy type constructor and data constructors
+        class Type_Const(object): pass
+        self.Type_Const = Type_Const
+        self.M1 = make_data_const("M1", [int], self.Type_Const)
+        self.M2 = make_data_const("M2", [int, str], self.Type_Const)
+        self.M3 = make_data_const("M3", [int, int, int], self.Type_Const)
+
+    def test_adt(self):
+        self.assertTrue(isinstance(self.M1(1), self.Type_Const))
+        self.assertTrue(isinstance(self.M2(1, "abc"), self.Type_Const))
+        self.assertTrue(isinstance(self.M3(1, 2, 3), self.Type_Const))
+
+    def test_derive_eq_data(self):
+        te = TypeError
+        with self.assertRaises(te): self.M1(1) == self.M1(1)
+        with self.assertRaises(te): self.M1(1) != self.M1(1)
+
+        self.M1 = derive_eq_data(self.M1)
+        self.M2 = derive_eq_data(self.M2)
+        self.M3 = derive_eq_data(self.M3)
+
+        self.assertTrue(self.M1(1) == self.M1(1))
+        self.assertTrue(self.M2(1, "b") == self.M2(1, "b"))
+        self.assertTrue(self.M3(1, 2, 3) == self.M3(1, 2, 3))
+
+        self.assertFalse(self.M1(1) != self.M1(1))
+        self.assertFalse(self.M2(1, "b") != self.M2(1, "b"))
+        self.assertFalse(self.M3(1, 2, 3) != self.M3(1, 2, 3))
+        self.assertFalse(self.M1(1) == self.M1(2))
+        self.assertFalse(self.M2(1, "b") == self.M2(4, "b"))
+        self.assertFalse(self.M2(1, "b") == self.M2(1, "a"))
+        self.assertFalse(self.M3(1, 2, 3) == self.M3(1, 9, 3))
+
+    def test_derive_show_data(self):
+        self.assertNotEquals("M1(1)", repr(self.M1(1)))
+
+        self.M1 = derive_show_data(self.M1)
+        self.M2 = derive_show_data(self.M2)
+        self.M3 = derive_show_data(self.M3)
+
+        self.assertEquals("M1(1)", repr(self.M1(1)))
+
+    def test_derive_read_data(self):
+        pass
+
+    def test_derive_ord_data(self):
+        te = TypeError
+        with self.assertRaises(te): self.M1(1) > self.M1(1)
+        with self.assertRaises(te): self.M1(1) >= self.M1(1)
+        with self.assertRaises(te): self.M1(1) < self.M1(1)
+        with self.assertRaises(te): self.M1(1) <= self.M1(1)
+
+        self.M1 = derive_ord_data(self.M1)
+        self.M2 = derive_ord_data(self.M2)
+        self.M3 = derive_ord_data(self.M3)
+
+
+class TestADT(unittest.TestCase):
+
+    def test_data(self):
+        se = SyntaxError
+        with self.assertRaises(se): data(1, "a")
+        with self.assertRaises(se): data("My_adt", 1)
+        with self.assertRaises(se): data("my_adt")
+        with self.assertRaises(se): data("my_adt", "a")
+        with self.assertRaises(se): data("my_adt", chr(110))
+        with self.assertRaises(se): data("My_ADT", "a", "a")
+        with self.assertRaises(se): data("My_ADT", "B")
+        with self.assertRaises(se): data("My_ADT", "a", "B")
+
+        with self.assertRaises(se): d("Just", "a") | 1
+        with self.assertRaises(se): d("Just", "a") | Nothing
+        with self.assertRaises(se): d("Just", "a") | d("Just", "a")
+        with self.assertRaises(se): d("Just", "a") | d("Just")
+        #with self.assertRaises(se): d("just", "a")
+
+        #a = data("M", "a") == d("J", "a") | d("N") & deriving(Eq)
+
+        #with self.assertRaises(se): data("My_ADT", "a") == "1"
+        #with self.assertRaises(se): data("My_ADT", "a") == typ("A") | "1"
+        #with self.assertRaises(se): data("My_ADT", "a") | typ("A")
+        #with self.assertRaises(se): data("My_ADT", "a") == typ("A") == typ("B")
+        #self.assertIsNotNone(data("My_ADT", "a") == typ("A") | typ("B"))
+
+
 class TestEnum(unittest.TestCase):
 
     def test_str(self):
@@ -99,6 +206,8 @@ class TestEnum(unittest.TestCase):
     def test_int(self):
         self.assertEquals(2, succ(1))
         self.assertEquals(1, pred(2))
+        self.assertEquals(4, succ(succ(succ(1))))
+        self.assertEquals(-1, pred(pred(pred(2))))
 
 
 class TestSyntax(unittest.TestCase):
@@ -269,31 +378,6 @@ class TestSyntax(unittest.TestCase):
 
     def test_caseof(self):
         self.assertTrue(~(caseof(1) / 1 % True))
-
-    def test_data(self):
-        se = SyntaxError
-        with self.assertRaises(se): data(1, "a")
-        with self.assertRaises(se): data("My_adt", 1)
-        with self.assertRaises(se): data("my_adt")
-        with self.assertRaises(se): data("my_adt", "a")
-        with self.assertRaises(se): data("my_adt", chr(110))
-        with self.assertRaises(se): data("My_ADT", "a", "a")
-        with self.assertRaises(se): data("My_ADT", "B")
-        with self.assertRaises(se): data("My_ADT", "a", "B")
-
-        with self.assertRaises(se): d("Just", "a") | 1
-        with self.assertRaises(se): d("Just", "a") | Nothing
-        with self.assertRaises(se): d("Just", "a") | d("Just", "a")
-        with self.assertRaises(se): d("Just", "a") | d("Just")
-        #with self.assertRaises(se): d("just", "a")
-
-        #a = data("M", "a") == d("J", "a") | d("N") & deriving(Eq)
-
-        #with self.assertRaises(se): data("My_ADT", "a") == "1"
-        #with self.assertRaises(se): data("My_ADT", "a") == typ("A") | "1"
-        #with self.assertRaises(se): data("My_ADT", "a") | typ("A")
-        #with self.assertRaises(se): data("My_ADT", "a") == typ("A") == typ("B")
-        #self.assertIsNotNone(data("My_ADT", "a") == typ("A") | typ("B"))
 
 
 class TestHOF(unittest.TestCase):
