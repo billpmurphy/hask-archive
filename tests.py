@@ -8,8 +8,8 @@ from hask import guard, c, otherwise, NoGuardMatchException
 from hask import caseof
 from hask import __
 from hask import data, d, deriving
-from hask import LazyList, L
-from hask import F, curry, const, flip, Func
+from hask import List, L
+from hask import F, const, flip, Func
 from hask import map as hmap
 from hask import filter as hfilter
 from hask import id as hid
@@ -298,29 +298,6 @@ class TestSyntax(unittest.TestCase):
 
 class TestHOF(unittest.TestCase):
 
-    def test_curry(self):
-
-        # regular version
-        def prod3(x, y, z):
-            return x * y * z
-
-        # curried version
-        cprod3 = curry(prod3)
-
-        @curry # curried version using decorator
-        def dprod3(x, y, z):
-            return x * y * z
-
-        self.assertEqual(prod3(1, 2, 3), cprod3(1, 2, 3))
-        self.assertEqual(prod3(1, 2, 3), cprod3(1, 2)(3))
-        self.assertEqual(prod3(1, 2, 3), cprod3(1)(2, 3))
-        self.assertEqual(prod3(1, 2, 3), cprod3(1)(2)(3))
-
-        self.assertEqual(prod3(1, 2, 3), dprod3(1, 2, 3))
-        self.assertEqual(prod3(1, 2, 3), dprod3(1, 2)(3))
-        self.assertEqual(prod3(1, 2, 3), dprod3(1)(2, 3))
-        self.assertEqual(prod3(1, 2, 3), dprod3(1)(2)(3))
-
     def test_F(self):
         te = TypeError
 
@@ -599,58 +576,58 @@ class TestMaybe(unittest.TestCase):
                 F(lambda x: Just(x * 10)))
 
 
-class TestLazyList(unittest.TestCase):
+class TestList(unittest.TestCase):
 
     def test_instances(self):
-        self.assertTrue(in_typeclass(LazyList, Show))
-        self.assertTrue(in_typeclass(LazyList, Eq))
-        self.assertTrue(in_typeclass(LazyList, Functor))
-        self.assertTrue(in_typeclass(LazyList, Applicative))
-        self.assertTrue(in_typeclass(LazyList, Monad))
-        self.assertTrue(in_typeclass(LazyList, Traversable))
-        self.assertTrue(in_typeclass(LazyList, Ix))
+        self.assertTrue(in_typeclass(List, Show))
+        self.assertTrue(in_typeclass(List, Eq))
+        self.assertTrue(in_typeclass(List, Functor))
+        self.assertTrue(in_typeclass(List, Applicative))
+        self.assertTrue(in_typeclass(List, Monad))
+        self.assertTrue(in_typeclass(List, Traversable))
+        self.assertTrue(in_typeclass(List, Ix))
 
     def test_ix(self):
         # add more corner cases
 
         ie = IndexError
-        self.assertEqual(3, LazyList(range(10))[3])
-        self.assertEqual(3, LazyList(range(4))[-1])
-        self.assertEqual(3, LazyList((i for i in range(10)))[3])
-        self.assertEqual(3, LazyList((i for i in range(4)))[-1])
-        self.assertEqual(2, LazyList([0, 1, 2, 3])[2])
-        self.assertEqual(2, LazyList([0, 1, 2, 3])[-2])
-        self.assertEqual(1, LazyList((0, 1, 2, 3))[1])
-        self.assertEqual(1, LazyList((0, 1, 2, 3))[-3])
+        self.assertEqual(3, List(range(10))[3])
+        self.assertEqual(3, List(range(4))[-1])
+        self.assertEqual(3, List((i for i in range(10)))[3])
+        self.assertEqual(3, List((i for i in range(4)))[-1])
+        self.assertEqual(2, List([0, 1, 2, 3])[2])
+        self.assertEqual(2, List([0, 1, 2, 3])[-2])
+        self.assertEqual(1, List((0, 1, 2, 3))[1])
+        self.assertEqual(1, List((0, 1, 2, 3))[-3])
 
-        with self.assertRaises(ie): LazyList((0, 1, 2))[3]
-        with self.assertRaises(ie): LazyList((0, 1, 2))[-4]
-        with self.assertRaises(ie): LazyList((i for i in range(3)))[3]
-        with self.assertRaises(ie): LazyList((i for i in range(3)))[-4]
+        with self.assertRaises(ie): List((0, 1, 2))[3]
+        with self.assertRaises(ie): List((0, 1, 2))[-4]
+        with self.assertRaises(ie): List((i for i in range(3)))[3]
+        with self.assertRaises(ie): List((i for i in range(3)))[-4]
 
     def test_eq(self):
-        self.assertEquals(list(range(10)), list(LazyList(range(10))))
-        self.assertEquals(LazyList(range(10)), LazyList(range(10)))
-        self.assertEquals(L[range(10)], LazyList(range(10)))
-        self.assertEquals(LazyList(range(10)),
-                          LazyList((i for i in range(10))))
+        self.assertEquals(list(range(10)), list(List(range(10))))
+        self.assertEquals(List(range(10)), List(range(10)))
+        self.assertEquals(L[range(10)], List(range(10)))
+        self.assertEquals(List(range(10)),
+                          List((i for i in range(10))))
 
     def test_functor(self):
         test_f = lambda x: x ** 2 - 1
         test_g = F(lambda y: y / 4 + 9)
 
         # functor laws
-        self.assertEquals(LazyList(range(10)), LazyList(range(10)) * hid)
-        self.assertEquals(LazyList(range(20)) * (test_f * test_g),
-                          (LazyList(range(20)) * test_g * test_f))
+        self.assertEquals(List(range(10)), List(range(10)) * hid)
+        self.assertEquals(List(range(20)) * (test_f * test_g),
+                          (List(range(20)) * test_g * test_f))
 
-        # `fmap` == `map` for LazyLists
-        self.assertEquals(map(test_f, list(LazyList(range(9)))),
-                          list(LazyList(range(9)) * test_f))
-        self.assertEquals(map(test_f, LazyList(range(9))),
-                          list(LazyList(range(9)) * test_f))
+        # `fmap` == `map` for Lists
+        self.assertEquals(map(test_f, list(List(range(9)))),
+                          list(List(range(9)) * test_f))
+        self.assertEquals(map(test_f, List(range(9))),
+                          list(List(range(9)) * test_f))
         self.assertEquals(map(test_f, range(9)),
-                          list(LazyList(range(9)) * test_f))
+                          list(List(range(9)) * test_f))
 
     def test_list_comp(self):
         # numeric lists
@@ -679,7 +656,7 @@ class TestLazyList(unittest.TestCase):
     def test_hmap(self):
         test_f = lambda x: (x + 100) / 2
 
-        # `map` == `hmap` for LazyLists
+        # `map` == `hmap` for Lists
         self.assertEquals(map(test_f, range(20)),
                           list(hmap(test_f, range(20))))
         self.assertEquals(map(test_f, range(20)),
@@ -693,7 +670,9 @@ class TestLazyList(unittest.TestCase):
         self.assertEquals(filter(test_f, range(20)),
                           filter(test_f, range(20)))
 
-
+    def test_len(self):
+        self.assertEquals(0, len(L[None]))
+        self.assertEquals(3, len(L[1, 2, 3]))
 
 if __name__ == '__main__':
     unittest.main()
