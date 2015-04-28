@@ -48,11 +48,18 @@ class Eq(type_system.Typeclass):
 
 
 class Ord(type_system.Typeclass):
-    def __init__(self, cls, __cmp__):
+    def __init__(self, cls, __lt__):
         if not type_system.in_typeclass(cls, Eq):
             raise TypeError("Class must be a member of Eq")
 
-        type_system.add_attr(cls, "__cmp__", __eq__)
+        __le__ = lambda s, o: s.__lt__(o) or s.__eq__(o)
+        __gt__ = lambda s, o: not s.__lt__(o) and not s.__eq__(o)
+        __ge__ = lambda s, o: not s.__lt__(o) or not s.__eq__(o)
+
+        type_system.add_attr(cls, "__lt__", __lt__)
+        type_system.add_attr(cls, "__le__", __le__)
+        type_system.add_attr(cls, "__gt__", __gt__)
+        type_system.add_attr(cls, "__ge__", __ge__)
         type_system.add_typeclass_flag(cls, self.__class__)
         return
 
@@ -250,11 +257,14 @@ class Monad(type_system.Typeclass):
         return m.bind(fn)
 
 
-
 class Foldable(type_system.Typeclass):
     def __init__(self, cls, _foldr):
         type_system.add_typeclass_flag(cls, self.__class__)
         return
+
+    @staticmethod
+    def foldr(fn, a, lb):
+        return lb.foldr(fn, a)
 
 
 class Traversable(type_system.Typeclass):

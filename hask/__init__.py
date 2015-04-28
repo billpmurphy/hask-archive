@@ -36,6 +36,8 @@ enumFromThen = Enum.enumFromThen
 enumFromTo = Enum.enumFromTo
 enumFromThenTo = Enum.enumFromThenTo
 fmap = Functor.fmap
+foldr = Foldable.foldr
+length = Ix.length
 
 from hask.lang.hof import const
 from hask.lang.hof import flip

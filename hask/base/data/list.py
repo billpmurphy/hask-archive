@@ -11,11 +11,13 @@ def head(xs):
     """
     return xs[0]
 
+
 def last(xs):
     """
     Extract the last element of a list, which must be finite and non-empty.
     """
     return xs[-1]
+
 
 def tail(xs):
     """
@@ -24,12 +26,15 @@ def tail(xs):
     for x in xs[1:]:
         yield x
 
+
 def init(xs):
     """
-    Return all the elements of a list except the last one. The list must be non-empty.
+    Return all the elements of a list except the last one. The list must be
+    non-empty.
     """
     for x in xs[:-1]:
         yield x
+
 
 def uncons(xs):
     """
@@ -39,11 +44,13 @@ def uncons(xs):
     """
     return Just((xs[0], xs[1:])) if xs else Nothing
 
+
 def null(xs):
     """
     Test whether the structure is empty.
     """
     return bool(xs)
+
 
 def length(xs):
     """
@@ -53,11 +60,8 @@ def length(xs):
     """
     return len(x)
 
-## List transformations
 
-# map
-def map(xs):
-    pass
+## List transformations
 
 def reverse(xs):
     """
@@ -66,12 +70,14 @@ def reverse(xs):
     for x in xs[::-1]:
         yield x
 
+
 def intersperse(a, xs):
     """
     The intersperse function takes an element and a list and `intersperses'
     that element between the elements of the list.
     """
     pass
+
 
 def intercalate(xs, xss):
     """
@@ -81,14 +87,17 @@ def intercalate(xs, xss):
     """
     return concat(intersperse(xs, xss))
 
+
 def transpose(xs):
     """
     The transpose function transposes the rows and columns of its argument.
     """
     pass
 
+
 def subsequences(xs):
     pass
+
 
 def permutations(xs):
     pass
@@ -172,11 +181,13 @@ def elem(a, list_a):
     """
     return a in list_a
 
+
 def notElem(a, list_a):
     """
     notElem is the negation of elem.
     """
     return not elem(a, list_a)
+
 
 def lookup(a, assoc_list):
     """
@@ -185,6 +196,7 @@ def lookup(a, assoc_list):
         if key == a:
             return Just(value)
     return Nothing
+
 
 ## Searching with a predicate
 
@@ -199,8 +211,6 @@ def find(f, xs):
             return Just(x)
     return Nothing
 
-def filter(f, xs):
-    pass
 
 def partition(f, xs):
     """
@@ -222,12 +232,14 @@ def lines(s):
     """
     return s.split("\n")
 
+
 def words(s):
     """
     words breaks a string up into a list of words, which were delimited by
     white space.
     """
     return s.split(" ")
+
 
 def unlines(lines):
     """
@@ -236,6 +248,7 @@ def unlines(lines):
     """
     return "\n".join(lines)
 
+
 def unwords(words):
     """
     unwords is an inverse operation to words. It joins words with separating
@@ -243,30 +256,38 @@ def unwords(words):
     """
     return " ".join(words)
 
+
 ## "Set" operations
 
 def nub(xs):
     pass
 
+
 def delete(a, xs):
     pass
+
 
 def diff(xs, ys):
     pass
 
+
 def union(xs, ys):
     pass
 
+
 def intersect(xs, ys):
     pass
+
 
 ## Ordered lists
 
 def sort(xs):
     pass
 
+
 def sortOn(f, xs):
     pass
+
 
 def insert(x, xs):
     """
@@ -287,17 +308,22 @@ def insert(x, xs):
 def nubBy(f, xs):
     pass
 
+
 def deleteBy(f, xs):
     pass
+
 
 def deleteFirstBy(f, xs, ys):
     pass
 
+
 def unionBy(f, xs, ys):
     pass
 
+
 def intersectBy(f, xs, ys):
     pass
+
 
 def groupBy(f, xs):
     pass
@@ -308,11 +334,14 @@ def groupBy(f, xs):
 def sortBy(f, xs):
     pass
 
+
 def insertBy(f, xs):
     pass
 
+
 def maximumBy(f, xs):
     pass
+
 
 def minimumBy(f, xs):
     pass

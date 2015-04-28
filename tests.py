@@ -173,28 +173,20 @@ class TestADT(unittest.TestCase):
 
     def test_data(self):
         se = SyntaxError
-        with self.assertRaises(se): data(1, "a")
-        with self.assertRaises(se): data("My_adt", 1)
-        with self.assertRaises(se): data("my_adt")
-        with self.assertRaises(se): data("my_adt", "a")
-        with self.assertRaises(se): data("my_adt", chr(110))
-        with self.assertRaises(se): data("My_ADT", "a", "a")
-        with self.assertRaises(se): data("My_ADT", "B")
-        with self.assertRaises(se): data("My_ADT", "a", "B")
+        self.assertEquals(("a",), (data . Maybe("a")).type_args)
+        self.assertEquals(("a", "b"), (data . Maybe("a", "b")).type_args)
+        self.assertEquals((), (data . Maybe).type_args)
 
-        with self.assertRaises(se): d("Just", "a") | 1
-        with self.assertRaises(se): d("Just", "a") | Nothing
-        with self.assertRaises(se): d("Just", "a") | d("Just", "a")
-        with self.assertRaises(se): d("Just", "a") | d("Just")
-        #with self.assertRaises(se): d("just", "a")
+    def test_d(self):
+        pass
 
-        #a = data("M", "a") == d("J", "a") | d("N") & deriving(Eq)
+    def test_deriving(self):
+        te = TypeError
+        with self.assertRaises(te): deriving(Num)
+        with self.assertRaises(te): deriving(Ord, Num)
 
-        #with self.assertRaises(se): data("My_ADT", "a") == "1"
-        #with self.assertRaises(se): data("My_ADT", "a") == typ("A") | "1"
-        #with self.assertRaises(se): data("My_ADT", "a") | typ("A")
-        #with self.assertRaises(se): data("My_ADT", "a") == typ("A") == typ("B")
-        #self.assertIsNotNone(data("My_ADT", "a") == typ("A") | typ("B"))
+    def test_holistic(self):
+        pass
 
 
 class TestEnum(unittest.TestCase):
@@ -733,9 +725,9 @@ class TestList(unittest.TestCase):
         self.assertEquals([], list(L[2, 3, ..., 1]))
 
         # character lists
-        #self.assertEquals(10, len(L["a", ...][:10]))
-        #self.assertEquals("abcdefghij", L["a", ...][:10])
-        #self.assertEquals(11, len(L["a", ..., "k"]))
+        self.assertEquals(10, len(L["a", ...][:10]))
+        self.assertEquals("abcdefghij", "".join(L["a", ...][:10]))
+        self.assertEquals(11, len(L["a", ..., "k"]))
 
     def test_hmap(self):
         test_f = lambda x: (x + 100) / 2
@@ -757,6 +749,7 @@ class TestList(unittest.TestCase):
     def test_len(self):
         self.assertEquals(0, len(L[None]))
         self.assertEquals(3, len(L[1, 2, 3]))
+
 
 if __name__ == '__main__':
     unittest.main()

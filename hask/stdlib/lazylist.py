@@ -116,7 +116,7 @@ Iterator(List, List.__next__)
 Ix(List, List.__getitem__)
 
 
-class __list_builder__(syntax.Syntax):
+class __list_comprehension__(syntax.Syntax):
     """
     Syntactic construct for Haskell-style list comprehensions.
     """
@@ -144,7 +144,7 @@ class __list_builder__(syntax.Syntax):
         return List(lst)
 
 
-L = __list_builder__("Syntax error in list comprehension")
+L = __list_comprehension__("Syntax error in list comprehension")
 
 
 ## Haskellified versions of basic list functions

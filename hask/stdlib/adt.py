@@ -9,6 +9,8 @@ from ..lang import type_system
 from ..lang import typeclasses
 
 
+## ADT internals
+
 def _dc_items(dc):
     return tuple((dc.__getattribute__(i) for i in dc.__class__._fields))
 
@@ -19,7 +21,9 @@ def make_type_const(name, typeargs):
     This is simply a new class with a field `_params` that contains the list of
     type parameter names.
     """
-    cls = type(name, (object,), {"_params":tuple(typeargs)})
+    cls = type(name, (object,), {"__params__":tuple(typeargs),
+                                 "__constructors__":(),
+                                 "__typeclasses__":[]})
     return cls
 
 
@@ -102,81 +106,93 @@ def derive_ord_data(data_constructor):
         return all((fn(a, b) for a, b in zip(_dc_items(x), _dc_items(x))))
 
     data_constructor.__lt__ = lambda s, o: zip_cmp(s, o, operator.lt)
-    data_constructor.__gt__ = lambda s, o: zip_cmp(s, o, operator.gt)
-    data_constructor.__le__ = lambda s, o: zip_cmp(s, o, operator.le)
-    data_constructor.__ge__ = lambda s, o: zip_cmp(s, o, operator.ge)
     return data_constructor
 
 
-class data(syntax.Syntax):
+## User-facing syntax
 
-    def __init__(self, dt_name, *type_args):
-        if type(dt_name) != str:
-            raise SyntaxError("Data type name must be str, not %s"
-                              % type(dt_name))
 
-        if not re.match("^[A-Z]\w*$", dt_name):
-            raise SyntaxError("Invalid ADT name.")
+class __dotwrapper__(object):
 
-        for type_arg in type_args:
-            if type(type_arg) != str:
-                raise SyntaxError("Data type name must be string")
+    def __init__(self, cls):
+        self.cls = cls
 
-            for letter in type_arg:
-                if letter not in string.lowercase:
-                    raise SyntaxError("Invalid type variable %s" % type_arg)
+    def __getattr__(self, value):
+        return getattr(self, "cls")(value)
 
-        if len(set(type_args)) != len(type_args):
-            raise SyntaxError("Conflicting definitions for type variable")
 
-        self.dt_name = dt_name
-        self.type_args = type_args
+class __new_tcon__(syntax.Syntax):
+
+    def __init__(self, tcon_name):
+        self.tcon_name = tcon_name
+        self.type_args = ()
 
         syntax_err_msg = "Syntax error in `data`"
         super(self.__class__, self).__init__(syntax_err_msg)
         return
 
-    def __eq__(self, constructors):
+    def __call__(self, *typeargs):
+        self.type_args = typeargs
         return self
 
+    def __eq__(self, ds):
+        newtype = make_type_const(self.tcon_name, self.type_args)
+        dcons = [make_data_const(d[0], d[1], newtype) for d in ds.donstructors]
+
+        for add_tclass in ds.derived_classes:
+            newtype = add_tclass(newtype)
+
+        # make the type constructor and data constructors available globally
+        globals()[self.tcon_name] = newtype
+        for dcon in dcons:
+            globals()[dcon.__name__] = dcon
+        return
 
 
-class d(syntax.Syntax):
+class __new_dcon__(syntax.Syntax):
 
-    def __init__(self, dconstructor, *typeargs):
-        self.dconstructors = [(dconstructor, typeargs)]
-        self.derives = None
+    def __init__(self, dcon_name):
+        self.dcon_name = dcon_name
+        self.dconstructors = [(dcon_name, type_args)]
+        self.type_args = ()
+
+        syntax_err_msg = "Syntax error in `d`"
+        super(self.__class__, self).__init__(syntax_err_msg)
+        return
+
+    def __call__(self, *typeargs):
+        self.type_args = typeargs
+        self.dconstructors = [(self.dcon_name, self.type_args)]
+        return self
 
     def __or__(self, other):
-        if type(other) == str:
-            return self.__or__(self.__class__(other))
-        elif type(other) == self.__class__:
-            self.derives = other.derives
-            self.dconstructors += other.dconstructors
+        self.derives = other.derives
+        self.dconstructors += other.dconstructors
 
-            # Check for duplicate data constructors
-            dconst_names = set(zip(*self.dconstructors)[0])
-            if len(dconst_names) < len(self.dconstructors):
-                raise SyntaxError("Illegal duplicate data constructors")
-        else:
-            raise SyntaxError("Illegal `%s` in data statement" % other)
+        # Check for duplicate data constructors
+        dconst_names = set(zip(*self.dconstructors)[0])
+        if len(dconst_names) < len(self.dconstructors):
+            raise SyntaxError("Illegal duplicate data constructors")
         return self
 
     def __and__(self, derives):
-        self.derives = derives.derived_classes()
+        self.derives = derives.derived_classes
         return self
 
 
+data = __dotwrapper__(__new_tcon__)
+d = __dotwrapper__(__new_dcon__)
+
+
 class deriving(syntax.Syntax):
-    __supported__ = (typeclasses.Show, typeclasses.Eq, typeclasses.Ord,
-                     typeclasses.Read)
+    __supported__ = {typeclasses.Show:derive_show_data,
+                     typeclasses.Eq:derive_eq_data,
+                     typeclasses.Ord:derive_ord_data,
+                     typeclasses.Read:derive_read_data}
 
     def __init__(self, *tclasses):
-        for tclass in tclasses:
+        for tclass in set(tclasses):
             if tclass not in self.__class__.__supported__:
                 raise TypeError("Cannot derive typeclass %s" % tclass)
-        self.tclasses = tclasses
+        self.derived_classes = [__supported__[t] for t in tclasses]
         return
-
-    def derived_classes(self):
-        return self.tclasses

@@ -41,19 +41,18 @@ To run the tests, just `python tests.py`.
 from hask import data, d, deriving
 from hask import Read, Show, Eq, Ord
 
-data("Maybe", "a") == "Nothing" | d("Just", "a") \
-                      & deriving(Read, Show, Eq, Ord)
+data . Maybe("a") == d.Nothing | d.Just("a") & deriving(Read, Show, Eq, Ord)
 ```
 
 Let's break this down a bit. The syntax for defining a new type constructor is:
 
 ```python
-data("Type name", ...type arguments...)
+data . Typename("typearg1", "typearg2")
 ```
 
 This defines a new datatype (i.e., a class) with type parameters.
 
-To define data constructors for this type, use `d`. The name of the data
+To define data constructors for this type, use `d.` The name of the data
 constructor goes first, followed by its fields. Multiple data constructors
 should be separted by `|`. If your data constructor has no fields, you can omit
 `d`. There is no limit to the number of data constructors you can define, and
@@ -61,10 +60,9 @@ there is no limit to the number of fields that each data constructor can have.
 
 
 ```python
-d("Data constructor 1", "arg1") | d("Data constructor 2", "arg1")
+d.DC1("a", "b")
 
-d("DC1", "arg1") | "DC2" | d("DC3, "arg1", "arg2", "arg3")
-
+d.DC1("a", "b")
 ```
 
 
@@ -77,8 +75,7 @@ and `Ord`.
 Putting it all together, here is an sample implementation of `Either`:
 
 ```python
-data("Either", "a", "b") == d("Left", "a") | d("Right", "b") \
-                            & deriving(Read, Show, Eq)
+data . Either("a", "b") == d.Left("a") | d.Right("b") & deriving(Read, Show, Eq)
 ```
 
 We can now use the data structures defined in a `data` statement to create instances of our new types. If our data structure takes no arguments, we can use it just like a variable.
@@ -94,12 +91,12 @@ Nothing
 >>> Just(Just(10))
 Just(Just(10))
 
->>> L(1)
-L(1)
+>>> Left(1)
+Left(1)
 
 
->>> R("a")
-R("a")
+>>> Right("a")
+Right("a")
 ```
 
 You can view the type of an object with `_t` (equivalent to `:t` in ghci).
