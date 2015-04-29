@@ -82,4 +82,3 @@ from hask.stdlib import in_either
 from base import Control
 from base import Data
 from base import Prelude
-from base import Numeric
