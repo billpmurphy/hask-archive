@@ -11,9 +11,7 @@ def make_section(fn):
     def applyier(self, y):
         if isinstance(y, Section):
             return hof.flip(section)
-        else:
-            return hof.F(section, y)
-
+        return hof.F(section, y)
     return applyier
 
 
