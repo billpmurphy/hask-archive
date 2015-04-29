@@ -79,6 +79,7 @@ class TestTypeSystem(unittest.TestCase):
         self.assertEquals(9, f1(5))
         with self.assertRaises(te): f1(1.0)
         with self.assertRaises(te): f1("foo")
+        print f1(5, 4, "SDFSDFSD")
         with self.assertRaises(te): f1(5, 4)
         with self.assertRaises(te): f1()
 
@@ -87,6 +88,7 @@ class TestTypeSystem(unittest.TestCase):
             return (x + y) / 2.0
 
         self.assertEquals(20.0, f2(20, 20))
+        self.assertEquals(20.0, f2(20)(20))
 
         with self.assertRaises(te):
             @sig(int)

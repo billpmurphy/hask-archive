@@ -214,7 +214,7 @@ def arity(f):
     return argcount - count
 
 
-def sig(ty_args):
+def sig2(ty_args):
     """
     Typechecking without currying.
     """
@@ -223,6 +223,39 @@ def sig(ty_args):
             raise TypeError("Signature and function have different arity")
 
         @functools.wraps(func)
+        def _wrapper(*args, **kwargs):
+            # typecheck arguments
+            assertions = zip(ty_args, args)
+            for t, v in assertions:
+                if not isinstance(v, t):
+                    raise TypeError("Typecheck failed: {v} :: {t}"
+                                    .format(v=v, t=t))
+
+            # typecheck return value
+            result = func(*args, **kwargs)
+            if not isinstance(result, ty_args[-1]):
+                raise TypeError("Typecheck failed: {v} :: {t}".format(v=v,t=t))
+            else:
+                return result
+        return _wrapper
+    return decorate
+
+
+from ..lang.hof import F
+
+def sig(ty_args):
+    """
+    Typechecking with currying.
+    """
+
+    def decorate(func):
+        if not len(ty_args) == arity(func) + 1:
+            raise TypeError("Signature and function have different arity")
+
+        func = F(func)
+
+        #@functools.wraps(func)
+        @F
         def _wrapper(*args, **kwargs):
             # typecheck arguments
             assertions = zip(ty_args, args)
