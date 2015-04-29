@@ -1,7 +1,6 @@
 import abc
 import inspect
 import functools
-import re
 import string
 import types
 
@@ -16,7 +15,6 @@ class ArityError(TypeError):
 
 class Typeclass(object):
     __metaclass__ = abc.ABCMeta
-    __instances__ = []
 
 
 def is_builtin(cls):
@@ -186,11 +184,10 @@ class H(object):
         return self.ty_args[ix]
 
 
-## type checking
-
 def arity(f):
     """
-    Find the arity of a function, including functools.partial objects.
+    Find the arity of a function or method, including functools.partial
+    objects.
     """
     if not hasattr(f, "__call__"):
         return 0
@@ -214,61 +211,65 @@ def arity(f):
     return argcount - count
 
 
-def sig2(ty_args):
+###############################################################################
+# Type checking
+###############################################################################
+
+def typecheck_arg(type_a, value):
+    if not isinstance(value, type_a):
+        err = "Typecheck failed: {v} :: {t}"
+        raise TypeError(err.format(v=repr(value), t=type_a))
+    return
+
+
+def sig(ty_args):
     """
     Typechecking without currying.
     """
     def decorate(func):
         if not len(ty_args) == arity(func) + 1:
-            raise TypeError("Signature and function have different arity")
+            raise ArityError("Signature and function have different arity")
 
-        @functools.wraps(func)
         def _wrapper(*args, **kwargs):
             # typecheck arguments
-            assertions = zip(ty_args, args)
-            for t, v in assertions:
-                if not isinstance(v, t):
-                    raise TypeError("Typecheck failed: {v} :: {t}"
-                                    .format(v=v, t=t))
+            for t, v in zip(ty_args[:-1], args):
+                typecheck_arg(t, v)
 
             # typecheck return value
             result = func(*args, **kwargs)
-            if not isinstance(result, ty_args[-1]):
-                raise TypeError("Typecheck failed: {v} :: {t}".format(v=v,t=t))
-            else:
-                return result
+            typecheck_arg(ty_args[-1], result)
+            return result
         return _wrapper
     return decorate
 
 
-from ..lang.hof import F
-
-def sig(ty_args):
+def sig2(ty_args):
     """
     Typechecking with currying.
     """
-
     def decorate(func):
-        if not len(ty_args) == arity(func) + 1:
-            raise TypeError("Signature and function have different arity")
-
-        func = F(func)
-
-        #@functools.wraps(func)
-        @F
         def _wrapper(*args, **kwargs):
             # typecheck arguments
-            assertions = zip(ty_args, args)
-            for t, v in assertions:
-                if not isinstance(v, t):
-                    raise TypeError("Typecheck failed: {v} :: {t}"
-                                    .format(v=v, t=t))
+            for t, v in zip(ty_args[:-1], args):
+                typecheck_arg(t, v)
 
             # typecheck return value
             result = func(*args, **kwargs)
-            if not isinstance(result, ty_args[-1]):
-                raise TypeError("Typecheck failed: {v} :: {t}".format(v=v,t=t))
-            else:
-                return result
-        return _wrapper
-    return decorate
+            typecheck_arg(ty_args[-1], result)
+            return result
+
+        class wrap(object):
+            def __init__(self):
+                self.n = len(ty_args) - 1
+                self.l = ()
+                self.d = {}
+            def __call__(self, *args, **kwargs):
+                self.n -= len(args)
+                self.l += args
+                self.d.update(kwargs)
+                if self.n - len(args) > 0:
+                    return self
+                return _wrapper(*self.l, **self.d)
+
+        return wrap()
+    return lambda fn: decorate(fn)

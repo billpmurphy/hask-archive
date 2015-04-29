@@ -15,11 +15,16 @@ def _apply(wrapper, f, *args, **kwargs):
     result is a callable, continue to apply the rest of the arguments
     (recursively).
     """
-    if not hasattr(f, "__call__"):
+    if not hasattr(f, "__call__") and (args or kwargs):
+        raise ArityError("Too many arguments supplied")
+    elif not hasattr(f, "__call__"):
         return f
 
+    while isinstance(f, Func):
+        f = f.func
 
     f_arity, arglen = arity(f), len(args)
+
     if f_arity == arglen == 0:
         return _apply(wrapper, f(), *args, **kwargs)
     elif f_arity == arglen:
@@ -28,8 +33,8 @@ def _apply(wrapper, f, *args, **kwargs):
     elif f_arity == 0:
         raise ArityError("Too many arguments supplied")
     elif f_arity < arglen:
-        applied = wrapper(f(*args[:f_arity], **kwargs))
-        return applied(*args[f_arity:])
+        applied = f(*args[:f_arity], **kwargs)
+        return _apply(wrapper, applied, *args[f_arity:])
     return wrapper(f, *args, **kwargs)
 
 
@@ -39,21 +44,17 @@ class Func(object):
     instance of functor, and composable with `*`
     """
     def __init__(self, func=lambda x: x, *a, **kw):
-        while isinstance(func, self.__class__):
-            func = func.f
-        self.f = _apply(functools.partial, func, *a, **kw) \
+        self.func = _apply(functools.partial, func, *a, **kw) \
                  if a or kw else func
 
     def __call__(self, *args, **kwargs):
-        if isinstance(self.f, self.__class__):
-            self.f = self.f.f
-            return self.__call__(*args, **kwargs)
-        return _apply(self.__class__, self.f, *args, **kwargs)
+        return _apply(self.__class__, self.func, *args, **kwargs)
 
     def fmap(self, other):
         if not isinstance(other, self.__class__):
             other = self.__class__(other)
-        return self.__class__(lambda x, *a, **kw: self.f(other.f(x, *a, **kw)))
+        return self.__class__(lambda x, *a, **kw: \
+                              self.func(other.func(x, *a, **kw)))
 
     def __rmul__(self, other):
         # override __rmul__ so that we can say `f * g` and compose correctly
@@ -64,19 +65,14 @@ class Func(object):
         """
         `%` is apply operator, equivalent to `$` in Haskell.
         """
-        return self.f(*args)
+        return self.func(*args)
 
 
-def F(func=Func(), *args, **kwargs):
-    # unroll nested instances of Func
-    while isinstance(func, Func):
-        func = func.f
-
-    return _apply(Func, func, *args, **kwargs)
+def F(fn=Func(), *args, **kwargs):
+    return _apply(Func, fn, *args, **kwargs)
 
 
 Functor(Func, Func.fmap)
-
 id = Func()
 
 

@@ -9,7 +9,7 @@ from hask.stdlib.adt import derive_show_data
 from hask.stdlib.adt import derive_read_data
 from hask.stdlib.adt import derive_ord_data
 
-from hask import in_typeclass, arity, sig, typ, H
+from hask import in_typeclass, arity, sig, typ, H, sig2
 from hask import guard, c, otherwise, NoGuardMatchException
 from hask import caseof
 from hask import __
@@ -79,8 +79,8 @@ class TestTypeSystem(unittest.TestCase):
         self.assertEquals(9, f1(5))
         with self.assertRaises(te): f1(1.0)
         with self.assertRaises(te): f1("foo")
-        print f1(5, 4, "SDFSDFSD")
         with self.assertRaises(te): f1(5, 4)
+        with self.assertRaises(te): f1(5, "foo")
         with self.assertRaises(te): f1()
 
         @sig(H() >> int >> int >> float)
@@ -88,7 +88,14 @@ class TestTypeSystem(unittest.TestCase):
             return (x + y) / 2.0
 
         self.assertEquals(20.0, f2(20, 20))
-        self.assertEquals(20.0, f2(20)(20))
+        with self.assertRaises(te): f2(5, "foo")
+
+        @sig(H() >> int >> int >> int >> float)
+        def f3(x, y, z):
+            return (x + y + z) / 3.0
+
+        self.assertEquals(20.0, f3(20, 20, 20))
+        with self.assertRaises(te): f3(5, "foo", 4)
 
         with self.assertRaises(te):
             @sig(int)
@@ -100,12 +107,54 @@ class TestTypeSystem(unittest.TestCase):
             def g(x):
                 return x / 2
 
-        @sig(H() >> float >> float)
+        @sig2(H() >> float >> float)
         def g(x):
-            return x / 2
-        with self.assertRaises(te): g(9)
+            return int(x / 2)
+        with self.assertRaises(te): g(9.0)
 
         @sig(H() >> int >> int)
+        def g(x):
+            return x / 2.0
+        with self.assertRaises(te): g(1)
+
+    def test_curry_sig(self):
+        te = TypeError
+
+        @sig2(H() >> int >> int)
+        def f1(x):
+            return x + 4
+
+        self.assertEquals(9, f1(5))
+        with self.assertRaises(te): f1(1.0)
+        with self.assertRaises(te): f1("foo")
+        with self.assertRaises(te): f1(5, 4)
+        with self.assertRaises(te): f1(5, "foo")
+
+        @sig2(H() >> int >> int >> float)
+        def f2(x, y):
+            return (x + y) / 2.0
+
+        self.assertEquals(15.0, f2(10, 20))
+
+        @sig2(H() >> int >> int >> int >> float)
+        def f3(x, y, z):
+            return (x + y + z) / 3.0
+
+        self.assertEquals(20.0, f3(20, 20, 20))
+        with self.assertRaises(te): f3(5, "foo", 4)
+
+
+        with self.assertRaises(te):
+            @sig2(int)
+            def g(x):
+                return x / 2
+
+        @sig2(H() >> float >> float)
+        def g(x):
+            return int(x / 2)
+        with self.assertRaises(te): g(9.0)
+
+        @sig2(H() >> int >> int)
         def g(x):
             return x / 2.0
         with self.assertRaises(te): g(1)
@@ -458,6 +507,11 @@ class TestHOF(unittest.TestCase):
         self.assertEquals(4, F(F(lambda: lambda: lambda: 4)))
         self.assertEquals(4, F(4))
         self.assertEquals(4, F(F(F(4))))
+
+        # too many arguments
+        with self.assertRaises(te): F(lambda: 1)(1, 2)
+        with self.assertRaises(te): F(lambda x: x)(1, 2)
+        with self.assertRaises(te): F(lambda x, y: x)(1, 2, 3)
 
     def test_F_functor(self):
         te = TypeError
