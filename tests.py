@@ -75,7 +75,6 @@ class TestTypeSystem(unittest.TestCase):
         @sig(H() >> int >> int)
         def f1(x):
             return x + 4
-
         self.assertEquals(9, f1(5))
         with self.assertRaises(te): f1(1.0)
         with self.assertRaises(te): f1("foo")
@@ -93,7 +92,6 @@ class TestTypeSystem(unittest.TestCase):
         @sig(H() >> int >> int >> int >> float)
         def f3(x, y, z):
             return (x + y + z) / 3.0
-
         self.assertEquals(20.0, f3(20, 20, 20))
         with self.assertRaises(te): f3(5, "foo", 4)
 
@@ -123,7 +121,6 @@ class TestTypeSystem(unittest.TestCase):
         @sig2(H() >> int >> int)
         def f1(x):
             return x + 4
-
         self.assertEquals(9, f1(5))
         with self.assertRaises(te): f1(1.0)
         with self.assertRaises(te): f1("foo")
@@ -133,16 +130,14 @@ class TestTypeSystem(unittest.TestCase):
         @sig2(H() >> int >> int >> float)
         def f2(x, y):
             return (x + y) / 2.0
-
         self.assertEquals(15.0, f2(10, 20))
+        self.assertEquals(15.0, f2(10)(20))
 
         @sig2(H() >> int >> int >> int >> float)
         def f3(x, y, z):
             return (x + y + z) / 3.0
-
         self.assertEquals(20.0, f3(20, 20, 20))
         with self.assertRaises(te): f3(5, "foo", 4)
-
 
         with self.assertRaises(te):
             @sig2(int)
@@ -153,6 +148,7 @@ class TestTypeSystem(unittest.TestCase):
         def g(x):
             return int(x / 2)
         with self.assertRaises(te): g(9.0)
+        with self.assertRaises(te): g(9.0, 10.0)
 
         @sig2(H() >> int >> int)
         def g(x):

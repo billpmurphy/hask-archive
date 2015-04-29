@@ -258,18 +258,5 @@ def sig2(ty_args):
             typecheck_arg(ty_args[-1], result)
             return result
 
-        class wrap(object):
-            def __init__(self):
-                self.n = len(ty_args) - 1
-                self.l = ()
-                self.d = {}
-            def __call__(self, *args, **kwargs):
-                self.n -= len(args)
-                self.l += args
-                self.d.update(kwargs)
-                if self.n - len(args) > 0:
-                    return self
-                return _wrapper(*self.l, **self.d)
-
-        return wrap()
-    return lambda fn: decorate(fn)
+        return _wrapper
+    return decorate
