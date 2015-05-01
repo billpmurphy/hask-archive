@@ -4,10 +4,10 @@ import unittest
 from hask.lang.syntax import Syntax
 
 from hask.stdlib.adt import make_data_const
-from hask.stdlib.adt import derive_eq_data
-from hask.stdlib.adt import derive_show_data
-from hask.stdlib.adt import derive_read_data
-from hask.stdlib.adt import derive_ord_data
+from hask.stdlib.adt import derive_eq
+from hask.stdlib.adt import derive_show
+from hask.stdlib.adt import derive_read
+from hask.stdlib.adt import derive_ord
 
 from hask import in_typeclass, arity, sig, typ, H, sig2
 from hask import guard, c, otherwise, NoGuardMatchException
@@ -176,9 +176,7 @@ class TestADTInternals(unittest.TestCase):
         with self.assertRaises(te): self.M1(1) == self.M1(1)
         with self.assertRaises(te): self.M1(1) != self.M1(1)
 
-        self.M1 = derive_eq_data(self.M1)
-        self.M2 = derive_eq_data(self.M2)
-        self.M3 = derive_eq_data(self.M3)
+        self.Type_Const = derive_eq(self.Type_Const)
 
         self.assertTrue(self.M1(1) == self.M1(1))
         self.assertTrue(self.M2(1, "b") == self.M2(1, "b"))
@@ -195,9 +193,7 @@ class TestADTInternals(unittest.TestCase):
     def test_derive_show_data(self):
         self.assertNotEquals("M1(1)", repr(self.M1(1)))
 
-        self.M1 = derive_show_data(self.M1)
-        self.M2 = derive_show_data(self.M2)
-        self.M3 = derive_show_data(self.M3)
+        self.Type_Const = derive_show(self.Type_Const)
 
         self.assertEquals("M1(1)", repr(self.M1(1)))
 
@@ -211,9 +207,7 @@ class TestADTInternals(unittest.TestCase):
         with self.assertRaises(te): self.M1(1) < self.M1(1)
         with self.assertRaises(te): self.M1(1) <= self.M1(1)
 
-        self.M1 = derive_ord_data(self.M1)
-        self.M2 = derive_ord_data(self.M2)
-        self.M3 = derive_ord_data(self.M3)
+        self.Type_Const = derive_ord(self.Type_Const)
 
 
 class TestADT(unittest.TestCase):

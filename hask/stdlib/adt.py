@@ -29,7 +29,9 @@ def make_type_const(name, typeargs):
                                  "__typeclasses__":[]})
 
     # TODO
-    cls.__type__ = lambda self: self.typeargs
+
+    cls._type = lambda self: self.typeargs
+    typeclasses.Typeable(cls, cls._type)
 
     cls.__iter__ = lambda self, other: raise_fn(TypeError)
     cls.__contains__ = lambda self, other: raise_fn(TypeError)
@@ -44,7 +46,6 @@ def make_type_const(name, typeargs):
     cls.__ne__ = lambda self, other: raise_fn(TypeError)
     cls.__repr__ = object.__repr__
     cls.__str__ = object.__str__
-
     return cls
 
 
@@ -62,23 +63,22 @@ def make_data_const(name, fields, type_constructor):
 
     # TODO: make sure __init__ or __new__ is typechecked
 
-    typeclasses.Typeable(cls, cls.__type__)
     return cls
 
 
-def derive_eq_data(data_constructor):
+def derive_eq(type_constructor):
     """
-    Add a default __eq__ method to a data constructor.
+    Add a default __eq__ method to a type constructor.
     """
     def __eq__(self, other):
         return self.__class__ == other.__class__ and \
                all((s == o for s, o in zip(_dc_items(self), _dc_items(other))))
-    data_constructor.__eq__ = __eq__
-    data_constructor.__ne__ = lambda self, other: not __eq__(self, other)
+    type_constructor.__eq__ = __eq__
+    type_constructor.__ne__ = lambda self, other: not __eq__(self, other)
     return data_constructor
 
 
-def derive_show_data(data_constructor):
+def derive_show(type_constructor):
     """
     Add a default __repr__ method to a data constructor.
     """
@@ -87,27 +87,27 @@ def derive_show_data(data_constructor):
             return self.__class__.__name__
         return "%s(%s)" % (self.__class__.__name__,
                            ", ".join(map(repr, _dc_items(self))))
-    data_constructor.__repr__ = __repr__
-    return data_constructor
+    type_constructor.__repr__ = __repr__
+    return type_constructor
 
 
-def derive_read_data(data_constructor):
+def derive_read(type_constructor):
     """
     Add a default __read__ method to a data constructor.
     """
     pass
 
 
-def derive_ord_data(data_constructor):
+def derive_ord(type_constructor):
     """
     Add default comparison operators to a data constructor.
     """
     # compare all of the _fields of two objects
     def zip_cmp(self, other, fn):
-        return all((fn(a, b) for a, b in zip(_dc_items(x), _dc_items(x))))
+        return all((fn(a, b) for a, b in zip(_dc_items(self), _dc_items(other))))
 
-    data_constructor.__lt__ = lambda s, o: zip_cmp(s, o, operator.lt)
-    return data_constructor
+    type_constructor.__lt__ = lambda s, o: zip_cmp(s, o, operator.lt)
+    return type_constructor
 
 
 ## User-facing syntax
@@ -186,10 +186,10 @@ d = __dotwrapper__(__new_dcon__)
 
 
 class deriving(syntax.Syntax):
-    __supported__ = {typeclasses.Show:derive_show_data,
-                     typeclasses.Eq:derive_eq_data,
-                     typeclasses.Ord:derive_ord_data,
-                     typeclasses.Read:derive_read_data}
+    __supported__ = {typeclasses.Show:derive_show,
+                     typeclasses.Eq:derive_eq,
+                     typeclasses.Ord:derive_ord,
+                     typeclasses.Read:derive_read}
 
     def __init__(self, *tclasses):
         for tclass in set(tclasses):
