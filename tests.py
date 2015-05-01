@@ -3,7 +3,7 @@ import unittest
 
 from hask.lang.syntax import Syntax
 
-from hask.stdlib.adt import make_data_const
+from hask.stdlib.adt import make_data_const, make_type_const
 from hask.stdlib.adt import derive_eq
 from hask.stdlib.adt import derive_show
 from hask.stdlib.adt import derive_read
@@ -160,8 +160,7 @@ class TestADTInternals(unittest.TestCase):
 
     def setUp(self):
         # dummy type constructor and data constructors
-        class Type_Const(object): pass
-        self.Type_Const = Type_Const
+        self.Type_Const = make_type_const("Type_Const", [])
         self.M1 = make_data_const("M1", [int], self.Type_Const)
         self.M2 = make_data_const("M2", [int, str], self.Type_Const)
         self.M3 = make_data_const("M3", [int, int, int], self.Type_Const)

@@ -29,7 +29,6 @@ def make_type_const(name, typeargs):
                                  "__typeclasses__":[]})
 
     # TODO
-
     cls._type = lambda self: self.typeargs
     typeclasses.Typeable(cls, cls._type)
 
@@ -59,7 +58,7 @@ def make_data_const(name, fields, type_constructor):
     `namedtuple` such as equality and comparison operators stripped out.
     """
     base = namedtuple(name, ["i%s" % i for i, _ in enumerate(fields)])
-    cls = type(name, (base, type_constructor), {})
+    cls = type(name, (type_constructor, base), {})
 
     # TODO: make sure __init__ or __new__ is typechecked
 
@@ -75,7 +74,7 @@ def derive_eq(type_constructor):
                all((s == o for s, o in zip(_dc_items(self), _dc_items(other))))
     type_constructor.__eq__ = __eq__
     type_constructor.__ne__ = lambda self, other: not __eq__(self, other)
-    return data_constructor
+    return type_constructor
 
 
 def derive_show(type_constructor):
