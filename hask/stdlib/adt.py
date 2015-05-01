@@ -21,9 +21,30 @@ def make_type_const(name, typeargs):
     This is simply a new class with a field `_params` that contains the list of
     type parameter names.
     """
+    def raise_fn(err):
+        raise err()
+
     cls = type(name, (object,), {"__params__":tuple(typeargs),
                                  "__constructors__":(),
                                  "__typeclasses__":[]})
+
+    # TODO
+    cls.__type__ = lambda self: self.typeargs
+
+    cls.__iter__ = lambda self, other: raise_fn(TypeError)
+    cls.__contains__ = lambda self, other: raise_fn(TypeError)
+    cls.__add__ = lambda self, other: raise_fn(TypeError)
+    cls.__rmul__ = lambda self, other: raise_fn(TypeError)
+    cls.__mul__ = lambda self, other: raise_fn(TypeError)
+    cls.__lt__ = lambda self, other: raise_fn(TypeError)
+    cls.__gt__ = lambda self, other: raise_fn(TypeError)
+    cls.__le__ = lambda self, other: raise_fn(TypeError)
+    cls.__ge__ = lambda self, other: raise_fn(TypeError)
+    cls.__eq__ = lambda self, other: raise_fn(TypeError)
+    cls.__ne__ = lambda self, other: raise_fn(TypeError)
+    cls.__repr__ = object.__repr__
+    cls.__str__ = object.__str__
+
     return cls
 
 
@@ -39,27 +60,7 @@ def make_data_const(name, fields, type_constructor):
     base = namedtuple(name, ["i%s" % i for i, _ in enumerate(fields)])
     cls = type(name, (base, type_constructor), {})
 
-    def raise_fn(err):
-        raise err()
-
-    # TODO:
-    # make sure __init__ or __new__ is typechecked
-    cls.__init__ = base.__init__
-    cls.__type__ = lambda self: type_constructor
-
-    cls.__iter__ = lambda self, other: raise_fn(TypeError)
-    cls.__contains__ = lambda self, other: raise_fn(TypeError)
-    cls.__add__ = lambda self, other: raise_fn(TypeError)
-    cls.__rmul__ = lambda self, other: raise_fn(TypeError)
-    cls.__mul__ = lambda self, other: raise_fn(TypeError)
-    cls.__lt__ = lambda self, other: raise_fn(TypeError)
-    cls.__gt__ = lambda self, other: raise_fn(TypeError)
-    cls.__le__ = lambda self, other: raise_fn(TypeError)
-    cls.__ge__ = lambda self, other: raise_fn(TypeError)
-    cls.__eq__ = lambda self, other: raise_fn(TypeError)
-    cls.__ne__ = lambda self, other: raise_fn(TypeError)
-    cls.__repr__ = object.__repr__
-    cls.__str__ = object.__str__
+    # TODO: make sure __init__ or __new__ is typechecked
 
     typeclasses.Typeable(cls, cls.__type__)
     return cls

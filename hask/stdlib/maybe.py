@@ -68,8 +68,6 @@ Applicative(Maybe, Maybe.pure)
 Monad(Maybe, Maybe.bind)
 
 
-## Decorators - need a clever way of making these into a typeclass or something
-
 def in_maybe(fn, *args, **kwargs):
     """
     Apply arguments to a function. If the function call raises an exception,
