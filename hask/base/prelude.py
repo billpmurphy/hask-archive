@@ -1,3 +1,16 @@
+import itertools
+
+from ..stdlib.lazylist import List
+
+
+def map(fn, iterable):
+    return List(itertools.imap(fn, iterable))
+
+
+def filter(fn, iterable):
+    return List(itertools.ifilter(fn, iterable))
+
+
 def repeat(x):
     """
     repeat(x) is an infinite list, with x the value of every element.

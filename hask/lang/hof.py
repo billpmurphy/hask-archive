@@ -1,8 +1,8 @@
 import functools
 
-from ..lang.type_system import arity
-from ..lang.type_system import ArityError
-from ..lang.typeclasses import Functor
+from .type_system import arity
+from .type_system import ArityError
+from .typeclasses import Functor
 
 
 def _apply(wrapper, f, *args, **kwargs):

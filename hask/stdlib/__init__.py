@@ -11,8 +11,6 @@ from adt import deriving
 
 from lazylist import L
 from lazylist import List
-from lazylist import map
-from lazylist import filter
 
 from maybe import Maybe
 from maybe import Just

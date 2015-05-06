@@ -1,3 +1,5 @@
+import sys
+
 import type_system
 from type_system import Typeable
 
@@ -73,24 +75,26 @@ class Bounded(type_system.Typeclass):
 
     @staticmethod
     def maxBound(a):
-        # handle builtins
         if type_system.is_builtin(type(a)):
-            return NotImplemented
+            if type(a) == int:
+                return sys.maxint
+            elif type(a) == float:
+                return sys.float_info.max
         return a.maxBound()
 
     @staticmethod
     def minBound(a):
-        # handle builtins
         if type_system.is_builtin(type(a)):
-            return NotImplemented
+            if type(a) == int:
+                return -sys.maxint - 1
+            elif type(a) == float:
+                return sys.float_info.min
         return a.minBound()
 
 
 class Num(type_system.Typeclass):
 
     def __init__(self, cls):
-        # todo: add checks for magic methods an object should have to be
-        # considered an instance of num
         if not type_system.in_typeclass(cls, Show):
             raise TypeError("Class must be a member of Show")
 
@@ -120,26 +124,20 @@ class Enum(type_system.Typeclass):
 
     @staticmethod
     def toEnum(a):
-        # handle builtins
         if type_system.is_builtin(type(a)):
             if type_system.in_typeclass(type(a), Num):
                 return a
             elif type(a) == str:
                 return ord(a)
-
-        # handle everything else
         return a.toEnum()
 
     @staticmethod
     def fromEnum(a, _return=None):
-        # handle builtins
         if type_system.is_builtin(type(a)):
             if type_system.in_typeclass(_return, Num):
                 return a
             elif _return == str:
                 return chr(a)
-
-        # handle everything else
         elif _return is not None:
             return _return.from_Enum(a)
         return a.fromEnum()
@@ -216,7 +214,6 @@ class Applicative(type_system.Typeclass):
             raise TypeError("Class must be a member of Functor")
 
         def _pure(self, value):
-            # later, will do some typechecking here
             return __pure__(self, value)
 
         type_system.add_attr(cls, "pure", classmethod(_pure))
@@ -240,7 +237,6 @@ class Monad(type_system.Typeclass):
 
         # wrapper around monadic bind
         def _bind(self, fn):
-            # later, will do some typechecking here
             return __bind__(self, fn)
 
         # `>>` syntax for monadic bind

@@ -33,7 +33,7 @@ class List(collections.Sequence):
 
     def eval_all(self):
         """
-        Evaluate the entire list.
+        Evaluate the entire List.
         """
         self.evaluated.extend(self.unevaluated)
         return
@@ -63,8 +63,17 @@ class List(collections.Sequence):
     def bind(self, fn):
         return List(itertools.chain.from_iterable(self.fmap(fn)))
 
+    def foldr(self, fn, a):
+        # note that this is not lazy
+        for i in reversed(self):
+            a = fn(i, a)
+        return a
+
     def __next__(self):
-        next_iter = next(self.unevaluated)
+        try:
+            next_iter = next(self.unevaluated)
+        except StopIteration as si:
+            raise si
         self.evaluated.append(next_iter)
         return next_iter
 
@@ -85,6 +94,9 @@ class List(collections.Sequence):
     def __getitem__(self, ix):
         is_slice = isinstance(ix, slice)
         i = ix.stop if is_slice else ix
+
+        # make sure that the list is evaluated enough to do the indexing, but
+        # not any more than necessary
         if i >= 0:
             while (i+1) > len(self.evaluated):
                 try:
@@ -99,10 +111,11 @@ class List(collections.Sequence):
             istart, istop, istep = ix.indices(len(self.evaluated))
             indices = Enum.enumFromThenTo(istart, istart+istep, istop-istep)
             return [self.evaluated[idx] for idx in indices]
+
         return self.evaluated[ix]
 
 
-## typeclass instances
+## Typeclass instances for list
 
 Read(List)
 Show(List, List.__repr__)
@@ -110,7 +123,7 @@ Eq(List, List.__eq__)
 Functor(List, List.fmap)
 Applicative(List, List.pure)
 Monad(List, List.bind)
-Foldable(List, None) # need to write foldr
+Foldable(List, List.foldr)
 Traversable(List, List.__iter__)
 Iterator(List, List.__next__)
 Ix(List, List.__getitem__)
@@ -145,13 +158,3 @@ class __list_comprehension__(syntax.Syntax):
 
 
 L = __list_comprehension__("Syntax error in list comprehension")
-
-
-## Haskellified versions of basic list functions
-
-def map(fn, iterable):
-    return List(itertools.imap(fn, iterable))
-
-
-def filter(fn, iterable):
-    return List(itertools.ifilter(fn, iterable))

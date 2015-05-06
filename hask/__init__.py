@@ -63,10 +63,8 @@ from hask.stdlib import data
 from hask.stdlib import d
 from hask.stdlib import deriving
 
-from hask.stdlib import L
 from hask.stdlib import List
-from hask.stdlib import map
-from hask.stdlib import filter
+from hask.stdlib import L
 
 from hask.stdlib import Maybe
 from hask.stdlib import Just
@@ -82,3 +80,6 @@ from hask.stdlib import in_either
 from base import Control
 from base import Data
 from base import Prelude
+
+from base.prelude import map
+from base.prelude import filter
