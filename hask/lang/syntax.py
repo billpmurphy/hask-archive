@@ -5,14 +5,15 @@ class Syntax(object):
     object is used with a Python buildin operator. Subclasses may override
     these methods to define what syntax is valid.
     """
-    def __init__(self, err_msg):
-        self._syntax_err_msg = err_msg
+    def __init__(self, err_msg=None):
+        if err_msg is not None:
+            self.syntax_err_msg = err_msg
+        return
 
     def _raise_invalid(self):
-        if hasattr(self, "_syntax_err_msg"):
-            raise SyntaxError(self._syntax_err_msg)
-        else:
-            raise SyntaxError("Syntax error in `%s`" % self.__name__)
+        if hasattr(self, "syntax_err_msg"):
+            raise SyntaxError(self.syntax_err_msg)
+        raise SyntaxError("Syntax error in `%s`" % self.__name__)
 
     __syntaxerr__ = lambda s, *a: s._raise_invalid()
 
