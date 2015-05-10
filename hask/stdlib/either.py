@@ -10,6 +10,26 @@ class Either(object):
     def __init__(self, value):
         self._value = value
 
+    def __eq__(self, other):
+        if self._is_left == other._is_left:
+            return self._value == other._value
+        return False
+
+    def __repr__(self):
+        if self._is_left:
+            return "Left(%s)" % self._value
+        return "Right(%s)" % self._value
+
+    def fmap(self, fn):
+        return self if self._is_left else Right(fn(self._value))
+
+    def pure(self, value):
+        return Right(value)
+
+    def bind(self, fn):
+        return self if self._is_left else fn(self._value)
+
+
 
 class Left(Either):
     def __init__(self, value, is_left=True):
@@ -23,38 +43,13 @@ class Right(Either):
         self._is_left = False
 
 
-
 ## Either instances
 
-def _either_eq(self, other):
-    if self._is_left == other._is_left:
-        return self._value == other._value
-    return False
-
-
-def _either_repr(self):
-    if self._is_left:
-        return "Left(%s)" % self._value
-    return "Right(%s)" % self._value
-
-
-def _either_fmap(self, fn):
-    return self if self._is_left else Right(fn(self._value))
-
-
-def _either_pure(self, value):
-    return Right(value)
-
-
-def _either_bind(self, fn):
-    return self if self._is_left else fn(self._value)
-
-
-Show(Either, _either_repr)
-Eq(Either, _either_eq)
-Functor(Either, _either_fmap)
-Applicative(Either, _either_pure)
-Monad(Either, _either_bind)
+Show(Either, Either.__repr__)
+Eq(Either, Either.__eq__)
+Functor(Either, Either.fmap)
+Applicative(Either, Either.pure)
+Monad(Either, Either.bind)
 
 
 def in_either(fn, *args, **kwargs):
