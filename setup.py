@@ -13,7 +13,7 @@ setup(
         description=description,
         long_description = open('README.md').read(),
         author='Bill Murphy',
-        #author_email='',
+        author_email='billpmurphy92@gmail.com',
         url='https://github.com/billpmurphy/pythaskell',
         packages=['hask'],
         package_data={'': ['LICENSE', 'README.md']},
