@@ -14,6 +14,19 @@ class ArityError(TypeError):
 class Typeclass(object):
     __metaclass__ = abc.ABCMeta
 
+    def __init__(self, cls, dependencies=(), attrs=None):
+        for dep in dependencies:
+            if not in_typeclass(cls, dep):
+                raise TypeError("%s is not a member of %s" %
+                                (cls.__name__, dep.__name__))
+
+        if attrs is not None:
+            for attr_name, attr in attrs.iteritems():
+                add_attr(cls, attr_name, attr)
+
+        add_typeclass_flag(cls, self.__class__)
+        return
+
 
 def is_builtin(cls):
     """
@@ -73,17 +86,6 @@ def add_typeclass_flag(cls, typeclass):
     else:
         cls.__typeclasses__ = [typeclass]
     return
-
-
-class Typeable(Typeclass):
-    """
-    Typeclass for objects that have a type within Hask. This allows the type
-    checker to understand higher-kinded types.
-    """
-    def __init__(self, cls, _type):
-        add_attr(cls, "_type", _type)
-        add_typeclass_flag(cls, self.__class__)
-        return
 
 
 def _t(obj):

@@ -7,9 +7,9 @@ from hask.lang.type_system import H
 from hask.lang.type_system import arity
 from hask.lang.type_system import sig
 from hask.lang.type_system import sig2
-from hask.lang.type_system import Typeable
 from hask.lang.type_system import Typeclass
 
+from hask.lang.typeclasses import Typeable
 from hask.lang.typeclasses import Read
 from hask.lang.typeclasses import Show
 from hask.lang.typeclasses import Eq

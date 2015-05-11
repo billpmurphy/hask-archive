@@ -1,31 +1,37 @@
 import sys
 
-import type_system
-from type_system import Typeable
+from type_system import Typeclass
+from type_system import is_builtin
+from type_system import in_typeclass
 
 
-class Read(type_system.Typeclass):
+class Typeable(Typeclass):
+    """
+    TODO: Deprecate this
+    """
+    def __init__(self, cls, _type):
+        super(Typeable, self).__init__(cls, attrs={"_type":_type})
+        return
+
+
+class Read(Typeclass):
 
     def __init__(self, cls, read=None):
-        if read is None:
-            read = lambda string: eval(string)
-        type_system.add_attr(cls, "read", classmethod(read))
-        type_system.add_typeclass_flag(cls, self.__class__)
+        read = classmethod(lambda s: eval(s) if read is None else read)
+        super(Read, self).__init__(cls, attrs={"read":read})
         return
 
     @staticmethod
     def read(string, _return):
         if _return is not None:
             return _return.__class_.read(string)
-        else:
-            return eval(string)
+        return eval(string)
 
 
-class Show(type_system.Typeclass):
+class Show(Typeclass):
 
-    def __init__(self, cls, __repr__):
-        type_system.add_attr(cls, "__repr__", __repr__)
-        type_system.add_typeclass_flag(cls, self.__class__)
+    def __init__(self, cls, __str__):
+        super(Show, self).__init__(cls, attrs={"__str__":__str__})
         return
 
     @staticmethod
@@ -33,7 +39,7 @@ class Show(type_system.Typeclass):
         return str(a)
 
 
-class Eq(type_system.Typeclass):
+class Eq(Typeclass):
     """
     The Eq class defines equality (==) and inequality (!=). Minimal complete
     definition: __eq__
@@ -43,39 +49,31 @@ class Eq(type_system.Typeclass):
         def __ne__(self, other):
             return not self.__eq__(other)
 
-        type_system.add_attr(cls, "__eq__", __eq__)
-        type_system.add_attr(cls, "__ne__", __ne__)
-        type_system.add_typeclass_flag(cls, self.__class__)
+        super(Eq, self).__init__(cls, attrs={"__eq__":__eq__, "__ne__":__ne__})
         return
 
 
-class Ord(type_system.Typeclass):
+class Ord(Typeclass):
     def __init__(self, cls, __lt__):
-        if not type_system.in_typeclass(cls, Eq):
-            raise TypeError("Class must be a member of Eq")
-
         __le__ = lambda s, o: s.__lt__(o) or s.__eq__(o)
         __gt__ = lambda s, o: not s.__lt__(o) and not s.__eq__(o)
         __ge__ = lambda s, o: not s.__lt__(o) or not s.__eq__(o)
 
-        type_system.add_attr(cls, "__lt__", __lt__)
-        type_system.add_attr(cls, "__le__", __le__)
-        type_system.add_attr(cls, "__gt__", __gt__)
-        type_system.add_attr(cls, "__ge__", __ge__)
-        type_system.add_typeclass_flag(cls, self.__class__)
+        attrs = {"__lt__":__lt__, "__le__":__le__,
+                 "__gt__":__gt__, "__ge__":__ge__}
+        super(Ord, self).__init__(cls, dependencies=[Eq], attrs=attrs)
         return
 
 
-class Bounded(type_system.Typeclass):
+class Bounded(Typeclass):
     def __init__(self, cls, minBound, maxBound):
-        type_system.add_attr(cls, "minBound", minBound)
-        type_system.add_attr(cls, "maxBound", maxBound)
-        type_system.add_typeclass_flag(cls, self.__class__)
+        attrs = {"minBound":minBound, "maxBound":maxBound}
+        super(Bounded, self).__init__(cls, attrs=attrs)
         return
 
     @staticmethod
     def maxBound(a):
-        if type_system.is_builtin(type(a)):
+        if is_builtin(type(a)):
             if type(a) == int:
                 return sys.maxint
             elif type(a) == float:
@@ -84,7 +82,7 @@ class Bounded(type_system.Typeclass):
 
     @staticmethod
     def minBound(a):
-        if type_system.is_builtin(type(a)):
+        if is_builtin(type(a)):
             if type(a) == int:
                 return -sys.maxint - 1
             elif type(a) == float:
@@ -92,40 +90,30 @@ class Bounded(type_system.Typeclass):
         return a.minBound()
 
 
-class Num(type_system.Typeclass):
+class Num(Typeclass):
 
     def __init__(self, cls):
-        if not type_system.in_typeclass(cls, Show):
-            raise TypeError("Class must be a member of Show")
-
-        if not type_system.in_typeclass(cls, Eq):
-            raise TypeError("Class must be a member of Eq")
-
-        type_system.add_typeclass_flag(cls, self.__class__)
+        super(Num, self).__init__(cls, dependencies=[Show, Eq])
         return
 
 
-class RealFloat(type_system.Typeclass):
+class RealFloat(Typeclass):
 
     def __init__(self, cls):
-        if not type_system.in_typeclass(cls, Num):
-            raise TypeError("Class must be a member of Num")
-
-        type_system.add_typeclass_flag(cls, self.__class__)
+        super(RealFloat, self).__init__(cls, dependencies=[Num])
         return
 
 
-class Enum(type_system.Typeclass):
+class Enum(Typeclass):
     def __init__(self, cls, toEnum, fromEnum):
-        type_system.add_attr(cls, "toEnum", toEnum)
-        type_system.add_attr(cls, "fromEnum", fromEnum)
-        type_system.add_typeclass_flag(cls, self.__class__)
+        attrs = {"toEnum":toEnum, "fromEnum":fromEnum}
+        super(Enum, self).__init__(cls, attrs=attrs)
         return
 
     @staticmethod
     def toEnum(a):
-        if type_system.is_builtin(type(a)):
-            if type_system.in_typeclass(type(a), Num):
+        if is_builtin(type(a)):
+            if in_typeclass(type(a), Num):
                 return a
             elif type(a) == str:
                 return ord(a)
@@ -133,8 +121,8 @@ class Enum(type_system.Typeclass):
 
     @staticmethod
     def fromEnum(a, _return=None):
-        if type_system.is_builtin(type(a)):
-            if type_system.in_typeclass(_return, Num):
+        if is_builtin(type(a)):
+            if in_typeclass(_return, Num):
                 return a
             elif _return == str:
                 return chr(a)
@@ -177,25 +165,21 @@ class Enum(type_system.Typeclass):
         return Enum.enumFromThenTo(start, Enum.succ(start), end)
 
 
-class Functor(type_system.Typeclass):
+class Functor(Typeclass):
 
     def __init__(self, cls, __fmap__):
         """
         Transform a class into a member of Functor. The fmap function must be
         supplied when making the class a member of Functor.
         """
-        # wrapper around fmap
-        def _fmap(self, fn):
-            # later, will do some typechecking here
+        def fmap(self, fn):
             return __fmap__(self, fn)
 
         # `*` syntax for fmap
-        def _mul(self, fn):
+        def mul(self, fn):
             return self.fmap(fn)
 
-        type_system.add_attr(cls, "fmap", _fmap)
-        type_system.add_attr(cls, "__mul__", _mul)
-        type_system.add_typeclass_flag(cls, self.__class__)
+        super(Functor, self).__init__(cls, attrs={"fmap":fmap, "__mul__":mul})
         return
 
     @staticmethod
@@ -203,21 +187,19 @@ class Functor(type_system.Typeclass):
         return functor.fmap(fn)
 
 
-class Applicative(type_system.Typeclass):
+class Applicative(Typeclass):
 
     def __init__(self, cls, __pure__):
         """
         Transform a class into a member of Applicative. The pure function must be
         supplied when making the class a member of Applicative.
         """
-        if not type_system.in_typeclass(cls, Functor):
-            raise TypeError("Class must be a member of Functor")
+        @classmethod
+        def pure(cls, value):
+            return __pure__(cls, value)
 
-        def _pure(self, value):
-            return __pure__(self, value)
-
-        type_system.add_attr(cls, "pure", classmethod(_pure))
-        type_system.add_typeclass_flag(cls, self.__class__)
+        super(Applicative, self).__init__(cls, dependencies=[Functor],
+                                          attrs={"pure":pure})
         return
 
     @staticmethod
@@ -225,27 +207,23 @@ class Applicative(type_system.Typeclass):
         return app.__class__.pure(value)
 
 
-class Monad(type_system.Typeclass):
+class Monad(Typeclass):
 
     def __init__(self, cls, __bind__):
         """
         Transform a class into a member of Monad. The bind function must be
         supplied when making the class a member of Monad.
         """
-        if not type_system.in_typeclass(cls, Applicative):
-            raise TypeError("Class must be a member of Applicative")
-
-        # wrapper around monadic bind
-        def _bind(self, fn):
+        def bind(self, fn):
             return __bind__(self, fn)
 
         # `>>` syntax for monadic bind
-        def _rshift(self, fn):
+        def rshift(self, fn):
             return self.bind(fn)
 
-        type_system.add_attr(cls, "bind", _bind)
-        type_system.add_attr(cls, "__rshift__", _rshift)
-        type_system.add_typeclass_flag(cls, self.__class__)
+        attrs = {"bind":bind, "__rshift__":rshift}
+        super(Monad, self).__init__(cls, dependencies=[Applicative],
+                                    attrs=attrs)
         return
 
     @staticmethod
@@ -253,9 +231,9 @@ class Monad(type_system.Typeclass):
         return m.bind(fn)
 
 
-class Foldable(type_system.Typeclass):
-    def __init__(self, cls, _foldr):
-        type_system.add_typeclass_flag(cls, self.__class__)
+class Foldable(Typeclass):
+    def __init__(self, cls, foldr):
+        super(Foldable, self).__init__(cls, attrs={"foldr":foldr})
         return
 
     @staticmethod
@@ -263,49 +241,34 @@ class Foldable(type_system.Typeclass):
         return lb.foldr(fn, a)
 
 
-class Traversable(type_system.Typeclass):
+class Traversable(Typeclass):
 
     def __init__(self, cls, __iter__):
-        if not type_system.in_typeclass(cls, Foldable):
-            raise TypeError("Class must be a member of Foldable")
-
-        if not type_system.in_typeclass(cls, Functor):
-            raise TypeError("Class must be a member of Functor")
-
         def _iter(self):
             return __iter__(self)
 
-        type_system.add_attr(cls, "__iter__", _iter)
-        type_system.add_typeclass_flag(cls, self.__class__)
+        deps = [Foldable, Functor]
+        super(Traversable, self).__init__(cls, dependencies=deps,
+                                          attrs={"__iter__":_iter})
         return
 
 
-class Ix(type_system.Typeclass):
+class Ix(Typeclass):
 
     def __init__(self, cls, __getitem__, __len__=None):
-        if not type_system.in_typeclass(cls, Traversable):
-            raise TypeError("Class must be a member of Traversable")
-
-        def _getitem(self, i):
+        def getitem(self, i):
             return __getitem__(self, i)
 
-        type_system.add_attr(cls, "__getitem__", _getitem)
+        def default_len(self):
+            count = 0
+            for _ in iter(self):
+                count += 1
+            return count
 
-        if __len__ is None:
-            def _default_len(self):
-                """
-                Default length function: Iterate through elements and count
-                them up.
-                """
-                count = 0
-                for _ in iter(self):
-                    count += 1
-                return count
-            type_system.add_attr(cls, "__len__", _default_len)
-        else:
-            type_system.add_attr(cls, "__len__", __len__)
+        __len__ = default_len if __len__ is None else __len__
 
-        type_system.add_typeclass_flag(cls, self.__class__)
+        attrs = {"__len__":__len__, "__getitem__":getitem}
+        super(Ix, self).__init__(cls, dependencies=[Traversable], attrs=attrs)
         return
 
     @staticmethod
@@ -313,15 +276,12 @@ class Ix(type_system.Typeclass):
         return a.__len__()
 
 
-class Iterator(type_system.Typeclass):
+class Iterator(Typeclass):
     def __init__(self, cls, __next__):
-        if not type_system.in_typeclass(cls, Traversable):
-            raise TypeError("Class must be a member of Traversable")
-
         def _next(self):
             return __next__(self)
 
-        type_system.add_attr(cls, "__next__", _next)
-        type_system.add_attr(cls, "next", _next)
-        type_system.add_typeclass_flag(cls, self.__class__)
+        attrs = {"__next__": _next, "next":_next}
+        super(Iterator, self).__init__(cls, dependencies=[Traversable],
+                                       attrs=attrs)
         return

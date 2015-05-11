@@ -668,7 +668,10 @@ class TestMaybe(unittest.TestCase):
         self.assertNotEqual(Just(1), Just("1"))
         self.assertNotEqual(Just(3), Nothing)
         self.assertNotEqual(Nothing, Just(0))
-        self.assertNotEqual(Nothing, None)
+        self.assertNotEqual(Nothing, None) # questionable
+
+        self.assertTrue(Just(1) == Just(1))
+        self.assertFalse(Just(1) == Just(2))
 
         self.assertTrue(Nothing == Nothing or Nothing != Nothing)
         self.assertTrue(Just(1) == Just(1) or Just(1) != Just(1))
