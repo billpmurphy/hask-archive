@@ -4,9 +4,86 @@ import string
 import types
 
 
+###############################################################################
+
+class Lambda(object):
+
+    def __init__(self, v, body):
+        self.v = v
+        self.body = body
+
+    def __str__(self):
+        return "\{v} -> {body}".format(v=self.v, body=self.body)
+
+
+class Ident(object):
+
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return self.name
+
+
+class Apply(object):
+
+    def __init__(self, fn, arg):
+        self.fn = fn
+        self.arg = arg
+
+    def __str__(self):
+        return "({fn} {arg})".format(fn=self.fn, arg=self.arg)
+
+#####
+
+class TypeVariable(object):
+
+    next_variable_id = 0
+    next_variable_name = 'a'
+
+    def __init__(self):
+        self.id = TypeVariable.next_variable_id
+        self.instance = None
+        self.__name = None
+        TypeVariable.next_variable_id += 1
+
+    def _getName(self):
+        return self.name if self.instance is None else str(self.instance)
+
+    def __repr__(self):
+        return "TypeVariable(id = {0})".format(self.id)
+
+
+class TypeOperator(object):
+
+    def __init__(self, name, types):
+        self.name = name
+        self.types = types
+
+    def __str__(self):
+        if num_types == 0:
+            return self.name
+        return "({0} {1})".format(self.name, " ".join(self.types))
+
+
+class Function(TypeOperator):
+
+    def __init__(self, from_type, to_type):
+        super(Function, self).__init__("->", [from_type, to_type])
+
+
+
+
+
+
+
+
+
+###############################################################################
+
+
 class ArityError(TypeError):
     pass
-
 
 
 def _t(obj):
