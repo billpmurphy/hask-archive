@@ -1,8 +1,91 @@
+import abc
 import sys
+import types
 
-from type_system import Typeclass
-from type_system import is_builtin
-from type_system import in_typeclass
+
+# Typeclass infrastructure
+
+__typeclass_flag__ = "__typeclasses__"
+
+
+def is_builtin(cls):
+    """
+    Return True if a type is a Python builtin type, and False otherwise.
+    """
+    b = set((types.NoneType, types.TypeType, types.BooleanType, types.IntType,
+             types.LongType, types.FloatType, types.ComplexType,
+             types.StringType, types.UnicodeType, types.TupleType,
+             types.ListType, types.DictType, types.DictionaryType,
+             types.FunctionType, types.LambdaType, types.GeneratorType,
+             types.CodeType, types.ClassType, types.InstanceType,
+             types.MethodType, types.UnboundMethodType,
+             types.BuiltinFunctionType, types.BuiltinMethodType,
+             types.ModuleType, types.FileType, types.XRangeType,
+             types.EllipsisType, types.TracebackType, types.FrameType,
+             types.BufferType, types.DictProxyType, types.NotImplementedType,
+             types.GetSetDescriptorType, types.MemberDescriptorType))
+    return cls in b
+
+
+def in_typeclass(cls, typeclass):
+    """
+    Return True if cls is a member of typeclass, and False otherwise.
+    Python builtins cannot be typeclasses.
+    """
+    if is_builtin(typeclass):
+       return False
+    elif is_builtin(cls):
+        try:
+            return issubclass(cls, typeclass)
+        except TypeError:
+            return False
+    elif hasattr(cls, __typeclass_flag__):
+        return typeclass in cls.__typeclasses__
+    return False
+
+
+class Typeclass(object):
+    """
+    Base metaclass for Typeclasses.
+    """
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, cls, dependencies=(), attrs=None):
+        for dep in dependencies:
+            if not in_typeclass(cls, dep):
+                raise TypeError("%s is not a member of %s" %
+                                (cls.__name__, dep.__name__))
+
+        if attrs is not None:
+            for attr_name, attr in attrs.iteritems():
+                Typeclass.add_attr(cls, attr_name, attr)
+
+        Typeclass.add_typeclass_flag(cls, self.__class__)
+        return
+
+    @staticmethod
+    def add_attr(cls, attr_name, attr):
+        """
+        Modify an existing class to add an attribute. If the class is a
+        builtin, do nothing.
+        """
+        if not is_builtin(cls):
+            setattr(cls, attr_name, attr)
+        return
+
+    @staticmethod
+    def add_typeclass_flag(cls, typeclass):
+        """
+        Add a typeclass membership flag to a class, signifying that the class
+        belongs to the specified typeclass.
+        """
+        if is_builtin(cls):
+            typeclass.register(cls)
+        elif hasattr(cls, __typeclass_flag__):
+            cls.__typeclasses__.append(typeclass)
+        else:
+            cls.__typeclasses__ = [typeclass]
+        return
 
 
 class Typeable(Typeclass):
@@ -13,6 +96,8 @@ class Typeable(Typeclass):
         super(Typeable, self).__init__(cls, attrs={"_type":_type})
         return
 
+
+# Basic typeclasses
 
 class Read(Typeclass):
 
@@ -54,6 +139,7 @@ class Eq(Typeclass):
 
 
 class Ord(Typeclass):
+
     def __init__(self, cls, __lt__):
         __le__ = lambda s, o: s.__lt__(o) or s.__eq__(o)
         __gt__ = lambda s, o: not s.__lt__(o) and not s.__eq__(o)
@@ -66,6 +152,7 @@ class Ord(Typeclass):
 
 
 class Bounded(Typeclass):
+
     def __init__(self, cls, minBound, maxBound):
         attrs = {"minBound":minBound, "maxBound":maxBound}
         super(Bounded, self).__init__(cls, attrs=attrs)
