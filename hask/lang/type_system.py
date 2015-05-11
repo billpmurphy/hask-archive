@@ -19,18 +19,18 @@ def is_builtin(cls):
     """
     Return True if a type is a Python builtin type, and False otherwise.
     """
-    b = (types.NoneType, types.TypeType, types.BooleanType, types.IntType,
-         types.LongType, types.FloatType, types.ComplexType,
-         types.StringType, types.UnicodeType, types.TupleType,
-         types.ListType, types.DictType, types.DictionaryType,
-         types.FunctionType, types.LambdaType, types.GeneratorType,
-         types.CodeType, types.ClassType, types.InstanceType,
-         types.MethodType, types.UnboundMethodType,
-         types.BuiltinFunctionType, types.BuiltinMethodType,
-         types.ModuleType, types.FileType, types.XRangeType,
-         types.EllipsisType, types.TracebackType, types.FrameType,
-         types.BufferType, types.DictProxyType, types.NotImplementedType,
-         types.GetSetDescriptorType, types.MemberDescriptorType)
+    b = set((types.NoneType, types.TypeType, types.BooleanType, types.IntType,
+             types.LongType, types.FloatType, types.ComplexType,
+             types.StringType, types.UnicodeType, types.TupleType,
+             types.ListType, types.DictType, types.DictionaryType,
+             types.FunctionType, types.LambdaType, types.GeneratorType,
+             types.CodeType, types.ClassType, types.InstanceType,
+             types.MethodType, types.UnboundMethodType,
+             types.BuiltinFunctionType, types.BuiltinMethodType,
+             types.ModuleType, types.FileType, types.XRangeType,
+             types.EllipsisType, types.TracebackType, types.FrameType,
+             types.BufferType, types.DictProxyType, types.NotImplementedType,
+             types.GetSetDescriptorType, types.MemberDescriptorType))
     return cls in b
 
 
@@ -96,68 +96,6 @@ def _t(obj):
 
 
 ## Type system
-
-class Constraint(object):
-    pass
-
-
-class Poly(object):
-    """
-    Class that represents a polymorphic type, identified by a word.
-    """
-    def __init__(self, name):
-        for letter in name:
-            if letter not in string.lowercase:
-                raise SyntaxError("Illegal name for polymorphic variable")
-        self.name = name
-        self.derived_type = None
-        self.__name__ = self.name
-
-    def __eq__(self, other):
-        return self.name == other.name
-
-    def __repr__(self):
-        return "Poly(%s)" % self.name
-
-
-class TypeObject(object):
-    """
-    Wrapper for tuple that represents types, including higher-kinded types.
-    """
-    def __init__(self, *args):
-        if not args:
-            raise TypeError("Cannot have empty typ()")
-
-        args = list(args)
-        for i, arg in enumerate(args):
-            if isinstance(arg, str):
-                args[i] = Poly(arg)
-            elif not isinstance(arg, type):
-                raise TypeError("%s is not a type or a type variable" % arg)
-
-        self.kind = len(args)
-        self.hkt = args if self.kind > 1 else args[0]
-
-        #syntax_err_msg = "Syntax error in `typ`"
-        #super(self.__class__, self).__init__(syntax_err_msg)
-
-    def __eq__(self, other):
-        if other.__class__ == typ:
-            return self.hkt == other.hkt
-        return self.hkt == other
-
-    def __ne__(self, other):
-        return not self == other
-
-    def __repr__(self):
-        if self.kind == 1:
-            return str(self.hkt)
-        return " ".join(map(lambda x: x.__name__, self.hkt))
-
-
-typ = TypeObject
-con = Constraint
-
 
 class H(object):
     """

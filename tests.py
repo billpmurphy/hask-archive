@@ -9,7 +9,7 @@ from hask.lang.adt import derive_show
 from hask.lang.adt import derive_read
 from hask.lang.adt import derive_ord
 
-from hask import in_typeclass, arity, sig, typ, H, sig2
+from hask import in_typeclass, arity, sig, H, sig2
 from hask import guard, c, otherwise, NoGuardMatchException
 from hask import caseof
 from hask import __

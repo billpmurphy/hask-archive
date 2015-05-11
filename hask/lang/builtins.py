@@ -1,7 +1,7 @@
 import collections
 import itertools
 
-from type_system import typ, _t
+from type_system import _t
 from typeclasses import Typeable
 from typeclasses import Enum
 from typeclasses import Num
@@ -54,7 +54,7 @@ class Maybe(object):
         return nothing
 
     def _type(self):
-        return typ(Maybe, self._value.__class__)
+        return (Maybe, self._value.__class__)
 
     def __eq__(self, other):
         if _t(self) != _t(other):
