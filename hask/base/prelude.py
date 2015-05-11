@@ -1,6 +1,6 @@
 import itertools
 
-from ..stdlib.lazylist import List
+from ..lang.builtins import List
 
 
 def map(fn, iterable):

@@ -46,35 +46,32 @@ from hask.lang.hof import id
 from hask.lang.hof import F
 from hask.lang.hof import Func
 
-from hask.lang.section import __
+from hask.lang.builtins import Int
+from hask.lang.builtins import Float
+from hask.lang.builtins import String
+from hask.lang.builtins import List
+from hask.lang.builtins import Maybe
+from hask.lang.builtins import Just
+from hask.lang.builtins import Nothing
+from hask.lang.builtins import in_maybe
+from hask.lang.builtins import Either
+from hask.lang.builtins import Left
+from hask.lang.builtins import Right
+from hask.lang.builtins import in_either
 
-from hask.stdlib import Int
-from hask.stdlib import Float
-from hask.stdlib import String
+from hask.lang.syntax import __
+from hask.lang.syntax import guard
+from hask.lang.syntax import c
+from hask.lang.syntax import otherwise
+from hask.lang.syntax import NoGuardMatchException
+from hask.lang.syntax import L
 
-from hask.stdlib import caseof
+from hask.lang.caseof import caseof
 
-from hask.stdlib import guard
-from hask.stdlib import c
-from hask.stdlib import otherwise
-from hask.stdlib import NoGuardMatchException
+from hask.lang.adt import data
+from hask.lang.adt import d
+from hask.lang.adt import deriving
 
-from hask.stdlib import data
-from hask.stdlib import d
-from hask.stdlib import deriving
-
-from hask.stdlib import List
-from hask.stdlib import L
-
-from hask.stdlib import Maybe
-from hask.stdlib import Just
-from hask.stdlib import Nothing
-from hask.stdlib import in_maybe
-
-from hask.stdlib import Either
-from hask.stdlib import Left
-from hask.stdlib import Right
-from hask.stdlib import in_either
 
 # Haskell base
 from base import Control

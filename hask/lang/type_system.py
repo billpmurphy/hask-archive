@@ -4,8 +4,6 @@ import functools
 import string
 import types
 
-import syntax
-
 
 class ArityError(TypeError):
     pass
@@ -122,7 +120,7 @@ class Poly(object):
         return "Poly(%s)" % self.name
 
 
-class TypeObject(syntax.Syntax):
+class TypeObject(object):
     """
     Wrapper for tuple that represents types, including higher-kinded types.
     """
@@ -140,8 +138,8 @@ class TypeObject(syntax.Syntax):
         self.kind = len(args)
         self.hkt = args if self.kind > 1 else args[0]
 
-        syntax_err_msg = "Syntax error in `typ`"
-        super(self.__class__, self).__init__(syntax_err_msg)
+        #syntax_err_msg = "Syntax error in `typ`"
+        #super(self.__class__, self).__init__(syntax_err_msg)
 
     def __eq__(self, other):
         if other.__class__ == typ:

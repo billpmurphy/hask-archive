@@ -1,6 +1,6 @@
 ### Data.Maybe
-from ...stdlib import Just
-from ...stdlib import Nothing
+from ...lang.builtins import Just
+from ...lang.builtins import Nothing
 
 def isJust(maybe_a):
     return not maybe_a is Nothing

@@ -3,11 +3,11 @@ import unittest
 
 from hask.lang.syntax import Syntax
 
-from hask.stdlib.adt import make_data_const, make_type_const
-from hask.stdlib.adt import derive_eq
-from hask.stdlib.adt import derive_show
-from hask.stdlib.adt import derive_read
-from hask.stdlib.adt import derive_ord
+from hask.lang.adt import make_data_const, make_type_const
+from hask.lang.adt import derive_eq
+from hask.lang.adt import derive_show
+from hask.lang.adt import derive_read
+from hask.lang.adt import derive_ord
 
 from hask import in_typeclass, arity, sig, typ, H, sig2
 from hask import guard, c, otherwise, NoGuardMatchException
