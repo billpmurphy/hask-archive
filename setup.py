@@ -6,11 +6,11 @@ try:
 except ImportError:
     from distutils.core import setup
 
-description = "We put a Haskell in your Python so you can Haskell while you Python."
+des = "We put a Haskell in your Python so you can Haskell while you Python."
 setup(
         name = 'hask',
         version = hask.__version__,
-        description=description,
+        description=des,
         long_description = open('README.md').read(),
         author='Bill Murphy',
         author_email='billpmurphy92@gmail.com',
@@ -25,7 +25,7 @@ setup(
             'Development Status :: 2 - Pre-Alpha',
             'Intended Audience :: Developers',
             'Natural Language :: English',
-            'License :: OSI Approved :: Apache Software License',
+            'License :: OSI Approved :: BSD License',
             'Programming Language :: Python',
             'Programming Language :: Python :: 2.7'
             ),
