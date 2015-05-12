@@ -9,20 +9,22 @@ class Syntax(object):
     """
     Superclass for new syntactic constructs. By default, a piece of syntax
     should raise a syntax error with a standard error message if the syntax
-    object is used with a Python buildin operator. Subclasses may override
+    object is used with a Python builtin operator. Subclasses may override
     these methods to define what syntax is valid.
     """
     def __init__(self, err_msg=None):
         if err_msg is not None:
             self.syntax_err_msg = err_msg
+        else:
+            self.syntax_err_msg = "Syntax error in `%s`" % self.__name__
         return
 
-    def _raise_invalid(self):
-        if hasattr(self, "syntax_err_msg"):
-            raise SyntaxError(self.syntax_err_msg)
-        raise SyntaxError("Syntax error in `%s`" % self.__name__)
+    def raise_invalid(self, msg=None):
+        if msg is not None:
+            raise SyntaxError(msg)
+        raise SyntaxError(self.syntax_err_msg)
 
-    __syntaxerr__ = lambda s, *a: s._raise_invalid()
+    __syntaxerr__ = lambda s, *a: s.raise_invalid()
 
     __len__ = __syntaxerr__
     __getitem__ = __syntaxerr__
@@ -97,7 +99,8 @@ class Syntax(object):
     __ixor__ = __syntaxerr__
 
 
-# Sections
+#=============================================================================#
+# Operator sections
 
 def make_section(fn):
     def section(a, b):
@@ -160,6 +163,7 @@ class Section(Syntax):
 __ = Section("Error in section")
 
 
+#=============================================================================#
 # Guards! Guards!
 
 class NoGuardMatchException(Exception):
@@ -170,34 +174,31 @@ class GuardCondition(Syntax):
     """
     Guard condition.
     """
-
     def __init__(self, fn):
         if not hasattr(fn, "__call__"):
             raise ValueError("Guard condition must be callable")
         self.__func = fn
         self.__return_value = None
         self.__has_return_value = False
-        self.__syntax_err_msg = "Syntax error in guard condition"
-        super(self.__class__, self).__init__(self.__syntax_err_msg)
+        super(self.__class__, self).__init__("Syntax error in guard condition")
 
     def has_return_value(self):
         return self.__has_return_value
 
     def return_value(self):
         if not self.has_return_value():
-            raise SyntaxError("Guard condition does not have return value")
-        else:
-            return self.__return_value
+            self.raise_invalid("Guard condition does not have return value")
+        return self.__return_value
 
     def check(self, *args, **kwargs):
         return self.__func(*args, **kwargs)
 
     def __rshift__(self, value):
         if isinstance(value, c):
-            raise SyntaxError(self.__syntax_err_msg)
+            self.raise_invalid()
 
         if self.has_return_value():
-            raise SyntaxError("Multiple return values in guard condition")
+            self.raise_invalid("Multiple return values in guard condition")
 
         self.__return_value = value
         self.__has_return_value = True
@@ -233,10 +234,10 @@ class guard(Syntax):
         self.__tried_to_match = True
 
         if not isinstance(cond, c):
-            raise SyntaxError("Guard expression contains non-condition")
+            self.raise_invalid("Guard expression contains non-condition")
 
         if not cond.has_return_value():
-            raise SyntaxError("Condition expression is missing return value")
+            self.raise_invalid("Condition expression is missing return value")
 
         if cond.check(self.__value):
             self.__guard_satisfied = True
@@ -245,13 +246,14 @@ class guard(Syntax):
 
     def __invert__(self):
         if not self.__tried_to_match:
-            raise SyntaxError("No conditions in guard expression")
+            self.raise_invalid("No conditions in guard expression")
 
         if self.__guard_satisfied:
             return self.__return_value
         raise NoGuardMatchException("No match found in guard")
 
 
+#=============================================================================#
 # List comprehension
 
 class __list_comprehension__(Syntax):
@@ -277,9 +279,8 @@ class __list_comprehension__(Syntax):
             elif len(lst) == 4 and lst[2] is Ellipsis:
                 return List(Enum.enumFromThenTo(lst[0], lst[1], lst[3]))
 
-            else:
-                raise SyntaxError("Invalid list comprehension")
+            self.raise_invalid()
         return List(lst)
 
 
-L = __list_comprehension__("Syntax error in list comprehension")
+L = __list_comprehension__("Invalid list comprehension")
