@@ -1,13 +1,6 @@
 import functools
+
 import unittest
-
-from hask.lang.syntax import Syntax
-
-from hask.lang.adt import make_data_const, make_type_const
-from hask.lang.adt import derive_eq
-from hask.lang.adt import derive_show
-from hask.lang.adt import derive_read
-from hask.lang.adt import derive_ord
 
 from hask import in_typeclass, arity, sig, H, sig2
 from hask import guard, c, otherwise, NoGuardMatchException
@@ -26,6 +19,221 @@ from hask import Show, Eq, Ord, Bounded, Num
 from hask import Enum, succ, pred
 from hask import Functor, Applicative, Monad
 from hask import Traversable, Ix, Foldable, Iterator
+
+# internals
+from hask.lang.syntax import Syntax
+
+from hask.lang.adt import make_data_const, make_type_const
+from hask.lang.adt import derive_eq
+from hask.lang.adt import derive_show
+from hask.lang.adt import derive_read
+from hask.lang.adt import derive_ord
+
+from hask.lang.hindley_milner import Var
+from hask.lang.hindley_milner import App
+from hask.lang.hindley_milner import Lam
+from hask.lang.hindley_milner import Let
+from hask.lang.hindley_milner import TypeVariable
+from hask.lang.hindley_milner import TypeOperator
+from hask.lang.hindley_milner import Function
+from hask.lang.hindley_milner import analyze
+from hask.lang.hindley_milner import unify
+
+
+class TestHindleyMilner(unittest.TestCase):
+
+    def inference(self, expr):
+        """Type inference succeeded using our toy environment"""
+        self.assertIsNotNone(analyze(expr, self.env))
+        return
+
+    def not_inference(self, expr):
+        """Type inference failed using our toy environment"""
+        with self.assertRaises(TypeError):
+            analyze(expr, self.env)
+        return
+
+    def typecheck(self, expr, expr_type):
+        """Typecheck succeeded using our toy environment"""
+        self.assertIsNone(unify(analyze(expr, self.env), expr_type))
+        return
+
+    def not_typecheck(self, expr, expr_type):
+        """Typecheck failed, but inference succeeded using our toy environment"""
+        self.inference(expr)
+        with self.assertRaises(TypeError):
+            self.typecheck(expr, expr_type)
+        return
+
+    def setUp(self):
+        # some basic types and polymorphic typevars
+        self.var1 = TypeVariable()
+        self.var2 = TypeVariable()
+        self.var3 = TypeVariable()
+        self.var4 = TypeVariable()
+        self.Pair = TypeOperator("*", (self.var1, self.var2))
+        self.Bool = TypeOperator("bool", [])
+        self.Integer = TypeOperator("int", [])
+        self.NoneT = TypeOperator("None", [])
+
+        # toy environment
+        self.env = {"pair" : Function(self.var1, Function(self.var2, self.Pair)),
+                    "True" : TypeOperator("bool", []),
+                    "None"   : self.NoneT,
+                    "id"   : Function(self.var4, self.var4),
+                    "cond" : Function(self.Bool, Function(self.var3,
+                                Function(self.var3, self.var3))),
+                    "zero" : Function(self.Integer, self.Bool),
+                    "pred" : Function(self.Integer, self.Integer),
+                    "times": Function(self.Integer,
+                                Function(self.Integer, self.Integer)),
+                    "4"    : self.Integer,
+                    "1"    : self.Integer }
+
+        # some expressions to play around with
+        self.compose = Lam("f", Lam("g", Lam("arg",
+            App(Var("g"), App(Var("f"), Var("arg"))))))
+        self.pair = App(App(Var("pair"), App(Var("f"), Var("1"))),
+            App(Var("f"), Var("True")))
+        return
+
+    def test_type_inference(self):
+        """Basic type inference in our toy environment"""
+
+        # (* True) ==> TypeError
+        self.not_inference(App(Var("times"), Var("True")))
+
+        # (* True) ==> TypeError (undefined symbol a)
+        self.not_inference(App(Var("times"), Var("a")))
+
+        # \x -> (x 4, x True) ==> TypeError
+        self.not_inference(
+            Lam("x",
+                App(
+                    App(Var("pair"),
+                        App(Var("x"), Var(4))),
+                    App(Var("x"), Var("True")))))
+
+        # \x -> (f 4, f True) ==> TypeError (undefined symbol f)
+        self.not_inference(
+            App(
+                App(Var("pair"), App(Var("f"), Var(4))),
+                App(Var("f"), Var("True"))))
+
+        # \f -> (f f) ==> TypeError (recursive unification)
+        self.not_inference(Lam("f", App(Var("f"), Var("f"))))
+
+        return
+
+    def test_type_checking(self):
+        """Basic type checking in our toy environment"""
+
+        # 1 :: Integer
+        self.typecheck(Var("1"), self.Integer)
+
+        # 1 :: Bool ==> TypeError
+        self.not_typecheck(Var("1"), self.Bool)
+
+        # (\x -> x) :: (a -> a)
+        v = TypeVariable()
+        self.typecheck(
+                Lam("n", Var("n")),
+                Function(v, v))
+
+        # type(id) == type(\x -> x)
+        self.typecheck(
+                Lam("n", Var("n")),
+                self.env["id"])
+
+        # (\x -> x) :: (a -> b)
+        v = TypeVariable()
+        self.typecheck(
+                Lam("n", Var("n")),
+                Function(TypeVariable(), TypeVariable()))
+
+        # (id 1) :: Integer
+        self.typecheck(App(Var("id"), Var("1")), self.Integer)
+
+        # (id 1) :: Bool ==> TypeError
+        self.not_typecheck(App(Var("id"), Var("1")), self.Bool)
+
+        # pred :: (Integer -> Integer)
+        self.typecheck(Var("pred"), Function(self.Integer, self.Integer))
+
+        # (pred 4) :: Integer
+        self.typecheck(
+            App(Var("pred"), Var("1")),
+            self.Integer)
+
+        # (*) :: (Integer -> Integer -> Integer)
+        self.typecheck(
+            Var("times"),
+            Function(self.Integer, Function(self.Integer, self.Integer)))
+
+        # (* 4) :: (Integer -> Integer)
+        self.typecheck(
+            App(Var("times"), Var("4")),
+            Function(self.Integer, self.Integer))
+
+        # (* 4) :: (Bool -> Integer) ==> TypeError
+        self.not_typecheck(
+            App(Var("times"), Var("4")),
+            Function(self.Bool, self.Integer))
+
+        # (* 4) :: (Integer -> a) ==> TypeError
+        self.not_typecheck(
+            App(Var("times"), Var("4")),
+            Function(self.Integer, TypeVariable))
+
+        # ((* 1) 4) :: Integer
+        self.typecheck(
+            App(App(Var("times"), Var("1")), Var("4")),
+            self.Integer)
+
+        # ((* 1) 4) :: Bool ==> TypeError
+        self.not_typecheck(
+            App(App(Var("times"), Var("1")), Var("4")),
+            self.Bool)
+
+        # let g = (\f -> 5) in (g g) :: Integer
+        self.typecheck(
+            Let("g",
+                Lam("f", Var("4")),
+                App(Var("g"), Var("g"))),
+            self.Integer)
+
+        # (. id id) :: (a -> a)
+        d = TypeVariable()
+        self.typecheck(
+            App(App(self.compose, Var("id")), Var("id")),
+            Function(d, d))
+
+        # let polymorphism
+        # let f = (\x -> x) in ((f 4), (f True)) :: (Integer, Bool)
+        self.typecheck(
+            Let("f", Lam("x", Var("x")), self.pair),
+            TypeOperator("*", [self.Integer, self.Bool]))
+
+        # (factorial 4) :: Integer (using letrec)
+        self.typecheck(
+            Let("factorial", # letrec factorial =
+                Lam("n",    # fn n =>
+                    App(
+                        App(   # cond (zero n) 1
+                            App(Var("cond"),     # cond (zero n)
+                                App(Var("zero"), Var("n"))),
+                            Var("1")),
+                        App(    # times n
+                            App(Var("times"), Var("n")),
+                            App(Var("factorial"),
+                                App(Var("pred"), Var("n")))
+                        )
+                    )
+                ),      # in
+                App(Var("factorial"), Var("4"))),
+            self.Integer)
+
+        return
 
 
 class TestTypeSystem(unittest.TestCase):
@@ -115,51 +323,11 @@ class TestTypeSystem(unittest.TestCase):
             return x / 2.0
         with self.assertRaises(te): g(1)
 
-    def test_curry_sig(self):
-        te = TypeError
-
-        @sig2(H() >> int >> int)
-        def f1(x):
-            return x + 4
-        self.assertEquals(9, f1(5))
-        with self.assertRaises(te): f1(1.0)
-        with self.assertRaises(te): f1("foo")
-        with self.assertRaises(te): f1(5, 4)
-        with self.assertRaises(te): f1(5, "foo")
-
-        @sig2(H() >> int >> int >> float)
-        def f2(x, y):
-            return (x + y) / 2.0
-        self.assertEquals(15.0, f2(10, 20))
-        self.assertEquals(15.0, f2(10)(20))
-
-        @sig2(H() >> int >> int >> int >> float)
-        def f3(x, y, z):
-            return (x + y + z) / 3.0
-        self.assertEquals(20.0, f3(20, 20, 20))
-        with self.assertRaises(te): f3(5, "foo", 4)
-
-        with self.assertRaises(te):
-            @sig2(int)
-            def g(x):
-                return x / 2
-
-        @sig2(H() >> float >> float)
-        def g(x):
-            return int(x / 2)
-        with self.assertRaises(te): g(9.0)
-        with self.assertRaises(te): g(9.0, 10.0)
-
-        @sig2(H() >> int >> int)
-        def g(x):
-            return x / 2.0
-        with self.assertRaises(te): g(1)
-
 
 class TestADTInternals(unittest.TestCase):
 
     def setUp(self):
-        # dummy type constructor and data constructors
+        """Dummy type constructor and data constructors"""
         self.Type_Const = make_type_const("Type_Const", [])
         self.M1 = make_data_const("M1", [int], self.Type_Const)
         self.M2 = make_data_const("M2", [int, str], self.Type_Const)
@@ -231,11 +399,11 @@ class TestADT(unittest.TestCase):
 
 class TestEnum(unittest.TestCase):
 
-    def test_str(self):
+    def test_enum_str(self):
         self.assertEquals("b", succ("a"))
         self.assertEquals("a", pred("b"))
 
-    def test_int(self):
+    def test_enum_int(self):
         self.assertEquals(2, succ(1))
         self.assertEquals(1, pred(2))
         self.assertEquals(4, succ(succ(succ(1))))
@@ -308,6 +476,7 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): s ^= 1
 
     def test_section(self):
+        """Operator sections (e.g. `(1+__)` )"""
         # add more
 
         # basic sections
@@ -796,6 +965,7 @@ class TestList(unittest.TestCase):
 
     def test_len(self):
         self.assertEquals(0, len(L[None]))
+        self.assertEquals(1, len(L[None,]))
         self.assertEquals(3, len(L[1, 2, 3]))
 
 

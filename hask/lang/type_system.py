@@ -3,6 +3,66 @@ import functools
 import string
 import types
 
+from hindley_milner import *
+
+#==================================================================#
+# User interface
+
+
+def fromExistingType(t):
+    """Makes a nullary type operator from an existing type.
+
+    Args:
+        t: the unknown type
+    """
+    return TypeOperator(t.__name__, [])
+
+
+class TypedFunc(object):
+
+    def __init__(self, signature, fn):
+        self.typeargs = parse_typeargs(signature)
+        self.signature = make_fn_type(typeargs)
+        self.fn = fn
+        return
+
+    def __call__(self, *args, **kwargs):
+        ap = self.signature
+        for arg in args:
+            if isinstance(arg, self.__class__):
+                arg_ast = arg.signature
+            else:
+                arg_ast = Var(arg)
+            ap = App(ap, arg_ast)
+
+        # typecheck, raising a TypeError if things don't check
+        t = analyze(ap, globals()) #need to supply environment
+        fn = self.fn.__call__(*args, **kwargs)
+        return self.__class__(t, fn)
+
+    def __str__(self):
+        return "%s :: %s" % (self.fn.__name__, self.signature)
+
+    @staticmethod
+    def parse_typeargs(signature):
+        typeargs = [None] * len(signature)
+        typevars = {s:TypeVariable() for s in signature if type(s) == str}
+
+        for i, s in enumerate(signature):
+            if isinstance(s, str):
+                typeargs[i] = typevars[s]
+            elif isinstance(s, self.__class__):
+                return s.signature
+            else:
+                typeargs[i] = fromExistingType(s)
+        return typeargs
+
+
+def sig(signature):
+    def decorator(fn):
+        return TypedFunc(signature, fn)
+    return decorator
+
 
 ##############################################################################
 

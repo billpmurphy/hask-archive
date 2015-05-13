@@ -1,19 +1,10 @@
 # based on implementation of Hindley-Milner for OWL BASIC by Robert Smallshire
 
+from __future__ import print_function
 
 #=============================================================================#
 # Class definitions for the AST nodes which comprise the little language for
 # which types will be inferred
-
-
-class Var(object):
-    """Wrapper for Python values"""
-
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return str(self.value)
 
 
 class Lam(object):
@@ -27,8 +18,8 @@ class Lam(object):
         return "(\{v} -> {body})".format(v=self.v, body=self.body)
 
 
-class Ident(object):
-    """Identfier"""
+class Var(object):
+    """Variable"""
 
     def __init__(self, name):
         self.name = name
@@ -49,7 +40,7 @@ class App(object):
 
 
 class Let(object):
-    """Let binding (unused)"""
+    """Let binding (always recursive)"""
 
     def __init__(self, v, defn, body):
         self.v = v
@@ -123,8 +114,7 @@ class Function(TypeOperator):
         super(Function, self).__init__("->", [from_type, to_type])
 
 
-
-#=======================================================#
+#=============================================================================#
 # Type inference machinery
 
 def analyze(node, env, non_generic=None):
@@ -156,8 +146,6 @@ def analyze(node, env, non_generic=None):
         non_generic = set()
 
     if isinstance(node, Var):
-        return fromExistingType(type(node.value))
-    elif isinstance(node, Ident):
         return getType(node.name, env, non_generic)
     elif isinstance(node, App):
         fun_type = analyze(node.fn, env, non_generic)
@@ -200,15 +188,6 @@ def getType(name, env, non_generic):
     if name in env:
         return fresh(env[name], non_generic)
     raise TypeError("Undefined symbol {0}".format(name))
-
-
-def fromExistingType(t):
-    """Makes a nullary type operator from an unknown type.
-
-    Args:
-        t: the unknown type
-    """
-    return TypeOperator(t.__name__, [])
 
 
 def fresh(t, non_generic):
@@ -310,7 +289,7 @@ def isGeneric(v, non_generic):
         non_generic: A set of non-generic TypeVariables
 
     Returns:
-        True if v is a generic variable, otherwise False
+        "true" if v is a generic variable, otherwise False
     """
     return not occursIn(v, non_generic)
 
@@ -325,11 +304,11 @@ def occursInType(v, type2):
         type2: The type in which to search
 
     Returns:
-        True if v occurs in type2, otherwise False
+        "true" if v occurs in type2, otherwise False
     """
     pruned_type2 = prune(type2)
     if pruned_type2 == v:
-        return True
+        return "true"
     elif isinstance(pruned_type2, TypeOperator):
         return occursIn(v, pruned_type2.types)
     return False
@@ -343,60 +322,9 @@ def occursIn(t, types):
         types: The sequence of types in which to search
 
     Returns:
-        True if t occurs in any of types, otherwise False
+        "true" if t occurs in any of types, otherwise False
     """
     return any(occursInType(t, t2) for t2 in types)
-
-
-
-#==================================================================#
-# User interface
-
-
-class TypedFunc(object):
-
-    def __init__(self, signature, fn):
-        self.typeargs = parse_typeargs(signature)
-        self.signature = make_fn_type(typeargs)
-        self.fn = fn
-        return
-
-    def __call__(self, *args, **kwargs):
-        ap = self.signature
-        for arg in args:
-            if isinstance(arg, self.__class__):
-                arg_ast = arg.signature
-            else:
-                arg_ast = Ident(arg)
-            ap = App(ap, arg_ast)
-
-        # typecheck, raising a TypeError if things don't check
-        t = analyze(ap, globals()) #need to supply environment
-        fn = self.fn.__call__(*args, **kwargs)
-        return self.__class__(t, fn)
-
-    def __str__(self):
-        return "%s :: %s" % (self.fn.__name__, self.signature)
-
-    @staticmethod
-    def parse_typeargs(signature):
-        typeargs = [None] * len(signature)
-        typevars = {s:TypeVariable() for s in signature if type(s) == str}
-
-        for i, s in enumerate(signature):
-            if isinstance(s, str):
-                typeargs[i] = typevars[s]
-            elif isinstance(s, self.__class__):
-                return s.signature
-            else:
-                typeargs[i] = fromExistingType(s)
-        return typeargs
-
-
-def sig(signature):
-    def decorator(fn):
-        return TypedFunc(signature, fn)
-    return decorator
 
 
 #==================================================================#
@@ -432,106 +360,87 @@ def main():
     Returns:
         None
     """
-
+    # some basic types and polymorphic typevars
     var1 = TypeVariable()
     var2 = TypeVariable()
     var3 = TypeVariable()
     var4 = TypeVariable()
-    pair_type = TypeOperator("*", (var1, var2))
-    Bool = fromExistingType(bool)
-    Integer = fromExistingType(int)
+    Pair = TypeOperator("*", (var1, var2))
+    Bool = TypeOperator(bool.__name__, [])
+    Integer = TypeOperator(int.__name__, [])
+    NoneT = TypeOperator("None", [])
 
-    my_env = { "pair" : Function(var1, Function(var2, pair_type)),
-               "id"   : Function(var4, var4),
-               "cond" : Function(Bool, Function(var3, Function(var3, var3))),
-               "zero" : Function(Integer, Bool),
-               "pred" : Function(Integer, Integer),
-               "times": Function(Integer, Function(Integer, Integer)),
-               "func" : Function(Integer, Function(Integer, Integer)) }
+    # toy environment
+    my_env = {"pair" : Function(var1, Function(var2, Pair)),
+                "true"   : Bool,
+                None   : NoneT,
+                "id"   : Function(var4, var4),
+                "cond" : Function(Bool, Function(var3,
+                            Function(var3, var3))),
+                "zero" : Function(Integer, Bool),
+                "pred" : Function(Integer, Integer),
+                "times": Function(Integer,
+                            Function(Integer, Integer)),
+                4      : Integer,
+                1      : Integer, }
 
-    pair = App(App(Ident("pair"), App(Ident("f"), Var(4))),
-                                  App(Ident("f"), Var(True)))
+    pair = App(App(Var("pair"), App(Var("f"), Var(1))),
+                                  App(Var("f"), Var("true")))
+    compose = Lam("f", Lam("g", Lam("arg", App(Var("g"), App(Var("f"), Var("arg"))))))
 
-    compose = Lam("f", Lam("g", Lam("arg", App(Ident("g"), App(Ident("f"), Ident("arg"))))))
-
-
-    #func = Lam(None, Lam(None, Ident(None)))
-    #func = NoneIdent("a")
 
     examples = [
-            # factorial
-            Let("factorial", # letrec factorial =
-                Lam("n",    # fn n =>
-                    App(
-                        App(   # cond (zero n) 1
-                            App(Ident("cond"),     # cond (zero n)
-                                App(Ident("zero"), Ident("n"))),
-                            Var(1)),
-                        App(    # times n
-                            App(Ident("times"), Ident("n")),
-                            App(Ident("factorial"),
-                                App(Ident("pred"), Ident("n")))
-                        )
-                    )
-                ),      # in
-                App(Ident("factorial"), Var(5))
-            ),
 
             # Should fail:
             # fn x => (pair(x(3) (x(true)))
             Lam("x",
                 App(
-                    App(Ident("pair"),
-                        App(Ident("x"), Var(3))),
-                    App(Ident("x"), Var(True)))),
+                    App(Var("pair"),
+                        App(Var("x"), Var(4))),
+                    App(Var("x"), Var("true")))),
 
             # pair(f(3), f(true))
             App(
-                App(Ident("pair"), App(Ident("f"), Var(4))),
-                App(Ident("f"), Var(True))),
+                App(Var("pair"), App(Var("f"), Var(4))),
+                App(Var("f"), Var("true"))),
 
             # let f = (fn x => x) in ((pair (f 4)) (f true))
-            Let("f", Lam("x", Ident("x")), pair),
+            Let("f", Lam("x", Var("x")), pair),
 
             # fn f => f f (fail)
-            Lam("f", App(Ident("f"), Ident("f"))),
+            Lam("f", App(Var("f"), Var("f"))),
 
             # let g = fn f => 5 in g g
             Let("g",
-                Lam("f", Var(5)),
-                App(Ident("g"), Ident("g"))),
+                Lam("f", Var(4)),
+                App(Var("g"), Var("g"))),
 
             # example that demonstrates generic and non-generic variables:
-            # fn g => let f = fn x => g in pair (f 3, f true)
+            # \g -> let f = (\x -> g) in pair (f 4, f "true")
             Lam("g",
                    Let("f",
-                       Lam("x", Ident("g")),
+                       Lam("x", Var("g")),
                        App(
-                            App(Ident("pair"),
-                                  App(Ident("f"), Var(3))
+                            App(Var("pair"),
+                                  App(Var("f"), Var(4))
                             ),
-                            App(Ident("f"), Var(True))))),
+                            App(Var("f"), Var("true"))))),
+
 
             # Function composition
             # fn f (fn g (fn arg (f g arg)))
-            Lam(Ident("a"), Var(10)),
-            Lam(Ident("a"), Lam(Ident("b"), Var(10))),
+            Lam(Var("a"), Var(4)),
+            Lam(Var("a"), Lam(Var("b"), Var(4))),
             compose,
-            App(App(compose, Ident("id")), Ident("id")),
-            Ident("id"),
-            Ident("a"),
-            Var(1),
-            App(Ident("pred"), Var(1)),
-            App(Ident("pred"), Ident("a")),
+            App(App(compose, Var("id")), Var("id")),
+            Var("id"),
+            Var("a"),
+            Var(4),
+            App(Var("pred"), Var(1)),
+            App(Var("pred"), Var("a")),
             Lam("a", Lam("b", Lam("c", Lam("d", Var(None))))),
-            App(Ident("times"), Var(True)),
-            App(Ident("times"), Var(9)),
-            App(App(Ident("times"), Var(9)), Var(0)),
-
-            Ident("func"),
-            App(Ident("func"), Var(1)),
-            App(App(Ident("func"), Var(1)), Var(1))
-
+            App(Var("times"), Var(1)),
+            App(Var("times"), Var("true")),
     ]
 
     for example in examples:
