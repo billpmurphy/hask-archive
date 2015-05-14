@@ -66,7 +66,9 @@ class TestHindleyMilner(unittest.TestCase):
         return
 
     def setUp(self):
-        # some basic types and polymorphic typevars
+        """Create some basic types and polymorphic typevars, a toy environment,
+           and some AST nodes
+        """
         self.var1 = TypeVariable()
         self.var2 = TypeVariable()
         self.var3 = TypeVariable()
@@ -78,8 +80,8 @@ class TestHindleyMilner(unittest.TestCase):
 
         # toy environment
         self.env = {"pair" : Function(self.var1, Function(self.var2, self.Pair)),
-                    "True" : TypeOperator("bool", []),
-                    "None"   : self.NoneT,
+                    "True" : self.Bool,
+                    "None" : self.NoneT,
                     "id"   : Function(self.var4, self.var4),
                     "cond" : Function(self.Bool, Function(self.var3,
                                 Function(self.var3, self.var3))),
@@ -92,9 +94,10 @@ class TestHindleyMilner(unittest.TestCase):
 
         # some expressions to play around with
         self.compose = Lam("f", Lam("g", Lam("arg",
-            App(Var("g"), App(Var("f"), Var("arg"))))))
-        self.pair = App(App(Var("pair"), App(Var("f"), Var("1"))),
-            App(Var("f"), Var("True")))
+                            App(Var("g"), App(Var("f"), Var("arg"))))))
+        self.pair = App(App(Var("pair"),
+                         App(Var("f"), Var("1"))),
+                         App(Var("f"), Var("True")))
         return
 
     def test_type_inference(self):
@@ -106,7 +109,8 @@ class TestHindleyMilner(unittest.TestCase):
         # (* True) ==> TypeError (undefined symbol a)
         self.not_inference(App(Var("times"), Var("a")))
 
-        # \x -> (x 4, x True) ==> TypeError
+        # monomorphism restriction
+        # \x -> ((x 4), (x True)) ==> TypeError
         self.not_inference(
             Lam("x",
                 App(
@@ -114,7 +118,7 @@ class TestHindleyMilner(unittest.TestCase):
                         App(Var("x"), Var(4))),
                     App(Var("x"), Var("True")))))
 
-        # \x -> (f 4, f True) ==> TypeError (undefined symbol f)
+        # \x -> ((f 4), (f True)) ==> TypeError (undefined symbol f)
         self.not_inference(
             App(
                 App(Var("pair"), App(Var("f"), Var(4))),
@@ -122,7 +126,6 @@ class TestHindleyMilner(unittest.TestCase):
 
         # \f -> (f f) ==> TypeError (recursive unification)
         self.not_inference(Lam("f", App(Var("f"), Var("f"))))
-
         return
 
     def test_type_checking(self):
@@ -146,7 +149,6 @@ class TestHindleyMilner(unittest.TestCase):
                 self.env["id"])
 
         # (\x -> x) :: (a -> b)
-        v = TypeVariable()
         self.typecheck(
                 Lam("n", Var("n")),
                 Function(TypeVariable(), TypeVariable()))
@@ -202,11 +204,48 @@ class TestHindleyMilner(unittest.TestCase):
                 App(Var("g"), Var("g"))),
             self.Integer)
 
-        # (. id id) :: (a -> a)
+        # (.) :: (a -> b) -> (b -> c) -> (a -> c)
+        a, b, c = TypeVariable(), TypeVariable(), TypeVariable()
+        self.typecheck(
+                self.compose,
+                Function(Function(a, b),
+                         Function(Function(b, c), Function(a, c))))
+
+        # composing `id` with `id` == `id`
+        # ((. id) id) :: (a -> a)
         d = TypeVariable()
         self.typecheck(
             App(App(self.compose, Var("id")), Var("id")),
             Function(d, d))
+
+        # basic closure
+        #((\x -> (\y -> ((* x) y))) 1) :: (Integer -> Integer)
+        self.typecheck(
+                App(
+                    Lam("x", Lam("y",
+                        App(App(Var("times"), Var("x")), Var("y")))),
+                    Var("1")),
+                Function(self.Integer, self.Integer))
+
+        # lambdas have lexical scope
+        # (((\x -> (\x -> x)) True) None) :: NoneT
+        self.typecheck(
+                App(App(
+                    Lam("x", Lam("x", Var("x"))),
+                    Var("True")), Var("None")),
+                self.NoneT)
+
+        # basic let expression
+        # let a = times in ((a 1) 4) :: Integer
+        self.typecheck(
+                Let("a", Var("times"), App(App(Var("a"), Var("1")), Var("4"))),
+                self.Integer)
+
+        # let has lexical scope
+        # let a = 1 in (let a = None in a) :: NoneT
+        self.typecheck(
+                Let("a", Var("1"), Let("a", Var("None"), Var("a"))),
+                self.NoneT)
 
         # let polymorphism
         # let f = (\x -> x) in ((f 4), (f True)) :: (Integer, Bool)
@@ -214,7 +253,8 @@ class TestHindleyMilner(unittest.TestCase):
             Let("f", Lam("x", Var("x")), self.pair),
             TypeOperator("*", [self.Integer, self.Bool]))
 
-        # (factorial 4) :: Integer (using letrec)
+        # recursive let
+        # (factorial 4) :: Integer
         self.typecheck(
             Let("factorial", # letrec factorial =
                 Lam("n",    # fn n =>
