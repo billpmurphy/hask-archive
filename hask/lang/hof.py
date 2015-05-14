@@ -40,8 +40,13 @@ def _apply(wrapper, f, *args, **kwargs):
 
 class Func(object):
     """
-    Haskell-ified wrapper around function objects that is always curried, an
-    instance of functor, and composable with `*`
+    Wrapper around function objects that is always curried.
+
+    `*` is the compose operator
+    `%` is the apply operator
+
+    Typeclass instances:
+    Functor
     """
     def __init__(self, func=lambda x: x, *a, **kw):
         self.func = _apply(functools.partial, func, *a, **kw) \
