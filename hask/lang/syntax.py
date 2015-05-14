@@ -178,8 +178,7 @@ class GuardCondition(Syntax):
         if not hasattr(fn, "__call__"):
             raise ValueError("Guard condition must be callable")
         self.__func = fn
-        self.__return_value = None
-        self.__has_return_value = False
+        self.reset()
         super(self.__class__, self).__init__("Syntax error in guard condition")
 
     def has_return_value(self):
@@ -192,6 +191,11 @@ class GuardCondition(Syntax):
 
     def check(self, *args, **kwargs):
         return self.__func(*args, **kwargs)
+
+    def reset(self):
+        self.__return_value = None
+        self.__has_return_value = False
+        return
 
     def __rshift__(self, value):
         if isinstance(value, c):
@@ -206,28 +210,39 @@ class GuardCondition(Syntax):
 
 
 c = GuardCondition
-otherwise = lambda: c(lambda _: True)
+otherwise = c(lambda _: True)
 
 
 class guard(Syntax):
     """
     Usage:
 
-    >>> ~(guard(8)
-    ...    | c(lambda x: x < 5) >> "less than 5"
-    ...    | c(lambda x: x < 9) >> "less than 9"
-    ...    | otherwise          >> "unsure"
-    ... )
+    ~(guard(<expr to test>)
+        | c(<test 1>) >> <return value 1>
+        | c(<test 2>) >> <return value 2>
+        | otherwise() >> <return value 3>
+    )
+
+    For example:
+
+    ~(guard(8)
+         | c(lambda x: x < 5) >> "less than 5"
+         | c(lambda x: x < 9) >> "less than 9"
+         | otherwise()        >> "unsure"
+    )
     """
     def __init__(self, value):
         self.__value = value
         self.__tried_to_match = False
         self.__guard_satisfied = False
+        self.conds = []
 
         self.__syntax_err_msg = "Syntax error in guard"
         super(self.__class__, self).__init__(self.__syntax_err_msg)
 
     def __or__(self, cond):
+        self.conds.append(cond)
+
         if self.__guard_satisfied:
             return self
 
@@ -245,6 +260,9 @@ class guard(Syntax):
         return self
 
     def __invert__(self):
+        for cond in self.conds:
+            cond.reset()
+
         if not self.__tried_to_match:
             self.raise_invalid("No conditions in guard expression")
 

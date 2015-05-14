@@ -566,9 +566,33 @@ class TestSyntax(unittest.TestCase):
         self.assertEquals(4, (__ + 1) * (__ * 3) % 1)
 
     def test_guard(self):
-        # syntax checks
         se = SyntaxError
         me = NoGuardMatchException
+
+        self.assertTrue(~(guard(1)
+            | c(lambda x: x == 1) >> True
+            | otherwise           >> False))
+        self.assertFalse(~(guard(2)
+            | c(lambda y: y == 1) >> True
+            | otherwise           >> False))
+        self.assertFalse(~(guard(2)
+            | otherwise >> False))
+        self.assertFalse(~(guard(2)
+            | otherwise           >> False
+            | c(lambda x: x == 2) >> True))
+        self.assertEquals("foo", ~(guard(1)
+            | c(lambda x: x > 1)  >> "bar"
+            | c(lambda x: x < 1)  >> "baz"
+            | c(lambda x: x == 1) >> "foo"
+            | otherwise           >> "Err"))
+
+        with self.assertRaises(me): ~(guard(1) | c(lambda x: x == 2) >> 1)
+
+        # syntax checks
+        self.assertTrue(~(guard(1)
+            | otherwise >> 1))
+        self.assertFalse(otherwise.has_return_value())
+
         with self.assertRaises(se): c(lambda x: x == 10) + c(lambda _: 1)
         with self.assertRaises(se): c(lambda x: x == 10) - c(lambda _: 1)
         with self.assertRaises(se): c(lambda x: x == 10) * c(lambda _: 1)
@@ -581,8 +605,8 @@ class TestSyntax(unittest.TestCase):
 
         with self.assertRaises(se): c(lambda x: x == 10) >> c(lambda _: 1)
         with self.assertRaises(se): c(lambda x: x > 1) | c(lambda x: x < 1)
-        with self.assertRaises(se): otherwise() >> c(lambda _: 1)
-        with self.assertRaises(se): otherwise() | c(lambda x: x < 1)
+        with self.assertRaises(se): otherwise >> c(lambda _: 1)
+        with self.assertRaises(se): otherwise | c(lambda x: x < 1)
         with self.assertRaises(se): otherwise >> c(lambda _: 1)
         with self.assertRaises(se): otherwise | c(lambda x: x < 1)
 
@@ -592,30 +616,9 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): guard(1) | (lambda x: x > 1)
         with self.assertRaises(se): ~guard(1) | (lambda x: x > 1)
         with self.assertRaises(se): ~guard(1)
-        with self.assertRaises(se): otherwise() >> "1" >> "2"
-        with self.assertRaises(se): "1" >> otherwise()
-        with self.assertRaises(se): guard(1) | otherwise()
-        with self.assertRaises(se): guard(1) | otherwise
+        with self.assertRaises(se): otherwise >> "1" >> "2"
+        with self.assertRaises(se): "1" >> otherwise
 
-        # matching checks
-        self.assertTrue(~(guard(1)
-            | c(lambda x: x == 1) >> True
-            | otherwise()         >> False))
-        self.assertFalse(~(guard(2)
-            | c(lambda y: y == 1) >> True
-            | otherwise()         >> False))
-        self.assertFalse(~(guard(2)
-            | otherwise() >> False))
-        self.assertFalse(~(guard(2)
-            | otherwise()         >> False
-            | c(lambda x: x == 2) >> True))
-        self.assertEquals("foo", ~(guard(1)
-            | c(lambda x: x > 1)  >> "bar"
-            | c(lambda x: x < 1)  >> "baz"
-            | c(lambda x: x == 1) >> "foo"
-            | otherwise()         >> "Err"))
-
-        with self.assertRaises(me): ~(guard(1) | c(lambda x: x == 2) >> 1)
 
     def test_caseof(self):
         self.assertTrue(~(caseof(1) / 1 % True))
@@ -1007,6 +1010,71 @@ class TestList(unittest.TestCase):
         self.assertEquals(0, len(L[None]))
         self.assertEquals(1, len(L[None,]))
         self.assertEquals(3, len(L[1, 2, 3]))
+
+
+class Test_README_Examples(unittest.TestCase):
+    """Make sure the README examples are all working"""
+
+    def test_sections(self):
+        pass
+
+    def test_guard(self):
+        otherwise.reset()
+        porridge_tempurature = 80
+        self.assertEqual(
+                ~(guard(porridge_tempurature)
+                    | c(__ < 20)  >> "Porridge is too cold!"
+                    | c(__ < 90)  >> "Porridge is just right!"
+                    | c(__ < 150) >> "Porridge is too hot!"
+                    | otherwise   >> "Porridge has gone thermonuclear"
+                ),
+                'Porridge is just right!')
+
+        def examine_password_security(password):
+            analysis = ~(guard(password)
+                | c(lambda x: len(x) > 20) >> "Wow, that's one secure password"
+                | c(lambda x: len(x) < 5)  >> "You made Bruce Schneier cry"
+                | c(__ == "12345")         >> "Same combination as my luggage!"
+                | otherwise                >> "Hope it's not `password`"
+            )
+            return analysis
+
+        nuclear_launch_code = "12345"
+        self.assertEqual(
+                examine_password_security(nuclear_launch_code),
+                'Same combination as my luggage!')
+        return
+
+    def test_decorators(self):
+        def a_problematic_function(cheese):
+            if cheese <= 0:
+                raise ValueError("Out of cheese error")
+            return cheese - 1
+
+        maybe_problematic = in_maybe(a_problematic_function)
+        self.assertEqual(maybe_problematic(1), Just(0))
+        self.assertEqual(maybe_problematic(0), Nothing)
+
+        either_problematic = in_either(a_problematic_function)
+        self.assertEqual(either_problematic(10), Right(9))
+        #self.assertEqual(either_problematic(0)
+        #                 Left(ValueError('Out of cheese error',)))
+
+        @in_either
+        def my_fn_that_raises_errors(n):
+            assert type(n) == int, "not an int!"
+
+            if n < 0:
+                raise ValueError("Too low!")
+
+            return n + 10
+
+        #self.assertEqual(my_fn_that_raises_errors("hello"),
+        #                 Left(AssertionError('not an int!',)))
+        #self.assertEqual(my_fn_that_raises_errors(-10),
+        #                 Left(ValueError('Too low!',)))
+        self.assertEqual(my_fn_that_raises_errors(1), Right(11))
+        return
 
 
 if __name__ == '__main__':
