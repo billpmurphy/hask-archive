@@ -101,17 +101,18 @@ class TypeOperator(object):
     def __str__(self):
         num_types = len(self.types)
         if num_types == 0:
-            return self.name
-        elif num_types == 2:
-            return "({0} {1} {2})".format(str(self.types[0]), self.name, str(self.types[1]))
-        return "{0} {1}" % (self.name, ' '.join(self.types))
+            return str(self.name)
+        return "{0} {1}".format(str(self.name), ' '.join(map(str, self.types)))
 
 
 class Function(TypeOperator):
     """A binary type constructor which builds function types"""
 
     def __init__(self, from_type, to_type):
-        super(Function, self).__init__("->", [from_type, to_type])
+        super(self.__class__, self).__init__("->", [from_type, to_type])
+
+    def __str__(self):
+        return "({1} {0} {2})".format(self.name, *map(str, self.types))
 
 
 #=============================================================================#
@@ -327,125 +328,25 @@ def occursIn(t, types):
     return any(occursInType(t, t2) for t2 in types)
 
 
-#==================================================================#
-# Example code to exercise the above
+#=============================================================================#
+# Some additional, helpful type operators
 
 
-def tryExp(env, node):
-    """Try to evaluate a type printing the result or reporting errors.
+class ListType(TypeOperator):
+    """Unary type constructor which builds list types"""
 
-    Args:
-        env: The type environment in which to evaluate the expression.
-        node: The root node of the abstract syntax tree of the expression.
+    def __init__(self, list_type):
+        super(self.__class__, self).__init__(list, [list_type])
 
-    Returns:
-        None
-    """
-    print(str(node) + " :: ", end=' ')
-    try:
-        t = analyze(node, env)
-        print(str(t))
-    except TypeError as e:
-        print(e)
+    def __str__(self):
+        return "[{0}]".format(str(self.types[0]))
 
 
-def main():
-    """The main example program.
+class Tuple(TypeOperator):
+    """N-ary constructure which builds tuple types"""
 
-    Sets up some predefined types using the type constructors TypeVariable,
-    TypeOperator and Function.  Creates a list of example expressions to be
-    evaluated. Evaluates the expressions, printing the type or errors arising
-    from each.
+    def __init__(self, types):
+        super(self.__class__, self).__init__(tuple, types)
 
-    Returns:
-        None
-    """
-    # some basic types and polymorphic typevars
-    var1 = TypeVariable()
-    var2 = TypeVariable()
-    var3 = TypeVariable()
-    var4 = TypeVariable()
-    Pair = TypeOperator("*", (var1, var2))
-    Bool = TypeOperator(bool.__name__, [])
-    Integer = TypeOperator(int.__name__, [])
-    NoneT = TypeOperator("None", [])
-
-    # toy environment
-    my_env = {"pair" : Function(var1, Function(var2, Pair)),
-                "true"   : Bool,
-                None   : NoneT,
-                "id"   : Function(var4, var4),
-                "cond" : Function(Bool, Function(var3,
-                            Function(var3, var3))),
-                "zero" : Function(Integer, Bool),
-                "pred" : Function(Integer, Integer),
-                "times": Function(Integer,
-                            Function(Integer, Integer)),
-                4      : Integer,
-                1      : Integer, }
-
-    pair = App(App(Var("pair"), App(Var("f"), Var(1))),
-                                  App(Var("f"), Var("true")))
-    compose = Lam("f", Lam("g", Lam("arg", App(Var("g"), App(Var("f"), Var("arg"))))))
-
-
-    examples = [
-
-            # Should fail:
-            # fn x => (pair(x(3) (x(true)))
-            Lam("x",
-                App(
-                    App(Var("pair"),
-                        App(Var("x"), Var(4))),
-                    App(Var("x"), Var("true")))),
-
-            # pair(f(3), f(true))
-            App(
-                App(Var("pair"), App(Var("f"), Var(4))),
-                App(Var("f"), Var("true"))),
-
-            # let f = (fn x => x) in ((pair (f 4)) (f true))
-            Let("f", Lam("x", Var("x")), pair),
-
-            # fn f => f f (fail)
-            Lam("f", App(Var("f"), Var("f"))),
-
-            # let g = fn f => 5 in g g
-            Let("g",
-                Lam("f", Var(4)),
-                App(Var("g"), Var("g"))),
-
-            # example that demonstrates generic and non-generic variables:
-            # \g -> let f = (\x -> g) in pair (f 4, f "true")
-            Lam("g",
-                   Let("f",
-                       Lam("x", Var("g")),
-                       App(
-                            App(Var("pair"),
-                                  App(Var("f"), Var(4))
-                            ),
-                            App(Var("f"), Var("true"))))),
-
-
-            # Function composition
-            # fn f (fn g (fn arg (f g arg)))
-            Lam(Var("a"), Var(4)),
-            Lam(Var("a"), Lam(Var("b"), Var(4))),
-            compose,
-            App(App(compose, Var("id")), Var("id")),
-            Var("id"),
-            Var("a"),
-            Var(4),
-            App(Var("pred"), Var(1)),
-            App(Var("pred"), Var("a")),
-            Lam("a", Lam("b", Lam("c", Lam("d", Var(None))))),
-            App(Var("times"), Var(1)),
-            App(Var("times"), Var("true")),
-    ]
-
-    for example in examples:
-        tryExp(my_env, example)
-
-
-if __name__ == '__main__':
-    main()
+    def __str__(self):
+        return "({0})".format(", ".join(map(str(self.types))))

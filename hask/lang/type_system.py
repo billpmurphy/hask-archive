@@ -9,59 +9,88 @@ from hindley_milner import *
 # User interface
 
 
-def fromExistingType(t):
-    """Makes a nullary type operator from an existing type.
+# should be syntax
+class H2(object):
+    """
+    Usage:
+
+    @H() >> int >> int >> t.Maybe . int
+    def safe_div(x, y):
+        if y == 0:
+            return Nothing
+        return Just(x / y)
+
+    @H(t.Show("a")) >> "a" >> str
+    def to_str(x):
+        return str(x)
+    """
+    def __new__(self, *constraints):
+        return __signature__(constraints=constraints)
+
+
+class __signature__(object):
+    def __init__(self, constraints=(), *args):
+        self.args = args
+        self.constraints = constraints
+        self.constraints_set = False
+
+    def __getitem__(self, constraints):
+        if self.constraints_set:
+            raise SyntaxError("Error")
+        self.constraints = constraints
+        self.constraints_set = True
+        return self
+
+    def __rshift__(self, next_arg):
+        self.args += (next_arg,)
+        return self
+
+    def __call__(self, fn):
+        # do all the type checking in here
+        return fn
+
+
+class TypeSignatureError(Exception):
+    pass
+
+
+def fromExistingType(t, *params):
+    """Makes a type operator from an existing type.
 
     Args:
         t: the unknown type
     """
-    return TypeOperator(t.__name__, [])
+    return TypeOperator(t.__name__, params)
 
 
-class TypedFunc(object):
+def parse_sig_item(item):
+    if isinstance(item, TypeVariable) or isinstance(item, TypeOperator):
+        return item
 
-    def __init__(self, signature, fn):
-        self.typeargs = parse_typeargs(signature)
-        self.signature = make_fn_type(typeargs)
-        self.fn = fn
-        return
+    elif hasattr(item, "type"):
+        return TypeOperator(item.type().hkt,
+                            map(parse_sig_item, item.type().params))
 
-    def __call__(self, *args, **kwargs):
-        ap = self.signature
-        for arg in args:
-            if isinstance(arg, self.__class__):
-                arg_ast = arg.signature
-            else:
-                arg_ast = Var(arg)
-            ap = App(ap, arg_ast)
+    # ("a", "b"), (int, ("a", float)), etc.
+    elif isinstance(item, tuple):
+        return Tuple(map(parse_sig_item, item))
 
-        # typecheck, raising a TypeError if things don't check
-        t = analyze(ap, globals()) #need to supply environment
-        fn = self.fn.__call__(*args, **kwargs)
-        return self.__class__(t, fn)
+    # ["a"], [int], etc
+    elif isinstance(item, list) and len(item) == 1:
+        return ListType(parse_sig_item(item[0]))
 
-    def __str__(self):
-        return "%s :: %s" % (self.fn.__name__, self.signature)
+    # any other type
+    elif isinstance(item, type):
+        return TypeOperator(item, [])
 
-    @staticmethod
-    def parse_typeargs(signature):
-        typeargs = [None] * len(signature)
-        typevars = {s:TypeVariable() for s in signature if type(s) == str}
-
-        for i, s in enumerate(signature):
-            if isinstance(s, str):
-                typeargs[i] = typevars[s]
-            elif isinstance(s, self.__class__):
-                return s.signature
-            else:
-                typeargs[i] = fromExistingType(s)
-        return typeargs
+    raise TypeSignatureError("Invalid item in type signature: %s" % item)
 
 
-def sig(signature):
-    def decorator(fn):
-        return TypedFunc(signature, fn)
-    return decorator
+
+def parse_type_sig(items):
+    parsed_items = parse_sig_item(items)
+    return
+
 
 
 ##############################################################################
