@@ -5,6 +5,7 @@ import types
 
 from hindley_milner import *
 
+
 #==================================================================#
 # User interface
 
@@ -63,10 +64,19 @@ def fromExistingType(t, *params):
     return TypeOperator(t.__name__, params)
 
 
-def parse_sig_item(item):
+def parse_sig_item(item, var_dict=None):
     if isinstance(item, TypeVariable) or isinstance(item, TypeOperator):
         return item
 
+    # string representing type variable
+    elif isinstance(item, str):
+        if var_dict is None:
+            var_dict = {item:TypeVariable()}
+        elif item not in var_dict:
+            var_dict[item] = TypeVariable()
+        return var_dict[item]
+
+    # an ADT or something else created in hask
     elif hasattr(item, "type"):
         return TypeOperator(item.type().hkt,
                             map(parse_sig_item, item.type().params))
@@ -86,11 +96,9 @@ def parse_sig_item(item):
     raise TypeSignatureError("Invalid item in type signature: %s" % item)
 
 
-
 def parse_type_sig(items):
-    parsed_items = parse_sig_item(items)
-    return
-
+    var_dict = {}
+    return map(lambda x: parse_sig_item(x, var_dict), items)
 
 
 ##############################################################################

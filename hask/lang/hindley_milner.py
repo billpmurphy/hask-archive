@@ -349,4 +349,4 @@ class Tuple(TypeOperator):
         super(self.__class__, self).__init__(tuple, types)
 
     def __str__(self):
-        return "({0})".format(", ".join(map(str(self.types))))
+        return "({0})".format(", ".join(map(str, self.types)))
