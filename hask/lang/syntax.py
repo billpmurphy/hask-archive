@@ -289,42 +289,48 @@ L = __list_comprehension__("Invalid list comprehension")
 
 from hindley_milner import *
 
-
-class H2(Syntax):
+class __sig__(Syntax):
     """
     Usage:
 
-    @H() >> int >> int >> t.Maybe . int
+    @H/ int >> int >> t.Maybe . int >> t.Maybe . int
     def safe_div(x, y):
         if y == 0:
             return Nothing
         return Just(x / y)
 
-    @H(t.Show("a")) >> "a" >> str
+    @H[t.Show("a")]/ >> "a" >> str
     def to_str(x):
         return str(x)
     """
     def __init__(self, constraints=()):
         self.constraints = constraints
+        super(__sig__, self).__init__("Syntax error in type signature")
         return
 
-    def __call__(self, constraints):
-        self.constraints = constraints
-        return
+    def __getitem__(self, constraints):
+        return __sig__(constraints)
 
     def __div__(self, arg1):
         return __signature__((arg1,), self.constraints)
 
 
-class __signature__(object):
+H2 = __sig__()
+
+
+class __signature__(Syntax):
+
     def __init__(self, args, constraints):
         self.args = args
         self.constraints = constraints
+        super(__signature__, self).__init__("Syntax error in type signature")
+        return
 
     def __rshift__(self, next_arg):
         return __signature__(self.args + (next_arg,), self.constraints)
 
     def __call__(self, fn):
+        # convert the list of arguments from the signature into its type
         return fn
 
 
@@ -345,6 +351,7 @@ def parse_sig_item(item, var_dict=None):
         return var_dict[item]
 
     # an ADT or something else created in hask
+    # change this when ADT stuff is worked out
     elif hasattr(item, "type"):
         return TypeOperator(item.type().hkt,
                             map(parse_sig_item, item.type().params))
@@ -362,6 +369,3 @@ def parse_sig_item(item, var_dict=None):
         return TypeOperator(item, [])
 
     raise TypeSignatureError("Invalid item in type signature: %s" % item)
-
-
-
