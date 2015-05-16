@@ -627,10 +627,6 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(me): ~(guard(1) | c(lambda x: x == 2) >> 1)
 
         # syntax checks
-        self.assertTrue(~(guard(1)
-            | otherwise >> 1))
-        self.assertFalse(otherwise.has_return_value())
-
         with self.assertRaises(se): c(lambda x: x == 10) + c(lambda _: 1)
         with self.assertRaises(se): c(lambda x: x == 10) - c(lambda _: 1)
         with self.assertRaises(se): c(lambda x: x == 10) * c(lambda _: 1)
@@ -1057,7 +1053,6 @@ class Test_README_Examples(unittest.TestCase):
         pass
 
     def test_guard(self):
-        otherwise.reset()
         porridge_tempurature = 80
         self.assertEqual(
                 ~(guard(porridge_tempurature)
