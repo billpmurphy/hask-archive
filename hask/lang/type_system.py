@@ -3,104 +3,6 @@ import functools
 import string
 import types
 
-from hindley_milner import *
-
-
-#==================================================================#
-# User interface
-
-
-# should be syntax
-class H2(object):
-    """
-    Usage:
-
-    @H() >> int >> int >> t.Maybe . int
-    def safe_div(x, y):
-        if y == 0:
-            return Nothing
-        return Just(x / y)
-
-    @H(t.Show("a")) >> "a" >> str
-    def to_str(x):
-        return str(x)
-    """
-    def __new__(self, *constraints):
-        return __signature__(constraints=constraints)
-
-
-class __signature__(object):
-    def __init__(self, constraints=(), *args):
-        self.args = args
-        self.constraints = constraints
-        self.constraints_set = False
-
-    def __getitem__(self, constraints):
-        if self.constraints_set:
-            raise SyntaxError("Error")
-        self.constraints = constraints
-        self.constraints_set = True
-        return self
-
-    def __rshift__(self, next_arg):
-        self.args += (next_arg,)
-        return self
-
-    def __call__(self, fn):
-        # do all the type checking in here
-        return fn
-
-
-class TypeSignatureError(Exception):
-    pass
-
-
-def fromExistingType(t, *params):
-    """Makes a type operator from an existing type.
-
-    Args:
-        t: the unknown type
-    """
-    return TypeOperator(t.__name__, params)
-
-
-def parse_sig_item(item, var_dict=None):
-    if isinstance(item, TypeVariable) or isinstance(item, TypeOperator):
-        return item
-
-    # string representing type variable
-    elif isinstance(item, str):
-        if var_dict is None:
-            var_dict = {item:TypeVariable()}
-        elif item not in var_dict:
-            var_dict[item] = TypeVariable()
-        return var_dict[item]
-
-    # an ADT or something else created in hask
-    elif hasattr(item, "type"):
-        return TypeOperator(item.type().hkt,
-                            map(parse_sig_item, item.type().params))
-
-    # ("a", "b"), (int, ("a", float)), etc.
-    elif isinstance(item, tuple):
-        return Tuple(map(parse_sig_item, item))
-
-    # ["a"], [int], etc
-    elif isinstance(item, list) and len(item) == 1:
-        return ListType(parse_sig_item(item[0]))
-
-    # any other type
-    elif isinstance(item, type):
-        return TypeOperator(item, [])
-
-    raise TypeSignatureError("Invalid item in type signature: %s" % item)
-
-
-def parse_type_sig(items):
-    var_dict = {}
-    return map(lambda x: parse_sig_item(x, var_dict), items)
-
-
 ##############################################################################
 
 
@@ -140,6 +42,7 @@ class H(object):
 
     def __getitem__(self, ix):
         return self.ty_args[ix]
+
 
 
 def arity(f):

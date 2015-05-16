@@ -41,7 +41,7 @@ from hask.lang.hindley_milner import Tuple
 from hask.lang.hindley_milner import analyze
 from hask.lang.hindley_milner import unify
 
-from hask.lang.type_system import parse_sig_item
+from hask.lang.syntax import parse_sig_item
 
 
 class TestHindleyMilner(unittest.TestCase):

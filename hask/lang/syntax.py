@@ -281,3 +281,87 @@ class __list_comprehension__(Syntax):
 
 
 L = __list_comprehension__("Invalid list comprehension")
+
+
+#=============================================================================#
+# Type signatures
+
+
+from hindley_milner import *
+
+
+class H2(Syntax):
+    """
+    Usage:
+
+    @H() >> int >> int >> t.Maybe . int
+    def safe_div(x, y):
+        if y == 0:
+            return Nothing
+        return Just(x / y)
+
+    @H(t.Show("a")) >> "a" >> str
+    def to_str(x):
+        return str(x)
+    """
+    def __init__(self, constraints=()):
+        self.constraints = constraints
+        return
+
+    def __call__(self, constraints):
+        self.constraints = constraints
+        return
+
+    def __div__(self, arg1):
+        return __signature__((arg1,), self.constraints)
+
+
+class __signature__(object):
+    def __init__(self, args, constraints):
+        self.args = args
+        self.constraints = constraints
+
+    def __rshift__(self, next_arg):
+        return __signature__(self.args + (next_arg,), self.constraints)
+
+    def __call__(self, fn):
+        return fn
+
+
+class TypeSignatureError(Exception):
+    pass
+
+
+def parse_sig_item(item, var_dict=None):
+    if isinstance(item, TypeVariable) or isinstance(item, TypeOperator):
+        return item
+
+    # string representing type variable
+    elif isinstance(item, str):
+        if var_dict is None:
+            var_dict = {item:TypeVariable()}
+        elif item not in var_dict:
+            var_dict[item] = TypeVariable()
+        return var_dict[item]
+
+    # an ADT or something else created in hask
+    elif hasattr(item, "type"):
+        return TypeOperator(item.type().hkt,
+                            map(parse_sig_item, item.type().params))
+
+    # ("a", "b"), (int, ("a", float)), etc.
+    elif isinstance(item, tuple):
+        return Tuple(map(parse_sig_item, item))
+
+    # ["a"], [int], etc
+    elif isinstance(item, list) and len(item) == 1:
+        return ListType(parse_sig_item(item[0]))
+
+    # any other type
+    elif isinstance(item, type):
+        return TypeOperator(item, [])
+
+    raise TypeSignatureError("Invalid item in type signature: %s" % item)
+
+
+
