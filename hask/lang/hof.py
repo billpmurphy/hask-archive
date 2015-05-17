@@ -15,26 +15,37 @@ def _apply(wrapper, f, *args, **kwargs):
     result is a callable, continue to apply the rest of the arguments
     (recursively).
     """
-    if not hasattr(f, "__call__") and (args or kwargs):
-        raise ArityError("Too many arguments supplied")
-    elif not hasattr(f, "__call__"):
-        return f
-
+    # unwrap nested instances of Func
     while isinstance(f, Func):
         f = f.func
 
     f_arity, arglen = arity(f), len(args)
 
-    if f_arity == arglen == 0:
-        return _apply(wrapper, f(), *args, **kwargs)
-    elif f_arity == arglen:
-        result = f(*args, **kwargs)
-        return wrapper(result) if hasattr(result, "__call__") else result
-    elif f_arity == 0:
+    # if the function is not actually a callable, and no arguments are given,
+    # just return it
+    if not hasattr(f, "__call__") and arglen == 0:
+        return f
+
+    # if the function takes no arguments and some are given, raise error
+    elif f_arity == 0 and arglen > 0:
         raise ArityError("Too many arguments supplied")
+
+    # if the function takes no arguments and none are given, call it
+    elif f_arity == arglen == 0:
+        return _apply(wrapper, f(), *args, **kwargs)
+
+    # if the number of args given matches the arity, call it with the args
+    elif f_arity == arglen:
+        return _apply(wrapper, f(*args, **kwargs))
+
+    # if the arity is lower than the number of arguments given,
+    # call the function with the correct number of arguments, and try
+    # to call the result with the remaining arguments
     elif f_arity < arglen:
         applied = f(*args[:f_arity], **kwargs)
         return _apply(wrapper, applied, *args[f_arity:])
+
+    # if the arity is higher than the number of args given, partially apply
     return wrapper(f, *args, **kwargs)
 
 
@@ -58,19 +69,18 @@ class Func(object):
     def fmap(self, other):
         if not isinstance(other, self.__class__):
             other = self.__class__(other)
-        return self.__class__(lambda x, *a, **kw: \
-                              self.func(other.func(x, *a, **kw)))
+        return self.__class__(lambda x: self.func(other.func(x)))
 
     def __rmul__(self, other):
         # override __rmul__ so that we can say `f * g` and compose correctly
         # even if `f` is not a Func object
-        return F(other).fmap(self)
+        return self.__class__(other).fmap(self)
 
-    def __mod__(self, *args):
+    def __mod__(self, arg):
         """
         `%` is apply operator, equivalent to `$` in Haskell.
         """
-        return self.func(*args)
+        return self.__call__(arg)
 
 
 def F(fn=Func(), *args, **kwargs):
@@ -84,6 +94,7 @@ id = Func()
 @F
 def flip(f, x, y, *a):
     return F(f)(y, x, *a)
+
 
 @F
 def const(a, b):
