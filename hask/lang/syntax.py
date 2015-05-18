@@ -289,20 +289,13 @@ L = __list_comprehension__("Invalid list comprehension")
 
 from hindley_milner import *
 
+def typeof():
+    pass
+
+
+
 class __constraints__(Syntax):
-    """
-    Usage:
 
-    @sig(H/ int >> int >> t.Maybe . int >> t.Maybe . int)
-    def safe_div(x, y):
-        if y == 0:
-            return Nothing
-        return Just(x / y)
-
-    @sig(H[t.Show("a")]/ >> "a" >> str)
-    def to_str(x):
-        return str(x)
-    """
     def __init__(self, constraints=()):
         self.constraints = constraints
         super(__constraints__, self).__init__("Syntax error in type signature")
@@ -313,9 +306,6 @@ class __constraints__(Syntax):
 
     def __div__(self, arg1):
         return __signature__((arg1,), self.constraints)
-
-
-H2 = __constraints__()
 
 
 class __signature__(Syntax):
@@ -329,9 +319,64 @@ class __signature__(Syntax):
     def __rshift__(self, next_arg):
         return __signature__(self.args + (next_arg,), self.constraints)
 
+
+class sig2(Syntax):
+    """
+    Usage:
+
+    @sig(H/ int >> int >> t.Maybe . int >> t.Maybe . int)
+    def safe_div(x, y):
+        if y == 0:
+            return Nothing
+        return Just(x / y)
+
+    @sig(H[t.Show("a")]/ >> "a" >> str)
+    def to_str(x):
+        return str(x)
+    """
+    def __init__(self, signature):
+        super(self.__class__, self).__init__("Syntax error in type signature")
+        if not isinstance(signature, __signature__):
+            self.raise_invalid()
+        elif len(signature.args) < 2:
+            self.raise_invalid("Not enough type arguments in signature")
+        self.signature = signature
+        return
+
     def __call__(self, fn):
+        fn_type = parse_sig(self.signature.args)
         # convert the list of arguments from the signature into its type
-        return fn
+        return TypedFunc(fn, fn_type)
+
+
+class TypedFunc(object):
+
+    def __init__(self, fn, fn_type):
+        self.func = fn
+        self.fn_type = fn_type
+        return
+
+    def type(self):
+        return self.fn_type
+
+    def __call__(self, *args, **kwargs):
+        # the evironment contains the type of the function and the types
+        # of the arguments
+        env = {id(self.func):self.fn_type}
+        env.update({id(arg):TypeOperator(type(arg), []) for arg in args})
+
+        ap = Var(id(self.func))
+        for arg in args:
+            ap = App(ap, Var(id(arg)))
+
+        result_type = analyze(ap, env)
+        result = self.func.__call__(*args, **kwargs)
+
+        unify(result_type, TypeOperator(type(result), []))
+        return result
+
+
+H2 = __constraints__()
 
 
 class TypeSignatureError(Exception):
@@ -369,3 +414,14 @@ def parse_sig_item(item, var_dict=None):
         return TypeOperator(item, [])
 
     raise TypeSignatureError("Invalid item in type signature: %s" % item)
+
+
+def parse_sig(items):
+    def make_fn_type(args):
+        if len(args) == 2:
+            last_input, return_type = args
+            return Function(last_input, return_type)
+        return Function(args[0], make_fn_type(args[1:]))
+
+    var_dict = {}
+    return make_fn_type([parse_sig_item(i, var_dict) for i in items])

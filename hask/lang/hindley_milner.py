@@ -1,6 +1,5 @@
 # based on implementation of Hindley-Milner for OWL BASIC by Robert Smallshire
 
-from __future__ import print_function
 
 #=============================================================================#
 # Class definitions for the AST nodes which comprise the little language for
