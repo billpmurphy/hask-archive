@@ -7,6 +7,7 @@ from ...lang.builtins import Nothing
 
 def head(xs):
     """
+    head :: [a] -> a
     Extract the first element of a list, which must be non-empty.
     """
     return xs[0]
@@ -14,6 +15,7 @@ def head(xs):
 
 def last(xs):
     """
+    last :: [a] -> a
     Extract the last element of a list, which must be finite and non-empty.
     """
     return xs[-1]
@@ -21,6 +23,7 @@ def last(xs):
 
 def tail(xs):
     """
+    tail :: [a] -> [a]
     Extract the elements after the head of a list, which must be non-empty.
     """
     for x in xs[1:]:
@@ -29,6 +32,7 @@ def tail(xs):
 
 def init(xs):
     """
+    init :: [a] -> [a]
     Return all the elements of a list except the last one. The list must be
     non-empty.
     """
@@ -38,6 +42,7 @@ def init(xs):
 
 def uncons(xs):
     """
+    uncons :: [a] -> Maybe (a, [a])
     Decompose a list into its head and tail. If the list is empty, returns
     Nothing. If the list is non-empty, returns Just (x, xs), where x is the
     head of the list and xs its tail.
@@ -47,6 +52,7 @@ def uncons(xs):
 
 def null(xs):
     """
+    null :: [a] -> bool
     Test whether the structure is empty.
     """
     return bool(xs)
@@ -54,6 +60,7 @@ def null(xs):
 
 def length(xs):
     """
+    length :: [a] -> int
     Returns the size/length of a finite structure as an Int. The default
     implementation is optimized for structures that are similar to cons-lists,
     because there is no general way to do better.
@@ -65,6 +72,7 @@ def length(xs):
 
 def reverse(xs):
     """
+    reverse :: [a] -> [a]
     reverse xs returns the elements of xs in reverse order. xs must be finite.
     """
     for x in xs[::-1]:
@@ -73,6 +81,7 @@ def reverse(xs):
 
 def intersperse(a, xs):
     """
+    intersperse :: a -> [a] -> [a]
     The intersperse function takes an element and a list and `intersperses'
     that element between the elements of the list.
     """

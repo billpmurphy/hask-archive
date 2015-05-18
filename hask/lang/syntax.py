@@ -289,33 +289,33 @@ L = __list_comprehension__("Invalid list comprehension")
 
 from hindley_milner import *
 
-class __sig__(Syntax):
+class __constraints__(Syntax):
     """
     Usage:
 
-    @H/ int >> int >> t.Maybe . int >> t.Maybe . int
+    @sig(H/ int >> int >> t.Maybe . int >> t.Maybe . int)
     def safe_div(x, y):
         if y == 0:
             return Nothing
         return Just(x / y)
 
-    @H[t.Show("a")]/ >> "a" >> str
+    @sig(H[t.Show("a")]/ >> "a" >> str)
     def to_str(x):
         return str(x)
     """
     def __init__(self, constraints=()):
         self.constraints = constraints
-        super(__sig__, self).__init__("Syntax error in type signature")
+        super(__constraints__, self).__init__("Syntax error in type signature")
         return
 
     def __getitem__(self, constraints):
-        return __sig__(constraints)
+        return __constraints__(constraints)
 
     def __div__(self, arg1):
         return __signature__((arg1,), self.constraints)
 
 
-H2 = __sig__()
+H2 = __constraints__()
 
 
 class __signature__(Syntax):
