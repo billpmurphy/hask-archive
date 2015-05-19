@@ -289,10 +289,6 @@ L = __list_comprehension__("Invalid list comprehension")
 
 from hindley_milner import *
 
-def typeof():
-    pass
-
-
 
 class __constraints__(Syntax):
 
@@ -320,7 +316,7 @@ class __signature__(Syntax):
         return __signature__(self.args + (next_arg,), self.constraints)
 
 
-class sig2(Syntax):
+class sig(Syntax):
     """
     Usage:
 
@@ -371,12 +367,14 @@ class TypedFunc(object):
 
         result_type = analyze(ap, env)
         result = self.func.__call__(*args, **kwargs)
-
         unify(result_type, TypeOperator(type(result), []))
+
+        if F(result) is result:
+            return result
         return result
 
 
-H2 = __constraints__()
+H = __constraints__()
 
 
 class TypeSignatureError(Exception):
@@ -396,7 +394,6 @@ def parse_sig_item(item, var_dict=None):
         return var_dict[item]
 
     # an ADT or something else created in hask
-    # change this when ADT stuff is worked out
     elif hasattr(item, "type"):
         return TypeOperator(item.type().hkt,
                             map(parse_sig_item, item.type().params))
@@ -404,10 +401,6 @@ def parse_sig_item(item, var_dict=None):
     # ("a", "b"), (int, ("a", float)), etc.
     elif isinstance(item, tuple):
         return Tuple(map(parse_sig_item, item))
-
-    # ["a"], [int], etc
-    elif isinstance(item, list) and len(item) == 1:
-        return ListType(parse_sig_item(item[0]))
 
     # any other type
     elif isinstance(item, type):

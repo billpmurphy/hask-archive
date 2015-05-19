@@ -2,7 +2,7 @@ import functools
 
 import unittest
 
-from hask import in_typeclass, arity, sig, H, sig2
+from hask import in_typeclass, arity, sig2, H2
 from hask import guard, c, otherwise, NoGuardMatchException
 from hask import caseof
 from hask import __
@@ -36,7 +36,6 @@ from hask.lang.hindley_milner import Let
 from hask.lang.hindley_milner import TypeVariable
 from hask.lang.hindley_milner import TypeOperator
 from hask.lang.hindley_milner import Function
-from hask.lang.hindley_milner import ListType
 from hask.lang.hindley_milner import Tuple
 from hask.lang.hindley_milner import analyze
 from hask.lang.hindley_milner import unify
@@ -284,17 +283,6 @@ class TestHindleyMilner(unittest.TestCase):
 
         return
 
-    def test_extentions(self):
-        self.unified(
-                TypeOperator(list, [TypeOperator(int, [])]),
-                ListType(TypeOperator(int, [])))
-        self.unified(
-                ListType(TypeOperator(int, [])),
-                TypeOperator(list, [TypeOperator(int, [])]))
-
-        #self.assertEqual("[int]", str(ListType(TypeOperator(int, []))))
-        return
-
     def test_parse_sig_item(self):
         class __test__(object):
             pass
@@ -304,11 +292,6 @@ class TestHindleyMilner(unittest.TestCase):
         self.unified(parse_sig_item(float), TypeOperator(float, []))
         self.unified(parse_sig_item(type(None)), TypeOperator(type(None), []))
         self.unified(parse_sig_item(__test__), TypeOperator(__test__, []))
-
-        # list
-        self.unified(parse_sig_item([int]), ListType(TypeOperator(int, [])))
-        self.unified(parse_sig_item([int]),
-                TypeOperator(list, [TypeOperator(int, [])]))
 
         # tuple
         return
@@ -358,7 +341,7 @@ class TestTypeSystem(unittest.TestCase):
     def test_plain_sig(self):
         te = TypeError
 
-        @sig(H() >> int >> int)
+        @sig2(H2() >> int >> int)
         def f1(x):
             return x + 4
         self.assertEqual(9, f1(5))
@@ -368,35 +351,35 @@ class TestTypeSystem(unittest.TestCase):
         with self.assertRaises(te): f1(5, "foo")
         with self.assertRaises(te): f1()
 
-        @sig(H() >> int >> int >> float)
+        @sig2(H2() >> int >> int >> float)
         def f2(x, y):
             return (x + y) / 2.0
 
         self.assertEqual(20.0, f2(20, 20))
         with self.assertRaises(te): f2(5, "foo")
 
-        @sig(H() >> int >> int >> int >> float)
+        @sig2(H2() >> int >> int >> int >> float)
         def f3(x, y, z):
             return (x + y + z) / 3.0
         self.assertEqual(20.0, f3(20, 20, 20))
         with self.assertRaises(te): f3(5, "foo", 4)
 
         with self.assertRaises(te):
-            @sig(int)
+            @sig2(int)
             def g(x):
                 return x / 2
 
         with self.assertRaises(te):
-            @sig(H() >> int >> int >> int)
+            @sig2(H2() >> int >> int >> int)
             def g(x):
                 return x / 2
 
-        @sig2(H() >> float >> float)
+        @sig2(H2() >> float >> float)
         def g(x):
             return int(x / 2)
         with self.assertRaises(te): g(9.0)
 
-        @sig(H() >> int >> int)
+        @sig2(H2() >> int >> int)
         def g(x):
             return x / 2.0
         with self.assertRaises(te): g(1)

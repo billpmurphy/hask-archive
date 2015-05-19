@@ -5,40 +5,6 @@ from ...lang.builtins import Nothing
 
 ## Basic functions
 
-def head(xs):
-    """
-    head :: [a] -> a
-    Extract the first element of a list, which must be non-empty.
-    """
-    return xs[0]
-
-
-def last(xs):
-    """
-    last :: [a] -> a
-    Extract the last element of a list, which must be finite and non-empty.
-    """
-    return xs[-1]
-
-
-def tail(xs):
-    """
-    tail :: [a] -> [a]
-    Extract the elements after the head of a list, which must be non-empty.
-    """
-    for x in xs[1:]:
-        yield x
-
-
-def init(xs):
-    """
-    init :: [a] -> [a]
-    Return all the elements of a list except the last one. The list must be
-    non-empty.
-    """
-    for x in xs[:-1]:
-        yield x
-
 
 def uncons(xs):
     """
@@ -69,14 +35,6 @@ def length(xs):
 
 
 ## List transformations
-
-def reverse(xs):
-    """
-    reverse :: [a] -> [a]
-    reverse xs returns the elements of xs in reverse order. xs must be finite.
-    """
-    for x in xs[::-1]:
-        yield x
 
 
 def intersperse(a, xs):

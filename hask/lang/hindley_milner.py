@@ -114,6 +114,16 @@ class Function(TypeOperator):
         return "({1} {0} {2})".format(self.name, *map(str, self.types))
 
 
+class Tuple(TypeOperator):
+    """N-ary constructure which builds tuple types"""
+
+    def __init__(self, types):
+        super(self.__class__, self).__init__(tuple, types)
+
+    def __str__(self):
+        return "({0})".format(", ".join(map(str, self.types)))
+
+
 #=============================================================================#
 # Type inference machinery
 
@@ -304,7 +314,7 @@ def occursInType(v, type2):
         type2: The type in which to search
 
     Returns:
-        "true" if v occurs in type2, otherwise False
+        True if v occurs in type2, otherwise False
     """
     pruned_type2 = prune(type2)
     if pruned_type2 == v:
@@ -322,30 +332,6 @@ def occursIn(t, types):
         types: The sequence of types in which to search
 
     Returns:
-        "true" if t occurs in any of types, otherwise False
+        True if t occurs in any of types, otherwise False
     """
     return any(occursInType(t, t2) for t2 in types)
-
-
-#=============================================================================#
-# Some additional, helpful type operators
-
-
-class ListType(TypeOperator):
-    """Unary type constructor which builds list types"""
-
-    def __init__(self, list_type):
-        super(self.__class__, self).__init__(list, [list_type])
-
-    def __str__(self):
-        return "[{0}]".format(str(self.types[0]))
-
-
-class Tuple(TypeOperator):
-    """N-ary constructure which builds tuple types"""
-
-    def __init__(self, types):
-        super(self.__class__, self).__init__(tuple, types)
-
-    def __str__(self):
-        return "({0})".format(", ".join(map(str, self.types)))

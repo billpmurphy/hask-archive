@@ -19,9 +19,16 @@ def _t(obj):
     return type(obj)
 
 
+def HM_typeof(obj):
+    """
+    Returns the type of an object within the internal type system.
+    """
+    pass
+
+
 ## Type system
 
-class H(object):
+class H2(object):
     """
     Wrapper for list that represents a chain of types in a type signature,
     e.g. "a -> b -> c". Used for cosmetic purposes, so that we can write e.g.
@@ -83,7 +90,7 @@ def typecheck_arg(type_a, value):
     return
 
 
-def sig(ty_args):
+def sig2(ty_args):
     """
     Typechecking without currying.
     """
@@ -100,24 +107,5 @@ def sig(ty_args):
             result = func(*args, **kwargs)
             typecheck_arg(ty_args[-1], result)
             return result
-        return _wrapper
-    return decorate
-
-
-def sig2(ty_args):
-    """
-    Typechecking with currying.
-    """
-    def decorate(func):
-        def _wrapper(*args, **kwargs):
-            # typecheck arguments
-            for t, v in zip(ty_args[:-1], args):
-                typecheck_arg(t, v)
-
-            # typecheck return value
-            result = func(*args, **kwargs)
-            typecheck_arg(ty_args[-1], result)
-            return result
-
         return _wrapper
     return decorate

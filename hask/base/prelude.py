@@ -3,20 +3,125 @@ import itertools
 from ..lang.builtins import List
 
 
-def map(fn, iterable):
-    return List(itertools.imap(fn, iterable))
+#=============================================================================#
+# Basic data types
 
 
-def filter(fn, iterable):
-    return List(itertools.ifilter(fn, iterable))
+def maybe(default, f, maybe_a):
+    """
+    maybe :: b -> (a -> b) -> Maybe a -> b
+    The maybe function takes a default value, a function, and a Maybe value. If
+    the Maybe value is Nothing, the function returns the default value.
+    Otherwise, it applies the function to the value inside the Just and returns
+    the result.
+    """
+    pass
 
 
+def either(f_a, f_b, either_a_b):
+    """
+    either :: (a -> c) -> (b -> c) -> Either a b -> c
+    Case analysis for the Either type. If the value is Left(a), apply the first
+    function to a; if it is Right(b), apply the second function to b.
+    """
+    pass
+
+
+#=============================================================================#
+# Tuples
+
+
+def fst(tup):
+    """
+    fst :: (a, b) -> a
+    Extract the first component of a pair.
+    """
+    return tup[0]
+
+
+def snd(tup):
+    """
+    snd :: (a, b) -> b
+    Extract the second component of a pair.
+    """
+    return tup[1]
+
+
+def curry(tup_fn, a, b):
+    """
+    curry :: ((a, b) -> c) -> a -> b -> c
+    `curry` converts an uncurried function to a curried function.
+    """
+    return tup_fn((a, b))
+
+
+def uncurry(fn, tup):
+    """
+    curry :: ((a, b) -> c) -> a -> b -> c
+    `uncurry` converts a curried function to a function on pairs.
+    """
+    return fn(fst(tup), snd(tup))
+
+
+#=============================================================================#
+# Numeric functions
+
+
+def subtract(x, y):
+    """
+    subtract :: Num a => a -> a -> a
+    the same as flip(__-__).
+    """
+    return y - x
+
+
+#@sig( H[(Integral, "a")]/ "a" >> bool )
+def even(x):
+    """
+    even :: Integral a => a -> Bool
+    Returns True if the integral value is even, and False otherwise.
+    """
+    return x % 2 == 0
+
+
+#@sig( H[(Integral, "a")]/ "a" >> bool )
+def odd(x):
+    """
+    even :: Integral a => a -> Bool
+    Returns True if the integral value is odd, and False otherwise.
+    """
+    return not even(x)
+
+
+def gcd(x, y):
+    """
+    gcd :: Integral a => a -> a -> a
+    gcd(x,y) is the non-negative factor of both x and y of which every common
+    factor of x and y is also a factor; for example gcd(4,2) = 2, gcd(-4,6) =
+    2, gcd(0,4) = 4. gcd(0,0) = 0. (That is, the common divisor that is
+    "greatest" in the divisibility preordering.)
+    """
+    pass
+
+
+def lcm(x, y):
+    """
+    lcm :: Integral a => a -> a -> a
+    lcm(x,y) is the smallest positive integer that both x and y divide.
+    """
+    pass
+
+
+
+#@sig(H/ "a" >> List("a"))
 def repeat(x):
     """
     repeat(x) is an infinite list, with x the value of every element.
     """
     return repeat(x)
 
+
+#sig(H/ ("a" >> "a") >> "a" >> List("a") )
 def iterate(f, x):
     """
     iterate(f,x) returns an infinite list of repeated applications of f to x:
@@ -27,11 +132,64 @@ def iterate(f, x):
         x = f(x)
 
 
+#@sig(H/ str -> "a")
 def error(msg):
+    """
+    error :: str -> a
+    error stops execution and displays an error message.
+    """
     raise Exception(msg)
 
 
-def undefined():
-    error("Prelude.undefined")
+#=============================================================================#
+# List operations
 
-## IO ops
+def map(fn, iterable):
+    return List(itertools.imap(fn, iterable))
+
+#@sig(H[Traversable . m]/ ("a" >> bool) >> t.m("a") >> List("a") )
+def filter(fn, iterable):
+    return List(itertools.ifilter(fn, iterable))
+
+
+def head(xs):
+    """
+    head :: [a] -> a
+    Extract the first element of a list, which must be non-empty.
+    """
+    return xs[0]
+
+
+def last(xs):
+    """
+    last :: [a] -> a
+    Extract the last element of a list, which must be finite and non-empty.
+    """
+    return xs[-1]
+
+
+def tail(xs):
+    """
+    tail :: [a] -> [a]
+    Extract the elements after the head of a list, which must be non-empty.
+    """
+    return List((x for x in xs[1:]))
+
+
+def init(xs):
+    """
+    init :: [a] -> [a]
+    Return all the elements of a list except the last one. The list must be
+    non-empty.
+    """
+    return List((x for x in xs[:-1]))
+
+
+def reverse(xs):
+    """
+    reverse :: [a] -> [a]
+    reverse xs returns the elements of xs in reverse order. xs must be finite.
+    """
+    return List((x for x in xs[::-1]))
+
+

@@ -2,9 +2,8 @@ __version__ = "0.0.1"
 
 # Core language
 from hask.lang.type_system import _t
-from hask.lang.type_system import H
 from hask.lang.type_system import arity
-from hask.lang.type_system import sig
+from hask.lang.type_system import H2
 from hask.lang.type_system import sig2
 
 from hask.lang.typeclasses import in_typeclass
