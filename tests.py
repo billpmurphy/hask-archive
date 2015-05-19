@@ -14,7 +14,7 @@ from hask import filter as hfilter
 from hask import id as hid
 from hask import Maybe, Just, Nothing, in_maybe
 from hask import Either, Left, Right, in_either
-from hask import Typeable, Typeclass
+from hask import Typeclass
 from hask import Show, Eq, Ord, Bounded, Num
 from hask import Enum, succ, pred
 from hask import Functor, Applicative, Monad
@@ -887,7 +887,6 @@ class TestHOF(unittest.TestCase):
 class TestMaybe(unittest.TestCase):
 
     def test_instances(self):
-        self.assertTrue(in_typeclass(Maybe, Typeable))
         self.assertTrue(in_typeclass(Maybe, Show))
         self.assertTrue(in_typeclass(Maybe, Eq))
         self.assertTrue(in_typeclass(Maybe, Functor))

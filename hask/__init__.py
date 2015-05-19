@@ -10,7 +10,6 @@ from hask.lang.type_system import sig2
 from hask.lang.typeclasses import in_typeclass
 from hask.lang.typeclasses import is_builtin
 from hask.lang.typeclasses import Typeclass
-from hask.lang.typeclasses import Typeable
 from hask.lang.typeclasses import Read
 from hask.lang.typeclasses import Show
 from hask.lang.typeclasses import Eq
@@ -26,19 +25,19 @@ from hask.lang.typeclasses import Ix
 from hask.lang.typeclasses import Foldable
 from hask.lang.typeclasses import Iterator
 
-read = Read.read
-show = Show.show
-succ = Enum.succ
-pred = Enum.pred
-toEnum = Enum.toEnum
-fromEnum = Enum.fromEnum
-enumFrom = Enum.enumFrom
-enumFromThen = Enum.enumFromThen
-enumFromTo = Enum.enumFromTo
-enumFromThenTo = Enum.enumFromThenTo
-fmap = Functor.fmap
-foldr = Foldable.foldr
-length = Ix.length
+from hask.lang.typeclasses import read
+from hask.lang.typeclasses import show
+from hask.lang.typeclasses import succ
+from hask.lang.typeclasses import pred
+from hask.lang.typeclasses import toEnum
+from hask.lang.typeclasses import fromEnum
+from hask.lang.typeclasses import enumFrom
+from hask.lang.typeclasses import enumFromThen
+from hask.lang.typeclasses import enumFromTo
+from hask.lang.typeclasses import enumFromThenTo
+from hask.lang.typeclasses import fmap
+from hask.lang.typeclasses import foldr
+from hask.lang.typeclasses import length
 
 from hask.lang.hof import const
 from hask.lang.hof import flip

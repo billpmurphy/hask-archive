@@ -88,15 +88,6 @@ class Typeclass(object):
         return
 
 
-class Typeable(Typeclass):
-    """
-    TODO: Deprecate this
-    """
-    def __init__(self, cls, _type):
-        super(Typeable, self).__init__(cls, attrs={"_type":_type})
-        return
-
-
 # Basic typeclasses
 
 class Read(Typeclass):
@@ -372,3 +363,22 @@ class Iterator(Typeclass):
         super(Iterator, self).__init__(cls, dependencies=[Traversable],
                                        attrs=attrs)
         return
+
+
+## Typeclass functions
+
+read = Read.read
+show = Show.show
+succ = Enum.succ
+pred = Enum.pred
+toEnum = Enum.toEnum
+fromEnum = Enum.fromEnum
+enumFrom = Enum.enumFrom
+enumFromThen = Enum.enumFromThen
+enumFromTo = Enum.enumFromTo
+enumFromThenTo = Enum.enumFromThenTo
+fmap = Functor.fmap
+foldr = Foldable.foldr
+length = Ix.length
+
+

@@ -2,7 +2,6 @@ import collections
 import itertools
 
 from type_system import _t
-from typeclasses import Typeable
 from typeclasses import Enum
 from typeclasses import Num
 from typeclasses import Read
@@ -88,7 +87,6 @@ class Just(Maybe):
 
 Nothing = Maybe._make_nothing()
 
-Typeable(Maybe, Maybe._type)
 Show(Maybe, Maybe.__repr__)
 Eq(Maybe, Maybe.__eq__)
 Functor(Maybe, Maybe.fmap)

@@ -30,7 +30,6 @@ def make_type_const(name, typeargs):
 
     # TODO
     cls._type = lambda self: self.typeargs
-    typeclasses.Typeable(cls, cls._type)
 
     cls.__iter__ = lambda self, other: raise_fn(TypeError)
     cls.__contains__ = lambda self, other: raise_fn(TypeError)
