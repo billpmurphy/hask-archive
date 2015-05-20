@@ -288,10 +288,11 @@ class TestHindleyMilner(unittest.TestCase):
             pass
 
         # builtin/non-ADT types
-        self.unified(parse_sig_item(int), TypeOperator(int, []))
-        self.unified(parse_sig_item(float), TypeOperator(float, []))
-        self.unified(parse_sig_item(type(None)), TypeOperator(type(None), []))
-        self.unified(parse_sig_item(__test__), TypeOperator(__test__, []))
+        self.unified(parse_sig_item(int, {}), TypeOperator(int, []))
+        self.unified(parse_sig_item(float, {}), TypeOperator(float, []))
+        self.unified(parse_sig_item(type(None), {}),
+                TypeOperator(type(None), []))
+        self.unified(parse_sig_item(__test__, {}), TypeOperator(__test__, []))
 
         # tuple
         return
@@ -1028,6 +1029,35 @@ class TestList(unittest.TestCase):
         self.assertEqual(3, len(L[1, 2, 3]))
 
 
+class TestPrelude(unittest.TestCase):
+
+    def test_all(self):
+        # tuples
+        from hask.Prelude import fst
+        from hask.Prelude import snd
+        from hask.Prelude import curry
+        from hask.Prelude import uncurry
+
+        # strings
+        from hask.Prelude import lines
+        from hask.Prelude import words
+        from hask.Prelude import unlines
+        from hask.Prelude import unwords
+        return
+
+
+class TestDataString(unittest.TestCase):
+
+    def test_string(self):
+        from hask.Data.String import lines
+        from hask.Data.String import words
+        from hask.Data.String import unlines
+        from hask.Data.String import unwords
+
+        # add tests
+        return
+
+
 class TestDataTuple(unittest.TestCase):
 
     def test_tuple(self):
@@ -1036,6 +1066,10 @@ class TestDataTuple(unittest.TestCase):
         from hask.Data.Tuple import curry
         from hask.Data.Tuple import uncurry
         from hask.Data.Tuple import swap
+
+        # add more
+        self.assertEqual(swap(swap((1, 2))), (1, 2))
+        self.assertEqual(swap((1, "a")), ("a", 1))
         return
 
 

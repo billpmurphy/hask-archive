@@ -1,7 +1,6 @@
 from ..lang.builtins import Just
 from ..lang.builtins import Nothing
 
-## Data.List
 
 ## Basic functions
 
@@ -9,6 +8,7 @@ from ..lang.builtins import Nothing
 def uncons(xs):
     """
     uncons :: [a] -> Maybe (a, [a])
+
     Decompose a list into its head and tail. If the list is empty, returns
     Nothing. If the list is non-empty, returns Just (x, xs), where x is the
     head of the list and xs its tail.
@@ -19,6 +19,7 @@ def uncons(xs):
 def null(xs):
     """
     null :: [a] -> bool
+
     Test whether the structure is empty.
     """
     return bool(xs)
@@ -27,6 +28,7 @@ def null(xs):
 def length(xs):
     """
     length :: [a] -> int
+
     Returns the size/length of a finite structure as an Int. The default
     implementation is optimized for structures that are similar to cons-lists,
     because there is no general way to do better.
@@ -102,20 +104,20 @@ def concat(xss):
 def concatMap(f, xs):
     pass
 
-def list_and(xs):
+def and_(xs):
     pass
 
-def list_or(xs):
+def or_(xs):
     pass
 
-def any(xs):
+def any_(xs):
     pass
 
-def all(xs):
+def all_(xs):
     pass
 
-def sum(xs):
-    pass
+#def sum(xs):
+#    pass
 
 def product(xs):
     pass
@@ -192,36 +194,10 @@ def partition(f, xs):
 
 ## Functions on strings
 
-def lines(s):
-    """
-    lines breaks a string up into a list of strings at newline characters. The
-    resulting strings do not contain newlines.
-    """
-    return s.split("\n")
-
-
-def words(s):
-    """
-    words breaks a string up into a list of words, which were delimited by
-    white space.
-    """
-    return s.split(" ")
-
-
-def unlines(lines):
-    """
-    unlines is an inverse operation to lines. It joins lines, after appending a
-    terminating newline to each.
-    """
-    return "\n".join(lines)
-
-
-def unwords(words):
-    """
-    unwords is an inverse operation to words. It joins words with separating
-    spaces.
-    """
-    return " ".join(words)
+from Data.String import lines
+from Data.String import words
+from Data.String import unlines
+from Data.String import unwords
 
 
 ## "Set" operations

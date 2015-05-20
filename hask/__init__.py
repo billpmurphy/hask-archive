@@ -64,6 +64,8 @@ from hask.lang.syntax import otherwise
 from hask.lang.syntax import NoGuardMatchException
 from hask.lang.syntax import L
 
+from hask.lang.syntax import sig, H
+
 from hask.lang.caseof import caseof
 
 from hask.lang.adt import data

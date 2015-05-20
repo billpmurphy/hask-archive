@@ -6,61 +6,18 @@ from .lang.builtins import List
 #=============================================================================#
 # Basic data types
 
+from Data.Maybe import maybe
 
-def maybe(default, f, maybe_a):
-    """
-    maybe :: b -> (a -> b) -> Maybe a -> b
-    The maybe function takes a default value, a function, and a Maybe value. If
-    the Maybe value is Nothing, the function returns the default value.
-    Otherwise, it applies the function to the value inside the Just and returns
-    the result.
-    """
-    pass
-
-
-def either(f_a, f_b, either_a_b):
-    """
-    either :: (a -> c) -> (b -> c) -> Either a b -> c
-    Case analysis for the Either type. If the value is Left(a), apply the first
-    function to a; if it is Right(b), apply the second function to b.
-    """
-    pass
 
 
 #=============================================================================#
 # Tuples
 
 
-def fst(tup):
-    """
-    fst :: (a, b) -> a
-    Extract the first component of a pair.
-    """
-    return tup[0]
-
-
-def snd(tup):
-    """
-    snd :: (a, b) -> b
-    Extract the second component of a pair.
-    """
-    return tup[1]
-
-
-def curry(tup_fn, a, b):
-    """
-    curry :: ((a, b) -> c) -> a -> b -> c
-    `curry` converts an uncurried function to a curried function.
-    """
-    return tup_fn((a, b))
-
-
-def uncurry(fn, tup):
-    """
-    curry :: ((a, b) -> c) -> a -> b -> c
-    `uncurry` converts a curried function to a function on pairs.
-    """
-    return fn(fst(tup), snd(tup))
+from Data.Tuple import fst
+from Data.Tuple import snd
+from Data.Tuple import curry
+from Data.Tuple import uncurry
 
 
 #=============================================================================#
@@ -193,3 +150,10 @@ def reverse(xs):
     return List((x for x in xs[::-1]))
 
 
+#=============================================================================#
+## Functions on strings
+
+from Data.String import lines
+from Data.String import words
+from Data.String import unlines
+from Data.String import unwords

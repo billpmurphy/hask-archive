@@ -3,6 +3,8 @@ import functools
 import string
 import types
 
+from hindley_milner import *
+
 ##############################################################################
 
 
@@ -23,7 +25,11 @@ def HM_typeof(obj):
     """
     Returns the type of an object within the internal type system.
     """
-    pass
+    if hasattr(obj, "type"):
+        return obj.type()
+    elif isinstance(obj, tuple):
+        return Tuple(map(HM_typeof, obj))
+    return TypeOperator(type(obj), [])
 
 
 ## Type system

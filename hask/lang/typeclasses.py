@@ -63,6 +63,13 @@ class Typeclass(object):
         Typeclass.add_typeclass_flag(cls, self.__class__)
         return
 
+    @classmethod
+    def derive_instance(cls, type_constructor):
+        """
+        Derive a typeclass instance for the given type constructor.
+        """
+        raise TypeError("Cannot derive instance for class %s" % cls.__name__)
+
     @staticmethod
     def add_attr(cls, attr_name, attr):
         """

@@ -4,6 +4,8 @@ import hof
 from builtins import List
 from typeclasses import Enum
 
+from type_system import HM_typeof
+
 
 class Syntax(object):
     """
@@ -259,7 +261,7 @@ class __list_comprehension__(Syntax):
     Syntactic construct for Haskell-style list comprehensions.
     """
     def __getitem__(self, lst):
-        if type(lst) is tuple and len(lst) < 5 and Ellipsis in lst:
+        if isinstance(lst, tuple) and len(lst) < 5 and Ellipsis in lst:
             # L[x, ...]
             if len(lst) == 2 and lst[1] is Ellipsis:
                 return List(Enum.enumFrom(lst[0]))
@@ -337,17 +339,18 @@ class sig(Syntax):
         elif len(signature.args) < 2:
             self.raise_invalid("Not enough type arguments in signature")
         self.signature = signature
+        self.fn_type = parse_sig(self.signature.args)
         return
 
     def __call__(self, fn):
-        fn_type = parse_sig(self.signature.args)
         # convert the list of arguments from the signature into its type
-        return TypedFunc(fn, fn_type)
+        return TypedFunc(fn, self.fn_type)
 
 
 class TypedFunc(object):
 
     def __init__(self, fn, fn_type):
+        self.__doc__ = fn.__doc__
         self.func = fn
         self.fn_type = fn_type
         return
@@ -359,7 +362,7 @@ class TypedFunc(object):
         # the evironment contains the type of the function and the types
         # of the arguments
         env = {id(self.func):self.fn_type}
-        env.update({id(arg):TypeOperator(type(arg), []) for arg in args})
+        env.update({id(arg):HM_typeof(arg) for arg in args})
 
         ap = Var(id(self.func))
         for arg in args:
@@ -367,9 +370,9 @@ class TypedFunc(object):
 
         result_type = analyze(ap, env)
         result = self.func.__call__(*args, **kwargs)
-        unify(result_type, TypeOperator(type(result), []))
+        unify(result_type, HM_typeof(result))
 
-        if F(result) is result:
+        if hof.F(result) is result:
             return result
         return result
 
@@ -381,26 +384,24 @@ class TypeSignatureError(Exception):
     pass
 
 
-def parse_sig_item(item, var_dict=None):
+def parse_sig_item(item, var_dict):
     if isinstance(item, TypeVariable) or isinstance(item, TypeOperator):
         return item
 
     # string representing type variable
     elif isinstance(item, str):
-        if var_dict is None:
-            var_dict = {item:TypeVariable()}
-        elif item not in var_dict:
+        if item not in var_dict:
             var_dict[item] = TypeVariable()
         return var_dict[item]
 
     # an ADT or something else created in hask
     elif hasattr(item, "type"):
         return TypeOperator(item.type().hkt,
-                            map(parse_sig_item, item.type().params))
+                map(lambda x: parse_sig_item(x, var_dict), item.type().params))
 
     # ("a", "b"), (int, ("a", float)), etc.
     elif isinstance(item, tuple):
-        return Tuple(map(parse_sig_item, item))
+        return Tuple(map(lambda x: parse_sig_item(x, var_dict), item))
 
     # any other type
     elif isinstance(item, type):
