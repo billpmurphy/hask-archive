@@ -1,5 +1,5 @@
-from ...lang.builtins import Just
-from ...lang.builtins import Nothing
+from ..lang.builtins import Just
+from ..lang.builtins import Nothing
 
 ## Data.List
 

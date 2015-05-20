@@ -1,6 +1,6 @@
 import itertools
 
-from ..lang.builtins import List
+from .lang.builtins import List
 
 
 #=============================================================================#

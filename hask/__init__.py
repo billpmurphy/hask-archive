@@ -72,9 +72,5 @@ from hask.lang.adt import deriving
 
 
 # Haskell base
-from base import Control
-from base import Data
-from base import Prelude
-
-from base.prelude import map
-from base.prelude import filter
+from Prelude import map
+from Prelude import filter

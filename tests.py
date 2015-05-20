@@ -1028,6 +1028,17 @@ class TestList(unittest.TestCase):
         self.assertEqual(3, len(L[1, 2, 3]))
 
 
+class TestDataTuple(unittest.TestCase):
+
+    def test_tuple(self):
+        from hask.Data.Tuple import fst
+        from hask.Data.Tuple import snd
+        from hask.Data.Tuple import curry
+        from hask.Data.Tuple import uncurry
+        from hask.Data.Tuple import swap
+        return
+
+
 class Test_README_Examples(unittest.TestCase):
     """Make sure the README examples are all working"""
 
