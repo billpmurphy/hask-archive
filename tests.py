@@ -628,6 +628,8 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): otherwise >> c(lambda _: 1)
         with self.assertRaises(se): otherwise | c(lambda x: x < 1)
 
+        with self.assertRaises(se):
+            ~(guard(2) | c(lambda x: x == 2) >> 1 | c(lambda y: y == 2))
         with self.assertRaises(se): c(lambda x: x == 10) >> "1" >> "2"
         with self.assertRaises(se): "1" >> c(lambda x: x == 10)
         with self.assertRaises(se): guard(1) | c(lambda x: x > 1)

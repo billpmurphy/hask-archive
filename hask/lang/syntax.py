@@ -7,12 +7,19 @@ from typeclasses import Enum
 from type_system import HM_typeof
 
 
+#=============================================================================#
+# Base class for syntactic constructs
+
+
 class Syntax(object):
     """
-    Superclass for new syntactic constructs. By default, a piece of syntax
-    should raise a syntax error with a standard error message if the syntax
-    object is used with a Python builtin operator. Subclasses may override
-    these methods to define what syntax is valid.
+    Base class for new syntactic constructs. All of the new "syntax" elements
+    of Hask inherit from this class.
+
+    By default, a piece of syntax will raise a syntax error with a standard
+    error message if the syntax object is used with a Python builtin operator.
+    Subclasses may override these methods to define what syntax is valid for
+    those objects.
     """
     def __init__(self, err_msg=None):
         if err_msg is not None:
@@ -105,24 +112,30 @@ class Syntax(object):
 # Operator sections
 
 def make_section(fn):
+    """
+    Create an operator section from a binary functon.
+    """
     def section(a, b):
         return fn(b, a)
 
+    def double_section():
+        return lambda x, y: section(y, x)
+
     def applyier(self, y):
-        if isinstance(y, Section):
-            return hof.flip(section)
-        return hof.F(section, y)
+        if isinstance(y, __section__):
+            return hof.F(double_section)
+        return hof.F(section)(y)
     return applyier
 
 
-class Section(Syntax):
+class __section__(Syntax):
 
     def __init__(self, syntax_err_msg):
-        self.__syntax_err_msg = syntax_err_msg
-        super(self.__class__, self).__init__(self.__syntax_err_msg)
+        super(__section__, self).__init__(syntax_err_msg)
         return
 
     __wrap = lambda f: lambda x, y: f(x, y)
+    __flip = lambda f: lambda x, y: f(y, x)
 
     __add__ = make_section(__wrap(operator.add))
     __sub__ = make_section(__wrap(operator.sub))
@@ -146,23 +159,23 @@ class Section(Syntax):
     __ge__ = make_section(__wrap(operator.ge))
     __le__ = make_section(__wrap(operator.le))
 
-    __radd__ = make_section(hof.flip(__wrap(operator.add)))
-    __rsub__ = make_section(hof.flip(__wrap(operator.sub)))
-    __rmul__ = make_section(hof.flip(__wrap(operator.mul)))
-    __rdiv__ = make_section(hof.flip(__wrap(operator.div)))
-    __rtruediv__ = make_section(hof.flip(__wrap(operator.truediv)))
-    __rfloordiv__ = make_section(hof.flip(__wrap(operator.floordiv)))
-    __rmod__ = make_section(hof.flip(__wrap(operator.mod)))
-    __rdivmod__ = make_section(hof.flip(__wrap(divmod)))
-    __rpow__ = make_section(hof.flip(__wrap(operator.pow)))
-    __rlshift__ = make_section(hof.flip(__wrap(operator.lshift)))
-    __rrshift__ = make_section(hof.flip(__wrap(operator.rshift)))
-    __ror__ = make_section(hof.flip(__wrap(operator.or_)))
-    __rand__ = make_section(hof.flip(__wrap(operator.and_)))
-    __rxor__ = make_section(hof.flip(__wrap(operator.xor)))
+    __radd__ = make_section(__flip(operator.add))
+    __rsub__ = make_section(__flip(operator.sub))
+    __rmul__ = make_section(__flip(operator.mul))
+    __rdiv__ = make_section(__flip(operator.div))
+    __rtruediv__ = make_section(__flip(operator.truediv))
+    __rfloordiv__ = make_section(__flip(operator.floordiv))
+    __rmod__ = make_section(__flip(operator.mod))
+    __rdivmod__ = make_section(__flip(divmod))
+    __rpow__ = make_section(__flip(operator.pow))
+    __rlshift__ = make_section(__flip(operator.lshift))
+    __rrshift__ = make_section(__flip(operator.rshift))
+    __ror__ = make_section(__flip(operator.or_))
+    __rand__ = make_section(__flip(operator.and_))
+    __rxor__ = make_section(__flip(operator.xor))
 
 
-__ = Section("Error in section")
+__ = __section__("Error in section")
 
 
 #=============================================================================#
@@ -180,10 +193,10 @@ class __guard_test__(Syntax):
         if not hasattr(fn, "__call__"):
             raise ValueError("Guard condition must be callable")
         self.__test = fn
-        super(self.__class__, self).__init__("Syntax error in guard condition")
+        super(__guard_test__, self).__init__("Syntax error in guard condition")
 
     def __rshift__(self, value):
-        if isinstance(value, self.__class__):
+        if isinstance(value, __guard_test__):
             self.raise_invalid()
         return __guard_conditional__(self.__test, value)
 
@@ -193,7 +206,7 @@ class __guard_conditional__(Syntax):
     def __init__(self, fn, return_value):
         self.check = fn
         self.return_value = return_value
-        super(self.__class__, self).__init__("Syntax error in guard condition")
+        super(__guard_conditional__, self).__init__("Syntax error in guard condition")
 
 
 class __guard_base__(Syntax):
@@ -221,7 +234,9 @@ class __unmatched_guard__(__guard_base__):
 class __matched_guard__(__guard_base__):
 
     def __or__(self, cond):
-        return self
+        if isinstance(cond, __guard_conditional__):
+            return self
+        self.raise_invalid()
 
     def __invert__(self):
         return self.value
