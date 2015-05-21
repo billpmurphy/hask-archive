@@ -3,6 +3,7 @@ import sys
 import types
 
 
+#=============================================================================#
 # Typeclass infrastructure
 
 __typeclass_flag__ = "__typeclasses__"
@@ -30,7 +31,6 @@ def is_builtin(cls):
 def in_typeclass(cls, typeclass):
     """
     Return True if cls is a member of typeclass, and False otherwise.
-    Python builtins cannot be typeclasses.
     """
     if is_builtin(typeclass):
        return False
@@ -40,7 +40,7 @@ def in_typeclass(cls, typeclass):
         except TypeError:
             return False
     elif hasattr(cls, __typeclass_flag__):
-        return typeclass in cls.__typeclasses__
+        return typeclass in getattr(cls, __typeclass_flag__)
     return False
 
 
@@ -51,15 +51,27 @@ class Typeclass(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, cls, dependencies=(), attrs=None):
+        """
+        Create an instance of a typeclass.
+
+        1) Check whether the instance type is a member of parent typeclasses of
+           the typeclass
+        2) Modify the instance type, adding the appropriate attributes
+        3) Add a typeclass flag to the instance type, signifying that it is now
+           a member of the typeclass
+        """
+        # 1) Check dependencies
         for dep in dependencies:
             if not in_typeclass(cls, dep):
-                raise TypeError("%s is not a member of %s" %
-                                (cls.__name__, dep.__name__))
+                msg = "%s is not a member of %s" % (cls.__name__, dep.__name__)
+                raise TypeError(msg)
 
+        # 2) Add attributes
         if attrs is not None:
             for attr_name, attr in attrs.iteritems():
                 Typeclass.add_attr(cls, attr_name, attr)
 
+        # 3) Add flag
         Typeclass.add_typeclass_flag(cls, self.__class__)
         return
 
@@ -67,14 +79,17 @@ class Typeclass(object):
     def derive_instance(cls, type_constructor):
         """
         Derive a typeclass instance for the given type constructor.
+
+        Derivable typeclasses should override this method and provide their own
+        implementation.
         """
         raise TypeError("Cannot derive instance for class %s" % cls.__name__)
 
     @staticmethod
     def add_attr(cls, attr_name, attr):
         """
-        Modify an existing class to add an attribute. If the class is a
-        builtin, do nothing.
+        Modify an existing class, adding an attribute. If the class is a
+        Python builtin, do nothing.
         """
         if not is_builtin(cls):
             setattr(cls, attr_name, attr)
@@ -85,16 +100,21 @@ class Typeclass(object):
         """
         Add a typeclass membership flag to a class, signifying that the class
         belongs to the specified typeclass.
+
+        If the class is a Python builtin (and therefore immutable), make it a
+        subclass of the specified typeclass.
         """
         if is_builtin(cls):
             typeclass.register(cls)
         elif hasattr(cls, __typeclass_flag__):
-            cls.__typeclasses__.append(typeclass)
+            setattr(cls, __typeclass_flag__,
+                    getattr(cls, __typeclass_flag__) + (typeclass,))
         else:
-            cls.__typeclasses__ = [typeclass]
+            setattr(cls, __typeclass_flag__, (typeclass,))
         return
 
 
+#=============================================================================#
 # Basic typeclasses
 
 class Read(Typeclass):
@@ -124,13 +144,23 @@ class Show(Typeclass):
 
 class Eq(Typeclass):
     """
-    The Eq class defines equality (==) and inequality (!=). Minimal complete
-    definition: __eq__
-    """
+    The Eq class defines equality (==) and inequality (!=).
 
-    def __init__(self, cls, __eq__):
-        def __ne__(self, other):
+    Dependencies:
+        n/a
+
+    Attributes:
+        __eq__
+        __ne__
+
+    Minimal complete definition:
+        __eq__
+    """
+    def __init__(self, cls, __eq__, __ne__=None):
+        def default_not_eq(self, other):
             return not self.__eq__(other)
+
+        __ne__ = default_not_eq if __ne__ is None else __ne__
 
         super(Eq, self).__init__(cls, attrs={"__eq__":__eq__, "__ne__":__ne__})
         return
@@ -362,6 +392,12 @@ class Ix(Typeclass):
 
 
 class Iterator(Typeclass):
+    """
+    Special typeclass for Python iterators, i.e. classes with a next or
+    __next__ attribute.
+
+    Minimal complete definition: __next__
+    """
     def __init__(self, cls, __next__):
         def _next(self):
             return __next__(self)
@@ -371,11 +407,16 @@ class Iterator(Typeclass):
                                        attrs=attrs)
         return
 
-
+#=============================================================================#
 ## Typeclass functions
 
+# Read
 read = Read.read
+
+# Show
 show = Show.show
+
+# Enum
 succ = Enum.succ
 pred = Enum.pred
 toEnum = Enum.toEnum
@@ -384,8 +425,12 @@ enumFrom = Enum.enumFrom
 enumFromThen = Enum.enumFromThen
 enumFromTo = Enum.enumFromTo
 enumFromThenTo = Enum.enumFromThenTo
+
+# Functor
 fmap = Functor.fmap
+
+# Foldable
 foldr = Foldable.foldr
+
+# Ix
 length = Ix.length
-
-

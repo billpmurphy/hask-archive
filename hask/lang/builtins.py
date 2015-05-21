@@ -198,7 +198,17 @@ class List(collections.Sequence):
         self.evaluated.extend(self.unevaluated)
         return
 
+    def __rpow__(self, item):
+        """
+        ** is the cons operator (equivalent to : in Haskell)
+        """
+        raise NotImplementedError("hmm")
+
     def __add__(self, iterable):
+        """
+        + is the list concatenation operator (equivalent to ++ in Haskell and +
+        for Python lists
+        """
         self.unevaluated = itertools.chain(self.unevaluated, iterable)
         return self
 

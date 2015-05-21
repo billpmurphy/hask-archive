@@ -1,5 +1,6 @@
 import functools
 
+
 import unittest
 
 from hask import in_typeclass, arity, sig2, H2
@@ -106,7 +107,6 @@ class TestHindleyMilner(unittest.TestCase):
         self.pair = App(App(Var("pair"),
                          App(Var("f"), Var("1"))),
                          App(Var("f"), Var("True")))
-        return
 
     def test_type_inference(self):
         """Basic type inference in our toy environment"""
@@ -134,7 +134,6 @@ class TestHindleyMilner(unittest.TestCase):
 
         # \f -> (f f) ==> TypeError (recursive unification)
         self.not_inference(Lam("f", App(Var("f"), Var("f"))))
-        return
 
     def test_type_checking(self):
         """Basic type checking in our toy environment"""
@@ -281,7 +280,6 @@ class TestHindleyMilner(unittest.TestCase):
                 App(Var("factorial"), Var("4"))),
             self.Integer)
 
-        return
 
     def test_parse_sig_item(self):
         class __test__(object):
@@ -295,7 +293,6 @@ class TestHindleyMilner(unittest.TestCase):
         self.unified(parse_sig_item(__test__, {}), TypeOperator(__test__, []))
 
         # tuple
-        return
 
 
 class TestTypeSystem(unittest.TestCase):
@@ -420,11 +417,11 @@ class TestADTInternals(unittest.TestCase):
         self.assertFalse(self.M3(1, 2, 3) == self.M3(1, 9, 3))
 
     def test_derive_show_data(self):
-        self.assertNotEquals("M1(1)", repr(self.M1(1)))
+        self.assertNotEquals("M1(1)", str(self.M1(1)))
 
         self.Type_Const = derive_show(self.Type_Const)
 
-        self.assertEqual("M1(1)", repr(self.M1(1)))
+        self.assertEqual("M1(1)", str(self.M1(1)))
 
     def test_derive_read_data(self):
         pass
@@ -622,12 +619,12 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): c(lambda x: x == 10) ^ c(lambda _: 1)
 
         with self.assertRaises(se): c(lambda x: x == 10) >> c(lambda _: 1)
+        with self.assertRaises(se): c(lambda x: x == 10) >> 2 >> 2
         with self.assertRaises(se): c(lambda x: x > 1) | c(lambda x: x < 1)
         with self.assertRaises(se): otherwise >> c(lambda _: 1)
         with self.assertRaises(se): otherwise | c(lambda x: x < 1)
         with self.assertRaises(se): otherwise >> c(lambda _: 1)
         with self.assertRaises(se): otherwise | c(lambda x: x < 1)
-
         with self.assertRaises(se):
             ~(guard(2) | c(lambda x: x == 2) >> 1 | c(lambda y: y == 2))
         with self.assertRaises(se): c(lambda x: x == 10) >> "1" >> "2"
@@ -1045,7 +1042,6 @@ class TestPrelude(unittest.TestCase):
         from hask.Prelude import words
         from hask.Prelude import unlines
         from hask.Prelude import unwords
-        return
 
 
 class TestDataString(unittest.TestCase):
@@ -1057,7 +1053,6 @@ class TestDataString(unittest.TestCase):
         from hask.Data.String import unwords
 
         # add tests
-        return
 
 
 class TestDataTuple(unittest.TestCase):
@@ -1072,7 +1067,6 @@ class TestDataTuple(unittest.TestCase):
         # add more
         self.assertEqual(swap(swap((1, 2))), (1, 2))
         self.assertEqual(swap((1, "a")), ("a", 1))
-        return
 
 
 class Test_README_Examples(unittest.TestCase):
@@ -1105,7 +1099,6 @@ class Test_README_Examples(unittest.TestCase):
         self.assertEqual(
                 examine_password_security(nuclear_launch_code),
                 'Same combination as my luggage!')
-        return
 
     def test_decorators(self):
         def a_problematic_function(cheese):
@@ -1136,7 +1129,6 @@ class Test_README_Examples(unittest.TestCase):
         #self.assertEqual(my_fn_that_raises_errors(-10),
         #                 Left(ValueError('Too low!',)))
         self.assertEqual(my_fn_that_raises_errors(1), Right(11))
-        return
 
 
 if __name__ == '__main__':
