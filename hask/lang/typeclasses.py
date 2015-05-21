@@ -8,24 +8,24 @@ import types
 
 __typeclass_flag__ = "__typeclasses__"
 
+__python_builtins__ = set((
+    types.NoneType, types.TypeType, types.BooleanType, types.IntType,
+    types.LongType, types.FloatType, types.ComplexType, types.StringType,
+    types.UnicodeType, types.TupleType, types.ListType, types.DictType,
+    types.DictionaryType, types.FunctionType, types.LambdaType,
+    types.GeneratorType, types.CodeType, types.ClassType, types.InstanceType,
+    types.MethodType, types.UnboundMethodType, types.BuiltinFunctionType,
+    types.BuiltinMethodType, types.ModuleType, types.FileType,
+    types.XRangeType, types.EllipsisType, types.TracebackType, types.FrameType,
+    types.BufferType, types.DictProxyType, types.NotImplementedType,
+    types.GetSetDescriptorType, types.MemberDescriptorType))
+
 
 def is_builtin(cls):
     """
     Return True if a type is a Python builtin type, and False otherwise.
     """
-    b = set((types.NoneType, types.TypeType, types.BooleanType, types.IntType,
-             types.LongType, types.FloatType, types.ComplexType,
-             types.StringType, types.UnicodeType, types.TupleType,
-             types.ListType, types.DictType, types.DictionaryType,
-             types.FunctionType, types.LambdaType, types.GeneratorType,
-             types.CodeType, types.ClassType, types.InstanceType,
-             types.MethodType, types.UnboundMethodType,
-             types.BuiltinFunctionType, types.BuiltinMethodType,
-             types.ModuleType, types.FileType, types.XRangeType,
-             types.EllipsisType, types.TracebackType, types.FrameType,
-             types.BufferType, types.DictProxyType, types.NotImplementedType,
-             types.GetSetDescriptorType, types.MemberDescriptorType))
-    return cls in b
+    return cls in __python_builtins__
 
 
 def in_typeclass(cls, typeclass):
@@ -116,6 +116,7 @@ class Typeclass(object):
 
 #=============================================================================#
 # Basic typeclasses
+
 
 class Read(Typeclass):
 
@@ -407,8 +408,9 @@ class Iterator(Typeclass):
                                        attrs=attrs)
         return
 
+
 #=============================================================================#
-## Typeclass functions
+## Exported typeclass functions
 
 # Read
 read = Read.read

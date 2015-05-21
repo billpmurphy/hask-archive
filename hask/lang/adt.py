@@ -9,29 +9,35 @@ from ..lang import type_system
 from ..lang import typeclasses
 
 
-## ADT internals
+#=============================================================================#
+# ADT internals
 
-def _dc_items(dc):
-    return tuple((dc.__getattribute__(i) for i in dc.__class__._fields))
+
+def nt_to_tuple(nt):
+    """
+    Convert an instance of namedtuple to tuple, even if the instance's __iter__
+    method has been changed.
+    """
+    return tuple((getattr(nt, f) for f in nt.__class__._fields))
 
 
 def make_type_const(name, typeargs):
     """
     Build a new type constructor given a name and the type parameters.
-    This is simply a new class with a field `_params` that contains the list of
-    type parameter names.
+    A new type constructor is a new class with a field `_params` that contains
+    the list of type parameter names.
     """
     def raise_fn(err):
         raise err()
 
     cls = type(name, (object,), {"__params__":tuple(typeargs),
                                  "__constructors__":(),
-                                 "__typeclasses__":[]})
+                                 "__typeclasses__":()})
 
     # TODO
     cls._type = lambda self: self.typeargs
 
-    cls.__iter__ = lambda self, other: raise_fn(TypeError)
+    cls.__iter__ = lambda self: raise_fn(TypeError)
     cls.__contains__ = lambda self, other: raise_fn(TypeError)
     cls.__add__ = lambda self, other: raise_fn(TypeError)
     cls.__rmul__ = lambda self, other: raise_fn(TypeError)
@@ -66,13 +72,18 @@ def make_data_const(name, fields, type_constructor):
 
 def derive_eq(type_constructor):
     """
-    Add a default __eq__ method to a type constructor.
+    Add default __eq__ and __ne__ methods to a type constructor.
     """
     def __eq__(self, other):
         return self.__class__ == other.__class__ and \
-               all((s == o for s, o in zip(_dc_items(self), _dc_items(other))))
+               nt_to_tuple(self) == nt_to_tuple(other)
+
+    def __ne__(self, other):
+        return self.__class__ != other.__class__ or  \
+               nt_to_tuple(self) != nt_to_tuple(other)
+
     type_constructor.__eq__ = __eq__
-    type_constructor.__ne__ = lambda self, other: not __eq__(self, other)
+    type_constructor.__ne__ = __ne__
     return type_constructor
 
 
@@ -80,12 +91,14 @@ def derive_show(type_constructor):
     """
     Add a default __repr__ method to a data constructor.
     """
-    def __repr__(self):
+    def __str__(self):
         if len(self.__class__._fields) == 0:
             return self.__class__.__name__
-        return "%s(%s)" % (self.__class__.__name__,
-                           ", ".join(map(repr, _dc_items(self))))
-    type_constructor.__repr__ = __repr__
+
+        nt_tup = nt_to_tuple(self)
+        tuple_str = "(%s)" % nt_tup[0] if len(nt_tup) == 1 else str(nt_tup)
+        return "{0}{1}".format(self.__class__.__name__, tuple_str)
+    type_constructor.__str__ = __str__
     return type_constructor
 
 
@@ -102,13 +115,15 @@ def derive_ord(type_constructor):
     """
     # compare all of the _fields of two objects
     def zip_cmp(self, other, fn):
-        return all((fn(a, b) for a, b in zip(_dc_items(self), _dc_items(other))))
+        zipped = zip(nt_to_tuple(self), nt_to_tuple(other))
+        return all((fn(a, b) for a, b in zipped))
 
     type_constructor.__lt__ = lambda s, o: zip_cmp(s, o, operator.lt)
     return type_constructor
 
 
-## User-facing syntax
+#=============================================================================#
+# User-facing syntax
 
 
 class __dotwrapper__(object):
