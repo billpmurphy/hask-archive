@@ -15,6 +15,11 @@ from hask.lang.typeclasses import Eq
 from hask.lang.typeclasses import Ord
 from hask.lang.typeclasses import Bounded
 from hask.lang.typeclasses import Num
+from hask.lang.typeclasses import Fractional
+from hask.lang.typeclasses import Floating
+from hask.lang.typeclasses import Real
+from hask.lang.typeclasses import RealFrac
+from hask.lang.typeclasses import RealFloat
 from hask.lang.typeclasses import Enum
 from hask.lang.typeclasses import Functor
 from hask.lang.typeclasses import Applicative

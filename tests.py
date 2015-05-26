@@ -16,7 +16,8 @@ from hask import id as hid
 from hask import Maybe, Just, Nothing, in_maybe
 from hask import Either, Left, Right, in_either
 from hask import Typeclass
-from hask import Show, Eq, Ord, Bounded, Num
+from hask import Show, Eq, Ord, Bounded
+from hask import Num, Real, RealFrac, Fractional, Floating, RealFloat
 from hask import Enum, succ, pred
 from hask import Functor, Applicative, Monad
 from hask import Traversable, Ix, Foldable, Iterator
@@ -456,17 +457,19 @@ class TestADT(unittest.TestCase):
         pass
 
 
-class TestEnum(unittest.TestCase):
+class TestBuiltins(unittest.TestCase):
 
-    def test_enum_str(self):
+    def test_enum(self):
         self.assertEqual("b", succ("a"))
         self.assertEqual("a", pred("b"))
-
-    def test_enum_int(self):
         self.assertEqual(2, succ(1))
         self.assertEqual(1, pred(2))
         self.assertEqual(4, succ(succ(succ(1))))
         self.assertEqual(-1, pred(pred(pred(2))))
+
+    def test_num(self):
+        self.assertTrue(in_typeclass(float, Num))
+        self.assertTrue(in_typeclass(float, Num))
 
 
 class TestSyntax(unittest.TestCase):
