@@ -55,7 +55,7 @@ class Typeclass(object):
         Create an instance of a typeclass.
 
         1) Check whether the instance type is a member of parent typeclasses of
-           the typeclass
+           the typeclass being instantiated
         2) Modify the instance type, adding the appropriate attributes
         3) Add a typeclass flag to the instance type, signifying that it is now
            a member of the typeclass
@@ -66,13 +66,17 @@ class Typeclass(object):
                 msg = "%s is not a member of %s" % (cls.__name__, dep.__name__)
                 raise TypeError(msg)
 
-        # 2) Add attributes
-        if attrs is not None:
-            for attr_name, attr in attrs.iteritems():
-                Typeclass.add_attr(cls, attr_name, attr)
+        if is_builtin(cls):
+            # 2a) If the class is a builtin, make it a subclass
+            self.__class__.register(cls)
+        else:
+            # 2b) Otherwise, add attributes to the class
+            if attrs is not None:
+                for attr_name, attr in attrs.iteritems():
+                    Typeclass.add_attr(cls, attr_name, attr)
 
-        # 3) Add flag
-        Typeclass.add_typeclass_flag(cls, self.__class__)
+            # 3b) Add flag to the class
+            Typeclass.add_typeclass_flag(cls, self.__class__)
         return
 
     @classmethod
@@ -213,10 +217,34 @@ class Num(Typeclass):
         return
 
 
+class Fractional(Typeclass):
+
+    def __init__(self, cls):
+        super(Fractional, self).__init__(cls, dependencies=[Num])
+
+
+class Floating(Typeclass):
+
+    def __init__(self, cls):
+        super(Floating, self).__init__(cls, dependencies=[Fractional])
+
+
+class Real(Typeclass):
+
+    def __init__(self, cls):
+        super(Real, self).__init__(cls, dependencies=[Num, Ord])
+
+
+class RealFrac(Typeclass):
+
+    def __init__(self, cls):
+        super(RealFrac, self).__init__(cls, dependencies=[Real, Fractional])
+
+
 class RealFloat(Typeclass):
 
     def __init__(self, cls):
-        super(RealFloat, self).__init__(cls, dependencies=[Num])
+        super(RealFloat, self).__init__(cls, dependencies=[Floating, RealFrac])
         return
 
 
@@ -370,7 +398,9 @@ class Traversable(Typeclass):
 
 
 class Ix(Typeclass):
-
+    """
+    Deps here do not match Haskell.
+    """
     def __init__(self, cls, __getitem__, __len__=None):
         def getitem(self, i):
             return __getitem__(self, i)

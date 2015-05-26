@@ -4,6 +4,7 @@ import itertools
 from type_system import _t
 from typeclasses import Enum
 from typeclasses import Num
+from typeclasses import RealFloat
 from typeclasses import Read
 from typeclasses import Show
 from typeclasses import Eq
@@ -20,20 +21,21 @@ from typeclasses import Foldable
 
 Int = int
 Float = float
+Complex = complex
 String = str
 
-Show.register(int)
-Show.register(float)
-Show.register(complex)
+Show(int, int.__str__)
+Show(float, float.__str__)
+Show(complex, complex.__str__)
+Show(str, str.__str__)
 
-Eq.register(int)
-Eq.register(float)
-Eq.register(complex)
+Eq(int, int.__eq__)
+Eq(float, float.__eq__)
+Eq(complex, complex.__eq__)
 
-Num.register(int)
-Num.register(float)
-Num.register(complex)
-
+Num(int)
+Num(float)
+Num(complex)
 
 # Maybe
 
