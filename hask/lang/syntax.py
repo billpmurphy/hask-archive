@@ -3,7 +3,6 @@ import operator
 import hof
 from builtins import List
 from typeclasses import Enum
-
 from type_system import HM_typeof
 
 
@@ -23,15 +22,15 @@ class Syntax(object):
     """
     def __init__(self, err_msg=None):
         if err_msg is not None:
-            self.syntax_err_msg = err_msg
+            self.__syntax_err_msg = err_msg
         else:
-            self.syntax_err_msg = "Syntax error in `%s`" % self.__name__
+            self.__syntax_err_msg = "Syntax error in `%s`" % self.__name__
         return
 
     def raise_invalid(self, msg=None):
         if msg is not None:
             raise SyntaxError(msg)
-        raise SyntaxError(self.syntax_err_msg)
+        raise SyntaxError(self.__syntax_err_msg)
 
     __syntaxerr__ = lambda s, *a: s.raise_invalid()
 
@@ -107,6 +106,8 @@ class Syntax(object):
     __iand__ = __syntaxerr__
     __ixor__ = __syntaxerr__
 
+    __bool__ = __syntaxerr__
+    __nonzero__ = __syntaxerr__
 
 #=============================================================================#
 # Operator sections
@@ -181,6 +182,7 @@ __ = __section__("Error in section")
 #=============================================================================#
 # Guards! Guards!
 
+
 class NoGuardMatchException(Exception):
     pass
 
@@ -196,7 +198,9 @@ class __guard_test__(Syntax):
         super(__guard_test__, self).__init__("Syntax error in guard condition")
 
     def __rshift__(self, value):
-        if isinstance(value, __guard_test__):
+        if isinstance(value, __guard_test__) or \
+           isinstance(value, __guard_conditional__) or \
+           isinstance(value, __guard_base__):
             self.raise_invalid()
         return __guard_conditional__(self.__test, value)
 

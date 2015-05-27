@@ -2,41 +2,97 @@ import collections
 import itertools
 
 from type_system import _t
-from typeclasses import Enum
-from typeclasses import Num
-from typeclasses import RealFloat
-from typeclasses import Read
 from typeclasses import Show
 from typeclasses import Eq
+from typeclasses import Ord
+from typeclasses import Enum
+from typeclasses import Num
+from typeclasses import Real
+from typeclasses import Integral
+from typeclasses import Floating
+from typeclasses import Fractional
+from typeclasses import RealFrac
+from typeclasses import RealFloat
+from typeclasses import Read
 from typeclasses import Functor
 from typeclasses import Applicative
 from typeclasses import Monad
 from typeclasses import Traversable
-from typeclasses import Ix
 from typeclasses import Iterator
 from typeclasses import Foldable
 
 
+#=============================================================================#
 # Wrappers for Python builtins (for cosmetic purposes only)
 
 Int = int
+Integer = long
 Float = float
 Complex = complex
 String = str
 
+
+#=============================================================================#
+# Typeclasses for Python builtins
+
+
+Show(str, str.__str__)
 Show(int, int.__str__)
+Show(long, long.__str__)
 Show(float, float.__str__)
 Show(complex, complex.__str__)
-Show(str, str.__str__)
 
+Eq(str, str.__eq__)
 Eq(int, int.__eq__)
+Eq(long, long.__eq__)
 Eq(float, float.__eq__)
 Eq(complex, complex.__eq__)
 
-Num(int)
-Num(float)
-Num(complex)
+Ord(str, str.__lt__, str.__le__, str.__gt__, str.__ge__)
+Ord(int, int.__lt__, int.__le__, int.__gt__, int.__ge__)
+Ord(long, long.__lt__, long.__le__, long.__gt__, long.__ge__)
+Ord(float, float.__lt__, float.__le__, float.__gt__, float.__ge__)
+Ord(complex, complex.__lt__, complex.__le__, complex.__gt__, complex.__ge__)
 
+Enum(int, lambda a: a, lambda a: a)
+Enum(long, lambda a: a, lambda a: a)
+
+
+def __signum(a):
+    """
+    Signum function for python builtin numeric types.
+    """
+    if a < 0:   return -1
+    elif a > 0: return 1
+    else:       return 0
+
+
+Num(int, int.__add__, int.__mul__, abs, __signum, lambda a: int(a),
+    int.__neg__, int.__sub__)
+Num(long, long.__add__, long.__mul__, abs, __signum, lambda a: long(a),
+    long.__neg__, long.__sub__)
+Num(float, float.__add__, float.__mul__, abs, __signum, lambda a: float(a),
+    float.__neg__, float.__sub__)
+Num(complex, complex.__add__, complex.__mul__, abs, __signum,
+    lambda a: complex(a), complex.__neg__, complex.__sub__)
+
+Real(int)
+Real(long)
+Real(float)
+
+Integral(int)
+Integral(long)
+
+Fractional(float)
+
+Floating(float)
+
+RealFrac(float)
+
+RealFloat(float)
+
+
+#=============================================================================#
 # Maybe
 
 class Maybe(object):
@@ -111,6 +167,7 @@ def in_maybe(fn, *args, **kwargs):
     return _closure_in_maybe
 
 
+#=============================================================================#
 # Either
 
 class Either(object):
@@ -175,6 +232,7 @@ def in_either(fn, *args, **kwargs):
     return _closure_in_either
 
 
+#=============================================================================#
 # List
 
 class List(collections.Sequence):
@@ -296,6 +354,5 @@ Functor(List, List.fmap)
 Applicative(List, List.pure)
 Monad(List, List.bind)
 Foldable(List, List.foldr)
-Traversable(List, List.__iter__)
+Traversable(List, List.__iter__, List.__getitem__, List.__len__)
 Iterator(List, List.__next__)
-Ix(List, List.__getitem__)

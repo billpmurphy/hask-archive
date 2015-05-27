@@ -173,10 +173,14 @@ class Eq(Typeclass):
 
 class Ord(Typeclass):
 
-    def __init__(self, cls, __lt__):
-        __le__ = lambda s, o: s.__lt__(o) or s.__eq__(o)
-        __gt__ = lambda s, o: not s.__lt__(o) and not s.__eq__(o)
-        __ge__ = lambda s, o: not s.__lt__(o) or not s.__eq__(o)
+    def __init__(self, cls, __lt__, __le__=None, __gt__=None, __ge__=None):
+        __le = lambda s, o: s.__lt__(o) or s.__eq__(o)
+        __gt = lambda s, o: not s.__lt__(o) and not s.__eq__(o)
+        __ge = lambda s, o: not s.__lt__(o) or not s.__eq__(o)
+
+        __le__ = __le if __le__ is None else __le__
+        __gt__ = __gt if __gt__ is None else __gt__
+        __ge__ = __ge if __ge__ is None else __ge__
 
         attrs = {"__lt__":__lt__, "__le__":__le__,
                  "__gt__":__gt__, "__ge__":__ge__}
@@ -210,45 +214,8 @@ class Bounded(Typeclass):
         return a.minBound()
 
 
-class Num(Typeclass):
-
-    def __init__(self, cls):
-        super(Num, self).__init__(cls, dependencies=[Show, Eq])
-        return
-
-
-class Fractional(Typeclass):
-
-    def __init__(self, cls):
-        super(Fractional, self).__init__(cls, dependencies=[Num])
-
-
-class Floating(Typeclass):
-
-    def __init__(self, cls):
-        super(Floating, self).__init__(cls, dependencies=[Fractional])
-
-
-class Real(Typeclass):
-
-    def __init__(self, cls):
-        super(Real, self).__init__(cls, dependencies=[Num, Ord])
-
-
-class RealFrac(Typeclass):
-
-    def __init__(self, cls):
-        super(RealFrac, self).__init__(cls, dependencies=[Real, Fractional])
-
-
-class RealFloat(Typeclass):
-
-    def __init__(self, cls):
-        super(RealFloat, self).__init__(cls, dependencies=[Floating, RealFrac])
-        return
-
-
 class Enum(Typeclass):
+
     def __init__(self, cls, toEnum, fromEnum):
         attrs = {"toEnum":toEnum, "fromEnum":fromEnum}
         super(Enum, self).__init__(cls, attrs=attrs)
@@ -307,6 +274,63 @@ class Enum(Typeclass):
     @staticmethod
     def enumFromTo(start, end):
         return Enum.enumFromThenTo(start, Enum.succ(start), end)
+
+
+class Num(Typeclass):
+
+    def __init__(self, cls, add, mul, abs, signum, fromInteger, negate, sub=None):
+        def default_sub(a, b):
+            return a.__add__(b.__neg__())
+
+        sub = default_sub if sub is None else sub
+
+        attrs = {"__add__":add,
+                 "__mul__":mul,
+                 "__abs__":abs,
+                 "signum":signum,
+                 "fromInteger":fromInteger,
+                 "__neg__":negate,
+                 "__sub__":sub}
+
+        super(Num, self).__init__(cls, dependencies=[Show, Eq], attrs=attrs)
+        return
+
+
+class Fractional(Typeclass):
+
+    def __init__(self, cls):
+        super(Fractional, self).__init__(cls, dependencies=[Num])
+
+
+class Floating(Typeclass):
+
+    def __init__(self, cls):
+        super(Floating, self).__init__(cls, dependencies=[Fractional])
+
+
+class Real(Typeclass):
+
+    def __init__(self, cls):
+        super(Real, self).__init__(cls, dependencies=[Num, Ord])
+
+
+class Integral(Typeclass):
+
+    def __init__(self, cls):
+        super(Integral, self).__init__(cls, dependencies=[Real, Enum])
+
+
+class RealFrac(Typeclass):
+
+    def __init__(self, cls):
+        super(RealFrac, self).__init__(cls, dependencies=[Real, Fractional])
+
+
+class RealFloat(Typeclass):
+
+    def __init__(self, cls):
+        super(RealFloat, self).__init__(cls, dependencies=[Floating, RealFrac])
+        return
 
 
 class Functor(Typeclass):
@@ -387,39 +411,28 @@ class Foldable(Typeclass):
 
 class Traversable(Typeclass):
 
-    def __init__(self, cls, __iter__):
-        def _iter(self):
-            return __iter__(self)
-
-        deps = [Foldable, Functor]
-        super(Traversable, self).__init__(cls, dependencies=deps,
-                                          attrs={"__iter__":_iter})
-        return
-
-
-class Ix(Typeclass):
-    """
-    Deps here do not match Haskell.
-    """
-    def __init__(self, cls, __getitem__, __len__=None):
-        def getitem(self, i):
-            return __getitem__(self, i)
-
+    def __init__(self, cls, __iter__, __getitem__=None, __len__=None):
         def default_len(self):
             count = 0
             for _ in iter(self):
                 count += 1
             return count
 
-        __len__ = default_len if __len__ is None else __len__
+        def default_getitem(self, i):
+            return list(iter(self))[i]
 
-        attrs = {"__len__":__len__, "__getitem__":getitem}
-        super(Ix, self).__init__(cls, dependencies=[Traversable], attrs=attrs)
+        __len__ = default_len if __len__ is None else __len__
+        __getitem__ = default_getitem if __getitem__ is None else __getitem__
+
+        deps = [Foldable, Functor]
+        attrs = {"__iter__":__iter__, "__getitem__":__getitem__,
+                 "__len__":__len__}
+        super(Traversable, self).__init__(cls, dependencies=deps, attrs=attrs)
         return
 
     @staticmethod
     def length(a):
-        return a.__len__()
+        return len(a)
 
 
 class Iterator(Typeclass):
@@ -464,5 +477,5 @@ fmap = Functor.fmap
 # Foldable
 foldr = Foldable.foldr
 
-# Ix
-length = Ix.length
+# Traversable
+length = Traversable.length

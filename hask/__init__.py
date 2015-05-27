@@ -25,7 +25,6 @@ from hask.lang.typeclasses import Functor
 from hask.lang.typeclasses import Applicative
 from hask.lang.typeclasses import Monad
 from hask.lang.typeclasses import Traversable
-from hask.lang.typeclasses import Ix
 from hask.lang.typeclasses import Foldable
 from hask.lang.typeclasses import Iterator
 

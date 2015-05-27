@@ -20,7 +20,9 @@ from hask import Show, Eq, Ord, Bounded
 from hask import Num, Real, RealFrac, Fractional, Floating, RealFloat
 from hask import Enum, succ, pred
 from hask import Functor, Applicative, Monad
-from hask import Traversable, Ix, Foldable, Iterator
+from hask import Traversable, Foldable, Iterator
+
+from hask import Prelude
 
 # internals
 from hask.lang.syntax import Syntax
@@ -45,6 +47,10 @@ from hask.lang.hindley_milner import unify
 from hask.lang.syntax import parse_sig_item
 
 
+te = TypeError
+se = SyntaxError
+
+
 class TestHindleyMilner(unittest.TestCase):
 
     def inference(self, expr):
@@ -54,8 +60,7 @@ class TestHindleyMilner(unittest.TestCase):
 
     def not_inference(self, expr):
         """Type inference failed using our toy environment"""
-        with self.assertRaises(TypeError):
-            analyze(expr, self.env)
+        with self.assertRaises(te): analyze(expr, self.env)
         return
 
     def unified(self, t1, t2):
@@ -71,8 +76,7 @@ class TestHindleyMilner(unittest.TestCase):
     def not_typecheck(self, expr, expr_type):
         """Typecheck failed, but inference succeeded using our toy environment"""
         self.inference(expr)
-        with self.assertRaises(TypeError):
-            self.typecheck(expr, expr_type)
+        with self.assertRaises(te): self.typecheck(expr, expr_type)
         return
 
     def setUp(self):
@@ -337,11 +341,11 @@ class TestTypeSystem(unittest.TestCase):
         self.assertEqual(4, arity(X1.__init__))
 
     def test_plain_sig(self):
-        te = TypeError
 
         @sig2(H2() >> int >> int)
         def f1(x):
             return x + 4
+
         self.assertEqual(9, f1(5))
         with self.assertRaises(te): f1(1.0)
         with self.assertRaises(te): f1("foo")
@@ -398,7 +402,6 @@ class TestADTInternals(unittest.TestCase):
         self.assertTrue(isinstance(self.M3(1, 2, 3), self.Type_Const))
 
     def test_derive_eq_data(self):
-        te = TypeError
         with self.assertRaises(te): self.M1(1) == self.M1(1)
         with self.assertRaises(te): self.M1(1) != self.M1(1)
 
@@ -427,7 +430,6 @@ class TestADTInternals(unittest.TestCase):
         pass
 
     def test_derive_ord_data(self):
-        te = TypeError
         with self.assertRaises(te): self.M1(1) > self.M1(1)
         with self.assertRaises(te): self.M1(1) >= self.M1(1)
         with self.assertRaises(te): self.M1(1) < self.M1(1)
@@ -439,7 +441,6 @@ class TestADTInternals(unittest.TestCase):
 class TestADT(unittest.TestCase):
 
     def test_data(self):
-        se = SyntaxError
         self.assertEqual(("a",), (data . Maybe("a")).type_args)
         self.assertEqual(("a", "b"), (data . Maybe("a", "b")).type_args)
         self.assertEqual((), (data . Maybe).type_args)
@@ -448,7 +449,6 @@ class TestADT(unittest.TestCase):
         pass
 
     def test_deriving(self):
-        te = TypeError
         with self.assertRaises(te): deriving(Num)
         with self.assertRaises(te): deriving(Ord, Num)
 
@@ -474,7 +474,6 @@ class TestBuiltins(unittest.TestCase):
 class TestSyntax(unittest.TestCase):
 
     def test_syntax(self):
-        se = SyntaxError
         s = Syntax("err")
 
         with self.assertRaises(se): len(s)
@@ -587,7 +586,6 @@ class TestSyntax(unittest.TestCase):
         self.assertEqual(4, (__ + 1) * (__ * 3) % 1)
 
     def test_guard(self):
-        se = SyntaxError
         me = NoGuardMatchException
 
         self.assertTrue(~(guard(1)
@@ -646,7 +644,6 @@ class TestSyntax(unittest.TestCase):
 class TestHOF(unittest.TestCase):
 
     def test_F(self):
-        te = TypeError
 
         # regular version
         def sum3(x, y, z):
@@ -734,7 +731,6 @@ class TestHOF(unittest.TestCase):
         with self.assertRaises(te): F(lambda x, y: x)(1, 2, 3)
 
     def test_F_functor(self):
-        te = TypeError
         f = lambda x: (x + 100) % 75
         g = lambda x: x * 21
         h = lambda x: (x - 31) / 3
@@ -828,8 +824,8 @@ class TestHOF(unittest.TestCase):
         self.assertEqual(1, const(1, 2))
         self.assertEqual(1, const(1)(2))
         self.assertEqual("foo", const("foo", 2))
-        self.assertEqual(1, (const(1) * const(2) * const(3))(4))
-        self.assertEqual(1, const(1) * const(2) * const(3) % 4)
+        self.assertEqual(1, (const(1) * const("foo") * const(3))(4))
+        self.assertEqual(1, const(1) * const("foo") * const(3) % 4)
 
         self.assertEqual(1, const(hid, 2)(1))
         self.assertEqual(1, const(hid)(2)(1))
@@ -882,7 +878,6 @@ class TestMaybe(unittest.TestCase):
         self.assertFalse(in_typeclass(Maybe, Num))
         self.assertFalse(in_typeclass(Maybe, Foldable))
         self.assertFalse(in_typeclass(Maybe, Traversable))
-        self.assertFalse(in_typeclass(Maybe, Ix))
         self.assertFalse(in_typeclass(Maybe, Iterator))
 
     def test_show(self):
@@ -939,9 +934,8 @@ class TestList(unittest.TestCase):
         self.assertTrue(in_typeclass(List, Applicative))
         self.assertTrue(in_typeclass(List, Monad))
         self.assertTrue(in_typeclass(List, Traversable))
-        self.assertTrue(in_typeclass(List, Ix))
 
-    def test_ix(self):
+    def test_indexing(self):
         # add more corner cases
 
         ie = IndexError
@@ -1032,7 +1026,7 @@ class TestList(unittest.TestCase):
 
 class TestPrelude(unittest.TestCase):
 
-    def test_all(self):
+    def test_imports(self):
         # tuples
         from hask.Prelude import fst
         from hask.Prelude import snd
@@ -1044,6 +1038,11 @@ class TestPrelude(unittest.TestCase):
         from hask.Prelude import words
         from hask.Prelude import unlines
         from hask.Prelude import unwords
+
+    def test_until(self):
+        from hask.Prelude import until
+
+        self.assertEquals(1, until((__>0), (__+1), -20))
 
 
 class TestDataString(unittest.TestCase):
@@ -1066,7 +1065,15 @@ class TestDataTuple(unittest.TestCase):
         from hask.Data.Tuple import uncurry
         from hask.Data.Tuple import swap
 
-        # add more
+        self.assertEqual(1, fst((1, 2)))
+        self.assertEqual(("a", "b"), fst((("a", "b"), ("c", "d"))))
+        self.assertEqual("a", fst(fst((("a", "b"), ("c", "d")))))
+
+        self.assertEqual(2, snd((1, 2)))
+        self.assertEqual(("c", "d"), snd((("a", "b"), ("c", "d"))))
+        self.assertEqual("b", snd(fst((("a", "b"), ("c", "d")))))
+        self.assertEqual("c", fst(snd((("a", "b"), ("c", "d")))))
+
         self.assertEqual(swap(swap((1, 2))), (1, 2))
         self.assertEqual(swap((1, "a")), ("a", 1))
 

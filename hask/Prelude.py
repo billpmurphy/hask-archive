@@ -69,6 +69,15 @@ def lcm(x, y):
     pass
 
 
+#sig(H/ ("a" >> bool) >> ("a" >> "a") >> "a" >> "a" )
+def until(p, f, a):
+    """
+    until(p, f, a) yields the result of applying f until p(a) holds.
+    """
+    while not p(a):
+        a = f(a)
+    return a
+
 
 #@sig(H/ "a" >> List("a"))
 def repeat(x):
