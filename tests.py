@@ -281,7 +281,6 @@ class TestHindleyMilner(unittest.TestCase):
                 App(Var("factorial"), Var("4"))),
             self.Integer)
 
-
     def test_parse_sig_item(self):
         class __test__(object):
             pass
