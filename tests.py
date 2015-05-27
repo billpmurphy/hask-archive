@@ -52,6 +52,7 @@ se = SyntaxError
 
 
 class TestHindleyMilner(unittest.TestCase):
+    """Test the internals of the Hindley-Milner type inference engine"""
 
     def inference(self, expr):
         """Type inference succeeded using our toy environment"""
@@ -286,6 +287,8 @@ class TestHindleyMilner(unittest.TestCase):
             self.Integer)
 
     def test_parse_sig_item(self):
+        """Test type signature parsing"""
+
         class __test__(object):
             pass
 
@@ -636,6 +639,29 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): otherwise >> "1" >> "2"
         with self.assertRaises(se): "1" >> otherwise
 
+    def test_list_comp(self):
+        # numeric lists
+        self.assertEqual(10, len(L[0, ...][:10]))
+        self.assertEqual(L[0, ...][:10], range(10)[:10])
+        self.assertEqual(L[-10, ...][:10], range(-10, 0)[:10])
+        self.assertEqual(11, len(L[-5, ..., 5]))
+        self.assertEqual(list(L[-5, ..., 5]), list(range(-5, 6)))
+        self.assertEqual(list(L[-5, -4, ..., 5]), list(range(-5, 6)))
+        self.assertEqual(list(L[-5, -3, ..., 5]), list(range(-5, 6, 2)))
+        self.assertEqual(L[1, 3, 5, 7], L[1, 3, ...][:4])
+        self.assertEqual(L[3, 5, 7], L[1, 3, ...][1:4])
+        self.assertEqual(L[5, 7], L[1, 3, ...][2:4])
+        self.assertEqual([], list(L[1, 3, ...][4:4]))
+        self.assertEqual([], list(L[1, 3, ...][5:4]))
+        self.assertEqual(L[1, 3, 5, 7], L[1, 3, ..., 7])
+        self.assertEqual(L[1, 3, 5, 7], L[1, 3, ..., 8])
+        self.assertEqual([], list(L[6, ..., 4]))
+        self.assertEqual([], list(L[2, 3, ..., 1]))
+
+        # character lists
+        self.assertEqual(10, len(L["a", ...][:10]))
+        self.assertEqual("abcdefghij", "".join(L["a", ...][:10]))
+        self.assertEqual(11, len(L["a", ..., "k"]))
 
     def test_caseof(self):
         self.assertTrue(~(caseof(1) / 1 % True))
@@ -977,30 +1003,6 @@ class TestList(unittest.TestCase):
         self.assertEqual(map(test_f, range(9)),
                           list(List(range(9)) * test_f))
 
-    def test_list_comp(self):
-        # numeric lists
-        self.assertEqual(10, len(L[0, ...][:10]))
-        self.assertEqual(L[0, ...][:10], range(10)[:10])
-        self.assertEqual(L[-10, ...][:10], range(-10, 0)[:10])
-        self.assertEqual(11, len(L[-5, ..., 5]))
-        self.assertEqual(list(L[-5, ..., 5]), list(range(-5, 6)))
-        self.assertEqual(list(L[-5, -4, ..., 5]), list(range(-5, 6)))
-        self.assertEqual(list(L[-5, -3, ..., 5]), list(range(-5, 6, 2)))
-        self.assertEqual(L[1, 3, 5, 7], L[1, 3, ...][:4])
-        self.assertEqual(L[3, 5, 7], L[1, 3, ...][1:4])
-        self.assertEqual(L[5, 7], L[1, 3, ...][2:4])
-        self.assertEqual([], list(L[1, 3, ...][4:4]))
-        self.assertEqual([], list(L[1, 3, ...][5:4]))
-        self.assertEqual(L[1, 3, 5, 7], L[1, 3, ..., 7])
-        self.assertEqual(L[1, 3, 5, 7], L[1, 3, ..., 8])
-        self.assertEqual([], list(L[6, ..., 4]))
-        self.assertEqual([], list(L[2, 3, ..., 1]))
-
-        # character lists
-        self.assertEqual(10, len(L["a", ...][:10]))
-        self.assertEqual("abcdefghij", "".join(L["a", ...][:10]))
-        self.assertEqual(11, len(L["a", ..., "k"]))
-
     def test_hmap(self):
         test_f = lambda x: (x + 100) / 2
 
@@ -1027,6 +1029,9 @@ class TestList(unittest.TestCase):
 class TestPrelude(unittest.TestCase):
 
     def test_imports(self):
+        """Prelude imports from Data.* modules; make sure things get loaded in
+           correctly
+        """
         # tuples
         from hask.Prelude import fst
         from hask.Prelude import snd
