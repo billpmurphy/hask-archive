@@ -17,6 +17,7 @@ class Syntax(object):
 
     By default, a piece of syntax will raise a syntax error with a standard
     error message if the syntax object is used with a Python builtin operator.
+
     Subclasses may override these methods to define what syntax is valid for
     those objects.
     """
@@ -109,24 +110,23 @@ class Syntax(object):
     __bool__ = __syntaxerr__
     __nonzero__ = __syntaxerr__
 
+
 #=============================================================================#
 # Operator sections
 
+
 def make_section(fn):
     """
-    Create an operator section from a binary functon.
+    Create an operator section from a binary operator.
     """
-    def section(a, b):
-        return fn(b, a)
-
-    def double_section():
-        return lambda x, y: section(y, x)
-
-    def applyier(self, y):
+    def section(self, y):
+        # double section, e.g. (__+__)
         if isinstance(y, __section__):
-            return hof.F(double_section)
-        return hof.F(section)(y)
-    return applyier
+            return hof.F(lambda x, y: fn(x, y))
+
+        # single section, e.g. (__+1) or (1+__)
+        return hof.F(lambda a: fn(a, y))
+    return section
 
 
 class __section__(Syntax):
@@ -135,30 +135,29 @@ class __section__(Syntax):
         super(__section__, self).__init__(syntax_err_msg)
         return
 
-    __wrap = lambda f: lambda x, y: f(x, y)
     __flip = lambda f: lambda x, y: f(y, x)
 
-    __add__ = make_section(__wrap(operator.add))
-    __sub__ = make_section(__wrap(operator.sub))
-    __mul__ = make_section(__wrap(operator.mul))
-    __div__ = make_section(__wrap(operator.div))
-    __truediv__ = make_section(__wrap(operator.truediv))
-    __floordiv__ = make_section(__wrap(operator.floordiv))
-    __mod__ = make_section(__wrap(operator.mod))
-    __divmod__ = make_section(__wrap(divmod))
-    __pow__ = make_section(__wrap(operator.pow))
-    __lshift__ = make_section(__wrap(operator.lshift))
-    __rshift__ = make_section(__wrap(operator.rshift))
-    __or__ = make_section(__wrap(operator.or_))
-    __and__ = make_section(__wrap(operator.and_))
-    __xor__ = make_section(__wrap(operator.xor))
+    __add__ = make_section(operator.add)
+    __sub__ = make_section(operator.sub)
+    __mul__ = make_section(operator.mul)
+    __div__ = make_section(operator.div)
+    __truediv__ = make_section(operator.truediv)
+    __floordiv__ = make_section(operator.floordiv)
+    __mod__ = make_section(operator.mod)
+    __divmod__ = make_section(divmod)
+    __pow__ = make_section(operator.pow)
+    __lshift__ = make_section(operator.lshift)
+    __rshift__ = make_section(operator.rshift)
+    __or__ =  make_section(operator.or_)
+    __and__ = make_section(operator.and_)
+    __xor__ = make_section(operator.xor)
 
-    __eq__ = make_section(__wrap(operator.eq))
-    __ne__ = make_section(__wrap(operator.ne))
-    __gt__ = make_section(__wrap(operator.gt))
-    __lt__ = make_section(__wrap(operator.lt))
-    __ge__ = make_section(__wrap(operator.ge))
-    __le__ = make_section(__wrap(operator.le))
+    __eq__ = make_section(operator.eq)
+    __ne__ = make_section(operator.ne)
+    __gt__ = make_section(operator.gt)
+    __lt__ = make_section(operator.lt)
+    __ge__ = make_section(operator.ge)
+    __le__ = make_section(operator.le)
 
     __radd__ = make_section(__flip(operator.add))
     __rsub__ = make_section(__flip(operator.sub))
@@ -189,7 +188,20 @@ class NoGuardMatchException(Exception):
 
 class __guard_test__(Syntax):
     """
-    Guard condition.
+    c creates a new condition that can be used in a guard
+    expression.
+
+    otherwise is a guard condition that always evaluates to True.
+
+    Usage:
+
+    ~(guard(<expr to test>)
+        | c(<test_fn_1>) >> <return_value_1>
+        | c(<test_fn_2>) >> <return_value_2>
+        | otherwise      >> <return_value_3>
+    )
+
+    See help(guard) for more details.
     """
     def __init__(self, fn):
         if not hasattr(fn, "__call__"):
@@ -206,22 +218,40 @@ class __guard_test__(Syntax):
 
 
 class __guard_conditional__(Syntax):
+    """
+    Object that represents one line of a guard expression, consisting of a
+    condition (a test function wrapped in c and a value to be returned if that
+    condition is satisfied).
 
+    See help(guard) for more details.
+    """
     def __init__(self, fn, return_value):
         self.check = fn
         self.return_value = return_value
-        super(__guard_conditional__, self).__init__("Syntax error in guard condition")
+        msg = "Syntax error in guard condition"
+        super(__guard_conditional__, self).__init__(msg)
 
 
 class __guard_base__(Syntax):
+    """
+    Superclass for the classes __unmatched_guard__ and __matched_guard__ below,
+    which represent the internal state of a guard expression as it is being
+    evaluated.
 
+    See help(guard) for more details.
+    """
     def __init__(self, value):
         self.value = value
         super(__guard_base__, self).__init__("Syntax error in guard")
 
 
 class __unmatched_guard__(__guard_base__):
+    """
+    Object that represents the state of a guard expression in mid-evaluation,
+    before one of the conditions in the expression has been satisfied.
 
+    See help(guard) for more details.
+    """
     def __or__(self, cond):
         if isinstance(cond, __guard_test__):
             self.raise_invalid("Guard expression is missing return value")
@@ -236,7 +266,12 @@ class __unmatched_guard__(__guard_base__):
 
 
 class __matched_guard__(__guard_base__):
+    """
+    Object that represents the state of a guard expression in mid-evaluation,
+    after one of the conditions in the expression has been satisfied.
 
+    See help(guard) for more details.
+    """
     def __or__(self, cond):
         if isinstance(cond, __guard_conditional__):
             return self
@@ -251,18 +286,20 @@ class guard(__unmatched_guard__):
     Usage:
 
     ~(guard(<expr to test>)
-        | c(<test 1>) >> <return value 1>
-        | c(<test 2>) >> <return value 2>
-        | otherwise() >> <return value 3>
+        | c(<test_fn_1>) >> <return_value_1>
+        | c(<test_fn_2>) >> <return_value_2>
+        | otherwise      >> <return_value_3>
     )
 
-    For example:
+    Examples:
 
     ~(guard(8)
          | c(lambda x: x < 5) >> "less than 5"
          | c(lambda x: x < 9) >> "less than 9"
-         | otherwise()        >> "unsure"
+         | otherwise          >> "unsure"
     )
+
+    # Using guards with sections. See help(__) for more on sections.
     """
     def __invert__(self):
         self.raise_invalid()
@@ -278,6 +315,20 @@ otherwise = c(lambda _: True)
 class __list_comprehension__(Syntax):
     """
     Syntactic construct for Haskell-style list comprehensions.
+
+    List comprehensions can be used with any instance of Enum, including the
+    built-in types int, long, float, and char.
+
+    There are four basic list comprehension patterns:
+
+    >>> L[1, ...]
+
+    >>> L[1, 3, ...]
+
+    >>> L[1, ..., 20]
+
+    >>> L[1, 5, ..., 20]
+
     """
     def __getitem__(self, lst):
         if isinstance(lst, tuple) and len(lst) < 5 and Ellipsis in lst:

@@ -129,13 +129,13 @@ class TestHindleyMilner(unittest.TestCase):
             Lam("x",
                 App(
                     App(Var("pair"),
-                        App(Var("x"), Var(4))),
+                        App(Var("x"), Var("4"))),
                     App(Var("x"), Var("True")))))
 
         # \x -> ((f 4), (f True)) ==> TypeError (undefined symbol f)
         self.not_inference(
             App(
-                App(Var("pair"), App(Var("f"), Var(4))),
+                App(Var("pair"), App(Var("f"), Var("4"))),
                 App(Var("f"), Var("True"))))
 
         # \f -> (f f) ==> TypeError (recursive unification)
@@ -179,6 +179,12 @@ class TestHindleyMilner(unittest.TestCase):
         self.typecheck(
             App(Var("pred"), Var("1")),
             self.Integer)
+
+        # ((pair 1) 4) :: (a, b)
+        self.typecheck(
+            App(App(Var("pair"), Var("1")), Var("4")),
+            TypeOperator("*", [TypeVariable(), TypeVariable()]))
+
 
         # (*) :: (Integer -> Integer -> Integer)
         self.typecheck(
