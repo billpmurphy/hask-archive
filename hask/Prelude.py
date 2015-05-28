@@ -1,5 +1,8 @@
 import itertools
 
+from .lang.syntax import H
+from .lang.syntax import sig
+from .lang.syntax import L
 from .lang.builtins import List
 
 
@@ -27,7 +30,8 @@ from Data.Tuple import uncurry
 def subtract(x, y):
     """
     subtract :: Num a => a -> a -> a
-    the same as flip(__-__).
+
+    the same as lambda x, y: y - x
     """
     return y - x
 
@@ -36,6 +40,7 @@ def subtract(x, y):
 def even(x):
     """
     even :: Integral a => a -> Bool
+
     Returns True if the integral value is even, and False otherwise.
     """
     return x % 2 == 0
@@ -45,9 +50,10 @@ def even(x):
 def odd(x):
     """
     even :: Integral a => a -> Bool
+
     Returns True if the integral value is odd, and False otherwise.
     """
-    return not even(x)
+    return x % 2 == 1
 
 
 def gcd(x, y):
@@ -79,26 +85,7 @@ def until(p, f, a):
     return a
 
 
-#@sig(H/ "a" >> List("a"))
-def repeat(x):
-    """
-    repeat(x) is an infinite list, with x the value of every element.
-    """
-    return repeat(x)
-
-
-#sig(H/ ("a" >> "a") >> "a" >> List("a") )
-def iterate(f, x):
-    """
-    iterate(f,x) returns an infinite list of repeated applications of f to x:
-       iterate(f,x) == [x, f x, f (f x), ...]
-    """
-    while True:
-        yield x
-        x = f(x)
-
-
-#@sig(H/ str -> "a")
+@sig(H/ str >> "a")
 def error(msg):
     """
     error :: str -> a
@@ -119,45 +106,88 @@ def filter(fn, iterable):
     return List(itertools.ifilter(fn, iterable))
 
 
+@sig( H/ ["a"] >> "a" )
 def head(xs):
     """
     head :: [a] -> a
+
     Extract the first element of a list, which must be non-empty.
     """
     return xs[0]
 
 
+@sig( H/ ["a"] >> "a" )
 def last(xs):
     """
     last :: [a] -> a
+
     Extract the last element of a list, which must be finite and non-empty.
     """
     return xs[-1]
 
 
+@sig( H/ ["a"] >> ["a"] )
 def tail(xs):
     """
     tail :: [a] -> [a]
+
     Extract the elements after the head of a list, which must be non-empty.
     """
     return List((x for x in xs[1:]))
 
 
+@sig( H/ ["a"] >> ["a"] )
 def init(xs):
     """
     init :: [a] -> [a]
+
     Return all the elements of a list except the last one. The list must be
     non-empty.
     """
     return List((x for x in xs[:-1]))
 
 
+@sig( H/ ["a"] >> ["a"] )
 def reverse(xs):
     """
     reverse :: [a] -> [a]
+
     reverse xs returns the elements of xs in reverse order. xs must be finite.
     """
-    return List((x for x in xs[::-1]))
+    return L[(x for x in xs[::-1])]
+
+
+#=============================================================================#
+## Special folds
+
+#=============================================================================#
+## Building lists
+
+
+#=============================================================================#
+### Scans
+
+
+#=============================================================================#
+### Infinite lists
+
+
+from Data.List import iterate
+from Data.List import repeat
+from Data.List import replicate
+from Data.List import cycle
+
+
+#=============================================================================#
+## Sublists
+
+
+#=============================================================================#
+## Searching lists
+
+
+#=============================================================================#
+## Zipping and unzipping lists
 
 
 #=============================================================================#

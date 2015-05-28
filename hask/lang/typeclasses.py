@@ -435,6 +435,23 @@ class Traversable(Typeclass):
         return len(a)
 
 
+class Monoid(Typeclass):
+
+    def __init__(self, cls, mempty, mappend):
+        #TODO: mconcat
+
+        attrs = {"mempty":mempty, "mappend":mappend}
+        super(Monoid, self).__init__(cls, attrs=attrs)
+
+    @staticmethod
+    def mempty(_return):
+        return _return.mempty
+
+    @staticmethod
+    def mappend(a, b):
+        return a.mappend(b)
+
+
 class Iterator(Typeclass):
     """
     Special typeclass for Python iterators, i.e. classes with a next or
@@ -479,3 +496,7 @@ foldr = Foldable.foldr
 
 # Traversable
 length = Traversable.length
+
+# Monoid
+mempty = Monoid.mempty
+mappend = Monoid.mappend

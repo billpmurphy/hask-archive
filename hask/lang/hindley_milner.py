@@ -55,7 +55,8 @@ class Let(object):
 # Types and type constructors
 
 class TypeVariable(object):
-    """A type variable standing for an arbitrary type. All type variables have
+    """
+    A type variable standing for an arbitrary type. All type variables have
     a unique id, but names are only assigned lazily, when required.
 
     Not thread-safe.
@@ -70,16 +71,17 @@ class TypeVariable(object):
         self.instance = None
         self.__name = None
 
-    def _getName(self):
-        """Names are allocated to TypeVariables lazily, so that only TypeVariables
-        present
+    def __getName(self):
+        """
+        Names are allocated to TypeVariables lazily, so that only TypeVariables
+        converted to strings are given names.
         """
         if self.__name is None:
             self.__name = TypeVariable.next_var_name
             TypeVariable.next_var_name = chr(ord(TypeVariable.next_var_name) + 1)
         return self.__name
 
-    name = property(_getName)
+    name = property(__getName)
 
     def __str__(self):
         if self.instance is not None:
@@ -128,13 +130,14 @@ class Tuple(TypeOperator):
 # Type inference machinery
 
 def analyze(node, env, non_generic=None):
-    """Computes the type of the expression given by node.
+    """
+    Computes the type of the expression given by node.
 
-    The type of the node is computed in the context of the context of the
-    supplied type environment env. Data types can be introduced into the
-    language simply by having a predefined set of identifiers in the initial
-    environment. This way there is no need to change the syntax or, more
-    importantly, the type-checking program when extending the language.
+    The type of the node is computed in the context of the supplied type
+    environment, env. Data types can be introduced into the language simply by
+    having a predefined set of identifiers in the initial environment. This way
+    there is no need to change the syntax or, more importantly, the
+    type-checking program when extending the language.
 
     Args:
         node: The root of the abstract syntax tree.

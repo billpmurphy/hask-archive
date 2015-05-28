@@ -115,19 +115,6 @@ class Syntax(object):
 # Operator sections
 
 
-def make_section(fn):
-    """
-    Create an operator section from a binary operator.
-    """
-    def section(self, y):
-        # double section, e.g. (__+__)
-        if isinstance(y, __section__):
-            return hof.F(lambda x, y: fn(x, y))
-
-        # single section, e.g. (__+1) or (1+__)
-        return hof.F(lambda a: fn(a, y))
-    return section
-
 
 class __section__(Syntax):
 
@@ -135,44 +122,59 @@ class __section__(Syntax):
         super(__section__, self).__init__(syntax_err_msg)
         return
 
+    @staticmethod
+    def __wrap(fn):
+        """
+        Create an operator section from a binary operator.
+        """
+        def section_wrapper(self, y):
+            # double section, e.g. (__+__)
+            if isinstance(y, __section__):
+                return hof.F(lambda x, y: fn(x, y))
+
+            # single section, e.g. (__+1) or (1+__)
+            return hof.F(lambda a: fn(a, y))
+        return section_wrapper
+
+    __make_section = __wrap.__func__
     __flip = lambda f: lambda x, y: f(y, x)
 
-    __add__ = make_section(operator.add)
-    __sub__ = make_section(operator.sub)
-    __mul__ = make_section(operator.mul)
-    __div__ = make_section(operator.div)
-    __truediv__ = make_section(operator.truediv)
-    __floordiv__ = make_section(operator.floordiv)
-    __mod__ = make_section(operator.mod)
-    __divmod__ = make_section(divmod)
-    __pow__ = make_section(operator.pow)
-    __lshift__ = make_section(operator.lshift)
-    __rshift__ = make_section(operator.rshift)
-    __or__ =  make_section(operator.or_)
-    __and__ = make_section(operator.and_)
-    __xor__ = make_section(operator.xor)
+    __add__ = __make_section(operator.add)
+    __sub__ = __make_section(operator.sub)
+    __mul__ = __make_section(operator.mul)
+    __div__ = __make_section(operator.div)
+    __truediv__ = __make_section(operator.truediv)
+    __floordiv__ = __make_section(operator.floordiv)
+    __mod__ = __make_section(operator.mod)
+    __divmod__ = __make_section(divmod)
+    __pow__ = __make_section(operator.pow)
+    __lshift__ = __make_section(operator.lshift)
+    __rshift__ = __make_section(operator.rshift)
+    __or__ =  __make_section(operator.or_)
+    __and__ = __make_section(operator.and_)
+    __xor__ = __make_section(operator.xor)
 
-    __eq__ = make_section(operator.eq)
-    __ne__ = make_section(operator.ne)
-    __gt__ = make_section(operator.gt)
-    __lt__ = make_section(operator.lt)
-    __ge__ = make_section(operator.ge)
-    __le__ = make_section(operator.le)
+    __eq__ = __make_section(operator.eq)
+    __ne__ = __make_section(operator.ne)
+    __gt__ = __make_section(operator.gt)
+    __lt__ = __make_section(operator.lt)
+    __ge__ = __make_section(operator.ge)
+    __le__ = __make_section(operator.le)
 
-    __radd__ = make_section(__flip(operator.add))
-    __rsub__ = make_section(__flip(operator.sub))
-    __rmul__ = make_section(__flip(operator.mul))
-    __rdiv__ = make_section(__flip(operator.div))
-    __rtruediv__ = make_section(__flip(operator.truediv))
-    __rfloordiv__ = make_section(__flip(operator.floordiv))
-    __rmod__ = make_section(__flip(operator.mod))
-    __rdivmod__ = make_section(__flip(divmod))
-    __rpow__ = make_section(__flip(operator.pow))
-    __rlshift__ = make_section(__flip(operator.lshift))
-    __rrshift__ = make_section(__flip(operator.rshift))
-    __ror__ = make_section(__flip(operator.or_))
-    __rand__ = make_section(__flip(operator.and_))
-    __rxor__ = make_section(__flip(operator.xor))
+    __radd__ = __make_section(__flip(operator.add))
+    __rsub__ = __make_section(__flip(operator.sub))
+    __rmul__ = __make_section(__flip(operator.mul))
+    __rdiv__ = __make_section(__flip(operator.div))
+    __rtruediv__ = __make_section(__flip(operator.truediv))
+    __rfloordiv__ = __make_section(__flip(operator.floordiv))
+    __rmod__ = __make_section(__flip(operator.mod))
+    __rdivmod__ = __make_section(__flip(divmod))
+    __rpow__ = __make_section(__flip(operator.pow))
+    __rlshift__ = __make_section(__flip(operator.lshift))
+    __rrshift__ = __make_section(__flip(operator.rshift))
+    __ror__ = __make_section(__flip(operator.or_))
+    __rand__ = __make_section(__flip(operator.and_))
+    __rxor__ = __make_section(__flip(operator.xor))
 
 
 __ = __section__("Error in section")
@@ -363,7 +365,9 @@ from hindley_milner import *
 
 
 class __constraints__(Syntax):
-
+    """
+    See help(sig) for more information on type signature decorators.
+    """
     def __init__(self, constraints=()):
         self.constraints = constraints
         super(__constraints__, self).__init__("Syntax error in type signature")
@@ -404,6 +408,7 @@ class sig(Syntax):
     """
     def __init__(self, signature):
         super(self.__class__, self).__init__("Syntax error in type signature")
+
         if not isinstance(signature, __signature__):
             self.raise_invalid()
         elif len(signature.args) < 2:
@@ -413,7 +418,6 @@ class sig(Syntax):
         return
 
     def __call__(self, fn):
-        # convert the list of arguments from the signature into its type
         return TypedFunc(fn, self.fn_type)
 
 
@@ -469,9 +473,13 @@ def parse_sig_item(item, var_dict):
         return TypeOperator(item.type().hkt,
                 map(lambda x: parse_sig_item(x, var_dict), item.type().params))
 
-    # ("a", "b"), (int, ("a", float)), etc.
+    # Tuples: ("a", "b"), (int, ("a", float)), etc.
     elif isinstance(item, tuple):
         return Tuple(map(lambda x: parse_sig_item(x, var_dict), item))
+
+    # Lists: ["a"], [int], etc.
+    elif isinstance(item, list) and len(item) == 1:
+        return TypeOperator(List, [parse_sig_item(item[0], var_dict)])
 
     # any other type
     elif isinstance(item, type):
@@ -482,6 +490,10 @@ def parse_sig_item(item, var_dict):
 
 def parse_sig(items):
     def make_fn_type(args):
+        """
+        Turn a list of arguments into a function type. E.g., convert
+        [int, int, int] into int -> int -> int
+        """
         if len(args) == 2:
             last_input, return_type = args
             return Function(last_input, return_type)

@@ -41,21 +41,26 @@ Show(int, int.__str__)
 Show(long, long.__str__)
 Show(float, float.__str__)
 Show(complex, complex.__str__)
+Show(bool, bool.__str__)
 
 Eq(str, str.__eq__)
 Eq(int, int.__eq__)
 Eq(long, long.__eq__)
 Eq(float, float.__eq__)
 Eq(complex, complex.__eq__)
+Eq(bool, bool.__eq__)
 
 Ord(str, str.__lt__, str.__le__, str.__gt__, str.__ge__)
 Ord(int, int.__lt__, int.__le__, int.__gt__, int.__ge__)
 Ord(long, long.__lt__, long.__le__, long.__gt__, long.__ge__)
 Ord(float, float.__lt__, float.__le__, float.__gt__, float.__ge__)
 Ord(complex, complex.__lt__, complex.__le__, complex.__gt__, complex.__ge__)
+Ord(bool, bool.__lt__, bool.__le__, bool.__gt__, bool.__ge__)
 
-Enum(int, lambda a: a, lambda a: a)
-Enum(long, lambda a: a, lambda a: a)
+
+Enum(int,  toEnum=lambda a: a,      fromEnum=lambda a: a)
+Enum(long, toEnum=lambda a: a,      fromEnum=lambda a: a)
+Enum(bool, toEnum=lambda a: int(a), fromEnum=lambda a: bool(a))
 
 
 def __signum(a):

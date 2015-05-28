@@ -3,7 +3,7 @@ import functools
 
 import unittest
 
-from hask import in_typeclass, arity, sig2, H2
+from hask import in_typeclass, arity
 from hask import guard, c, otherwise, NoGuardMatchException
 from hask import caseof
 from hask import __
@@ -348,52 +348,6 @@ class TestTypeSystem(unittest.TestCase):
                 pass
 
         self.assertEqual(4, arity(X1.__init__))
-
-    def test_plain_sig(self):
-
-        @sig2(H2() >> int >> int)
-        def f1(x):
-            return x + 4
-
-        self.assertEqual(9, f1(5))
-        with self.assertRaises(te): f1(1.0)
-        with self.assertRaises(te): f1("foo")
-        with self.assertRaises(te): f1(5, 4)
-        with self.assertRaises(te): f1(5, "foo")
-        with self.assertRaises(te): f1()
-
-        @sig2(H2() >> int >> int >> float)
-        def f2(x, y):
-            return (x + y) / 2.0
-
-        self.assertEqual(20.0, f2(20, 20))
-        with self.assertRaises(te): f2(5, "foo")
-
-        @sig2(H2() >> int >> int >> int >> float)
-        def f3(x, y, z):
-            return (x + y + z) / 3.0
-        self.assertEqual(20.0, f3(20, 20, 20))
-        with self.assertRaises(te): f3(5, "foo", 4)
-
-        with self.assertRaises(te):
-            @sig2(int)
-            def g(x):
-                return x / 2
-
-        with self.assertRaises(te):
-            @sig2(H2() >> int >> int >> int)
-            def g(x):
-                return x / 2
-
-        @sig2(H2() >> float >> float)
-        def g(x):
-            return int(x / 2)
-        with self.assertRaises(te): g(9.0)
-
-        @sig2(H2() >> int >> int)
-        def g(x):
-            return x / 2.0
-        with self.assertRaises(te): g(1)
 
 
 class TestADTInternals(unittest.TestCase):
@@ -1054,6 +1008,23 @@ class TestPrelude(unittest.TestCase):
         from hask.Prelude import until
 
         self.assertEquals(1, until((__>0), (__+1), -20))
+
+    def test_iterate(self):
+        from hask.Prelude import iterate
+
+        self.assertEquals(iterate(lambda x: x + 1, 0)[:10], list(range(10)))
+
+    def test_error(self):
+        from hask.Prelude import error
+
+        with self.assertRaises(Exception): error("")
+
+        msg = "OUT OF CHEESE ERROR"
+        try:
+            error(msg)
+            self.assertTrue(False)
+        except Exception as e:
+            self.assertEqual(msg, e.message)
 
 
 class TestDataString(unittest.TestCase):

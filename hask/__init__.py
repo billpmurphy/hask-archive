@@ -3,8 +3,6 @@ __version__ = "0.0.1"
 # Core language
 from hask.lang.type_system import _t
 from hask.lang.type_system import arity
-from hask.lang.type_system import H2
-from hask.lang.type_system import sig2
 
 from hask.lang.typeclasses import in_typeclass
 from hask.lang.typeclasses import is_builtin
@@ -41,6 +39,8 @@ from hask.lang.typeclasses import enumFromThenTo
 from hask.lang.typeclasses import fmap
 from hask.lang.typeclasses import foldr
 from hask.lang.typeclasses import length
+from hask.lang.typeclasses import mempty
+from hask.lang.typeclasses import mappend
 
 from hask.lang.hof import const
 from hask.lang.hof import flip
@@ -68,7 +68,8 @@ from hask.lang.syntax import otherwise
 from hask.lang.syntax import NoGuardMatchException
 from hask.lang.syntax import L
 
-from hask.lang.syntax import sig, H
+from hask.lang.syntax import sig
+from hask.lang.syntax import H
 
 from hask.lang.caseof import caseof
 

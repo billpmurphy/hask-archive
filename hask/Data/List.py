@@ -1,8 +1,14 @@
+from ..lang.syntax import H
+from ..lang.syntax import sig
+from ..lang.syntax import L
+
+from ..lang.builtins import Maybe
 from ..lang.builtins import Just
 from ..lang.builtins import Nothing
 
 
-## Basic functions
+#=============================================================================#
+# Basic functions
 
 
 def uncons(xs):
@@ -10,12 +16,13 @@ def uncons(xs):
     uncons :: [a] -> Maybe (a, [a])
 
     Decompose a list into its head and tail. If the list is empty, returns
-    Nothing. If the list is non-empty, returns Just (x, xs), where x is the
+    Nothing. If the list is non-empty, returns Just((x, xs)), where x is the
     head of the list and xs its tail.
     """
     return Just((xs[0], xs[1:])) if xs else Nothing
 
 
+@sig( H/ ["a"] >> bool )
 def null(xs):
     """
     null :: [a] -> bool
@@ -25,6 +32,7 @@ def null(xs):
     return bool(xs)
 
 
+@sig( H/ ["a"] >> int )
 def length(xs):
     """
     length :: [a] -> int
@@ -35,44 +43,73 @@ def length(xs):
     """
     return len(x)
 
+#=============================================================================#
+# List transformations
 
-## List transformations
 
-
+@sig( H/ "a" >> ["a"] >> ["a"] )
 def intersperse(a, xs):
     """
     intersperse :: a -> [a] -> [a]
+
     The intersperse function takes an element and a list and `intersperses'
     that element between the elements of the list.
     """
     pass
 
 
+@sig( H/ ["a"] >> [["a"]] >> ["a"] )
 def intercalate(xs, xss):
     """
+    intercalate :: [a] -> [[a]] -> [a]
+
     intercalate(xs,xss) is equivalent to concat(intersperse(xs,xss)). It
     inserts the list xs in between the lists in xss and concatenates the
     result.
     """
+    # this can probably be made more efficient
     return concat(intersperse(xs, xss))
 
 
+@sig( H/ [["a"]] >> [["a"]] )
 def transpose(xs):
     """
+    transpose :: [[a]] -> [[a]]
+
     The transpose function transposes the rows and columns of its argument.
     """
     pass
 
 
+@sig( H/ ["a"] >> [["a"]] )
 def subsequences(xs):
+    """
+    subsequences :: [a] -> [[a]]
+
+    The subsequences function returns the list of all subsequences of the
+    argument.
+
+    subsequences(L["a","b","c"]) == L["","a","b","ab","c","ac","bc","abc"]
+    """
     pass
 
 
+@sig( H/ ["a"] >> [["a"]] )
 def permutations(xs):
+    """
+    permutations :: [a] -> [[a]]
+
+    The permutations function returns the list of all permutations of the
+    argument.
+
+    permutations(L["a","b","c"]) == L["abc","bac","cba","bca","cab","acb"]
+    """
     pass
 
 
-## Reducing lists
+#=============================================================================#
+# Reducing lists (folds)
+
 
 def foldl(f, b, xs):
     pass
@@ -93,13 +130,17 @@ def foldr1(f, b, xs):
     pass
 
 
+#=============================================================================#
 ## Special folds
 
+
+@sig( H/ [["a"]] >> ["a"] )
 def concat(xss):
     """
     Concatenate a list of lists.
     """
-    return (x for xs in xss for x in xs)
+    return L[(x for xs in xss for x in xs)]
+
 
 def concatMap(f, xs):
     pass
@@ -128,6 +169,55 @@ def maximum(xs):
 def minimum(xs):
     pass
 
+
+#=============================================================================#
+# Building lists
+
+
+#=============================================================================#
+## Scans
+
+
+#=============================================================================#
+## Accumulating maps
+
+
+#=============================================================================#
+## Infinite lists
+
+def iterate(f, x):
+    def __iterate(f, x):
+        while True:
+            yield x
+            x = f(x)
+    return L[__iterate(f, x)]
+
+
+def repeat(a):
+    pass
+
+
+def replicate(i, a):
+    pass
+
+
+def cycle(a):
+    pass
+
+
+#=============================================================================#
+## Unfolding
+
+
+#=============================================================================#
+# Sublists
+
+#=============================================================================#
+## Exctracting sublists
+
+
+
+#=============================================================================#
 ## Predicates
 
 def isPrefixOf(xs, ys):
@@ -139,8 +229,11 @@ def isSuffixOf(xs, ys):
 def isSubsequenceOf(xs, ys):
     pass
 
+#=============================================================================#
+# Searching lists
 
-## Searching lists
+#=============================================================================#
+## Searching by equality
 
 def elem(a, list_a):
     """
@@ -167,7 +260,9 @@ def lookup(a, assoc_list):
     return Nothing
 
 
+#=============================================================================#
 ## Searching with a predicate
+
 
 def find(f, xs):
     """
@@ -188,18 +283,29 @@ def partition(f, xs):
     """
     return (x for x in xs if f(x)), (y for y in xs if not f(y))
 
-## Indexing lists
 
-## Zipping and unzipping lists
+#=============================================================================#
+# Indexing lists
 
+
+#=============================================================================#
+# Zipping and unzipping lists
+
+
+#=============================================================================#
+# Special lists
+
+
+#=============================================================================#
 ## Functions on strings
 
-from Data.String import lines
-from Data.String import words
-from Data.String import unlines
-from Data.String import unwords
+from String import lines
+from String import words
+from String import unlines
+from String import unwords
 
 
+#=============================================================================#
 ## "Set" operations
 
 def nub(xs):
@@ -222,6 +328,7 @@ def intersect(xs, ys):
     pass
 
 
+#=============================================================================#
 ## Ordered lists
 
 def sort(xs):
@@ -245,7 +352,16 @@ def insert(x, xs):
         yield i
 
 
-## User-supplied equality
+#=============================================================================#
+# Generalized functions
+
+
+#=============================================================================#
+## The "By" operations
+
+
+#=============================================================================#
+### User-supplied equality (replacing an Eq context)
 
 
 def nubBy(f, xs):
@@ -272,7 +388,8 @@ def groupBy(f, xs):
     pass
 
 
-## User-supplied comparison
+#=============================================================================#
+### User-supplied comparison (replacing an Ord context)
 
 def sortBy(f, xs):
     pass
