@@ -406,15 +406,22 @@ class TestADTInternals(unittest.TestCase):
 class TestADT(unittest.TestCase):
 
     def test_data(self):
-        self.assertEqual(("a",), (data . Maybe("a")).type_args)
-        self.assertEqual(("a", "b"), (data . Maybe("a", "b")).type_args)
-        self.assertEqual((), (data . Maybe).type_args)
+        with self.assertRaises(se): data.N("a", "a")
+        with self.assertRaises(se): data.N(1, "b")
 
     def test_d(self):
         pass
 
     def test_holistic(self):
-        pass
+        T, M1, M2, M3 =\
+        data.T("a", "b") == d.M1("a") | d.M2("b") | d.M3 & deriving(Show, Eq)
+
+        self.assertTrue(M1(20) == M1(20))
+        self.assertTrue(M1(20) != M1(21))
+        self.assertTrue(M2(20) == M2(20))
+        self.assertTrue(M2(20) != M2(21))
+        self.assertTrue(M3 == M3)
+        self.assertFalse(M3 != M3)
 
 
 class TestBuiltins(unittest.TestCase):

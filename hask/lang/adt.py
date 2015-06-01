@@ -4,6 +4,7 @@ from syntax import Syntax
 from type_system import Typeclass
 from type_system import __typeclass_flag__
 
+
 #=============================================================================#
 # ADT internals
 
@@ -15,9 +16,13 @@ class ADT(object):
 def make_type_const(name, typeargs):
     """
     Build a new type constructor given a name and the type parameters.
-    A new type constructor is a new class with a field __params__ that
-    contains a tuple of type parameter names, and a field __constructors__ with
-    a list of data constructors for that type.
+
+    Args:
+        name: the name of the new type constructor to be created
+        typeargs: the type parameters to the constructor
+
+    Returns:
+        A new class that acts as a type constructor
     """
     def raise_fn(err):
         raise err()
@@ -71,71 +76,126 @@ def make_data_const(name, fields, type_constructor):
     return cls
 
 
+def build_ADT(typename, type_args, data_constructors, to_derive):
+    # create the new type constructor and data constructors
+    newtype = make_type_const(typename, type_args)
+    dcons = [make_data_const(d[0], d[1], newtype) for d in data_constructors]
+
+    # derive typeclass instances for the new type constructors
+    for tclass in to_derive:
+        tclass.derive_instance(newtype)
+
+    # return everything
+    return tuple([newtype,] + dcons)
+
+
 #=============================================================================#
 # User-facing syntax
 
 
 class __new_tcon__(Syntax):
-
-    def __init__(self, tcon_name):
-        self.tcon_name = tcon_name
-        self.type_args = ()
-
+    """
+    """
+    def __init__(self, tcon_name, type_args=()):
+        self.__name = tcon_name
+        self.__args = type_args
         super(__new_tcon__, self).__init__("Syntax error in `data`")
         return
 
     def __call__(self, *typeargs):
-        self.type_args = typeargs
-        return self
+        # make sure all type params are strings
+        if not all((type(arg) == str for arg in typeargs)):
+            self.raise_invalid("Type parameters must be strings")
 
-    def __eq__(self, ds):
-        # create the new type constructor and data constructors
-        newtype = make_type_const(self.tcon_name, self.type_args)
-        dcons = [make_data_const(d[0], d[1], newtype) for d in ds.dconstructors]
+        # all type parameters must have unique names
+        if len(typeargs) != len(set(typeargs)):
+            self.raise_invalid("Type parameters are not unique")
 
-        # derive typeclass instances for the new type constructore
-        for tclass in ds.derives:
-            tclass.derive_instance(newtype)
+        return __new_tcon__(self.__name, typeargs)
 
-        # make the type constructor and data constructors available globally
-        return tuple([newtype,] + dcons)
+    def __eq__(self, d):
+        # one data constructor, no derived typedclasses
+        if isinstance(ds, __new_dcon__):
+            return build_ADT(self.__name, self.__args, [(d.name, d.args)], ())
+
+        # two or more data constructors, no derived typeclasses
+        elif isinstance(ds, __new_dcons__):
+            return build_ADT(self.__name, self.__args, d.dcons, ())
+
+        # one or more data constructors, one or more derived typeclasses
+        elif isinstance(ds, __new_deoncs_deriving__):
+            return build_ADT(self.__name, self.__args, d.dcons, d.classes)
+
+        self.raise_invalid()
+        return
 
 
 class __new_dcon__(Syntax):
 
-    def __init__(self, dcon_name):
-        self.dcon_name = dcon_name
-        self.dconstructors = [(self.dcon_name, ())]
-        self.derives = ()
+    def __init__(self, dcon_name, args=()):
+        self.name = dcon_name
+        self.args = ()
         super(__new_dcon__, self).__init__("Syntax error in `d`")
         return
 
     def __call__(self, *typeargs):
-        self.type_args = typeargs
-        self.dconstructors = [(self.dcon_name, self.type_args)]
-        return self
+        return __new_dcon__(self.name, typeargs)
 
-    def __or__(self, other):
-        self.derives = other.derives
-        self.dconstructors += other.dconstructors
+    def __or__(self, dcon):
+        if not isinstance(dcon, __new_dcon__):
+            self.raise_invalid()
+        return __new_dcons__(((self.name, self.args), (dcon.name, dcon.args)))
 
-        # Check for duplicate data constructors
-        dconst_names = set(zip(*self.dconstructors)[0])
-        if len(dconst_names) < len(self.dconstructors):
-            raise SyntaxError("Illegal duplicate data constructors")
-        return self
+    def __and__(self, derive):
+        if not isinstance(derive, deriving):
+            self.raise_invalid()
+        return __new_dcons_deriving__(((self.name, self.args),), derive.classes)
 
-    def __and__(self, derives):
-        self.derives = derives.derived_classes
-        return self
+
+class __new_dcons__(Syntax):
+
+    def __init__(self, data_consts):
+        self.dcons = data_consts
+        super(__new_dcons__, self).__init__("Syntax error in `d`")
+        return
+
+    def __or__(self, new_dcon):
+        if not isinstance(new_dcon, __new_dcon__):
+            self.raise_invalid()
+        return __new_dcons__(self.dcons + (new_dcon.name, new_dcon.args))
+
+    def __and__(self, derive):
+        if not isinstance(derive, deriving):
+            self.raise_invalid()
+        return __new_dcons_deriving__(self.dcons, derive)
+
+
+class __new_dcons_deriving__(Syntax):
+
+    def __init__(self, data_consts, classes):
+        self.dcons = data_consts
+        self.classes = classes
+        super(__new_dcons_deriving__, self).__init__("Syntax error in `d`")
 
 
 class __data__(Syntax):
+    """
+    Examples:
+
+    Maybe, Nothing, Just =\
+    data.Maybe("a") == d.Nothing | d.Just("a") deriving(Read, Show, Eq, Ord)
+
+    """
     def __getattr__(self, value):
         return __new_tcon__(value)
 
 
 class __d__(Syntax):
+    """
+    `d` is part of hask's special syntax for defining algebraic data types.
+
+    See help(data) for more information.
+    """
     def __getattr__(self, value):
         return __new_dcon__(value)
 
@@ -145,10 +205,15 @@ d = __d__()
 
 
 class deriving(Syntax):
+    """
+    `deriving` is part of hask's special syntax for defining algebraic data
+    types.
 
+    See help(data) for more information.
+    """
     def __init__(self, *tclasses):
         for tclass in tclasses:
             if not issubclass(tclass, Typeclass):
                 raise TypeError("Cannot derive non-typeclass %s" % tclass)
-        self.derived_classes = tclasses
+        self.classes = tclasses
         return
