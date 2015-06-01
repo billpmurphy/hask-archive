@@ -1,121 +1,10 @@
-import abc
+import operator
 import sys
-import types
 
-
-#=============================================================================#
-# Typeclass infrastructure
-
-__typeclass_flag__ = "__typeclasses__"
-
-__python_builtins__ = set((
-    types.NoneType, types.TypeType, types.BooleanType, types.IntType,
-    types.LongType, types.FloatType, types.ComplexType, types.StringType,
-    types.UnicodeType, types.TupleType, types.ListType, types.DictType,
-    types.DictionaryType, types.FunctionType, types.LambdaType,
-    types.GeneratorType, types.CodeType, types.ClassType, types.InstanceType,
-    types.MethodType, types.UnboundMethodType, types.BuiltinFunctionType,
-    types.BuiltinMethodType, types.ModuleType, types.FileType,
-    types.XRangeType, types.EllipsisType, types.TracebackType, types.FrameType,
-    types.BufferType, types.DictProxyType, types.NotImplementedType,
-    types.GetSetDescriptorType, types.MemberDescriptorType))
-
-
-def is_builtin(cls):
-    """
-    Return True if a type is a Python builtin type, and False otherwise.
-    """
-    return cls in __python_builtins__
-
-
-def in_typeclass(cls, typeclass):
-    """
-    Return True if cls is a member of typeclass, and False otherwise.
-    """
-    if is_builtin(typeclass):
-       return False
-    elif is_builtin(cls):
-        try:
-            return issubclass(cls, typeclass)
-        except TypeError:
-            return False
-    elif hasattr(cls, __typeclass_flag__):
-        return typeclass in getattr(cls, __typeclass_flag__)
-    return False
-
-
-class Typeclass(object):
-    """
-    Base metaclass for Typeclasses.
-    """
-    __metaclass__ = abc.ABCMeta
-
-    def __init__(self, cls, dependencies=(), attrs=None):
-        """
-        Create an instance of a typeclass.
-
-        1) Check whether the instance type is a member of parent typeclasses of
-           the typeclass being instantiated
-        2) Modify the instance type, adding the appropriate attributes
-        3) Add a typeclass flag to the instance type, signifying that it is now
-           a member of the typeclass
-        """
-        # 1) Check dependencies
-        for dep in dependencies:
-            if not in_typeclass(cls, dep):
-                msg = "%s is not a member of %s" % (cls.__name__, dep.__name__)
-                raise TypeError(msg)
-
-        if is_builtin(cls):
-            # 2a) If the class is a builtin, make it a subclass
-            self.__class__.register(cls)
-        else:
-            # 2b) Otherwise, add attributes to the class
-            if attrs is not None:
-                for attr_name, attr in attrs.iteritems():
-                    Typeclass.add_attr(cls, attr_name, attr)
-
-            # 3b) Add flag to the class
-            Typeclass.add_typeclass_flag(cls, self.__class__)
-        return
-
-    @classmethod
-    def derive_instance(cls, type_constructor):
-        """
-        Derive a typeclass instance for the given type constructor.
-
-        Derivable typeclasses should override this method and provide their own
-        implementation.
-        """
-        raise TypeError("Cannot derive instance for class %s" % cls.__name__)
-
-    @staticmethod
-    def add_attr(cls, attr_name, attr):
-        """
-        Modify an existing class, adding an attribute. If the class is a
-        Python builtin, do nothing.
-        """
-        if not is_builtin(cls):
-            setattr(cls, attr_name, attr)
-        return
-
-    @staticmethod
-    def add_typeclass_flag(cls, typeclass):
-        """
-        Add a typeclass membership flag to a class, signifying that the class
-        belongs to the specified typeclass.
-
-        If the class is a Python builtin (and therefore immutable), make it a
-        subclass of the specified typeclass.
-        """
-        if is_builtin(cls):
-            typeclass.register(cls)
-        elif hasattr(cls, __typeclass_flag__):
-            setattr(cls, __typeclass_flag__,
-                    getattr(cls, __typeclass_flag__) + (typeclass,))
-        else:
-            setattr(cls, __typeclass_flag__, (typeclass,))
-        return
+from type_system import Typeclass
+from type_system import is_builtin
+from type_system import in_typeclass
+from type_system import nt_to_tuple
 
 
 #=============================================================================#
@@ -146,6 +35,19 @@ class Show(Typeclass):
     def show(a):
         return str(a)
 
+    @staticmethod
+    def derive_instance(type_constructor):
+        def __str__(self):
+            if len(self.__class__._fields) == 0:
+                return self.__class__.__name__
+
+            nt_tup = nt_to_tuple(self)
+            tuple_str = "(%s)" % nt_tup[0] if len(nt_tup) == 1 else str(nt_tup)
+            return "{0}{1}".format(self.__class__.__name__, tuple_str)
+        Show(type_constructor, __str__ = __str__)
+        return
+
+
 
 class Eq(Typeclass):
     """
@@ -170,6 +72,21 @@ class Eq(Typeclass):
         super(Eq, self).__init__(cls, attrs={"__eq__":__eq__, "__ne__":__ne__})
         return
 
+    @staticmethod
+    def derive_instance(type_constructor):
+        def __eq__(self, other):
+            return self.__class__ == other.__class__ and \
+                nt_to_tuple(self) == nt_to_tuple(other)
+
+        def __ne__(self, other):
+            return self.__class__ != other.__class__ or  \
+                nt_to_tuple(self) != nt_to_tuple(other)
+
+        Eq(type_constructor, __eq__ = __eq__, __ne__ = __ne__)
+        return
+
+
+
 
 class Ord(Typeclass):
 
@@ -186,6 +103,24 @@ class Ord(Typeclass):
                  "__gt__":__gt__, "__ge__":__ge__}
         super(Ord, self).__init__(cls, dependencies=[Eq], attrs=attrs)
         return
+
+    @staticmethod
+    def derive_instance(type_constructor):
+        def zip_cmp(self, other, fn):
+            """
+            Compare all of the fields of two ADTs.
+            """
+            zipped_fields = zip(nt_to_tuple(self), nt_to_tuple(other))
+            return all((fn(a, b) for a, b in zipped_fields))
+
+        lt = lambda s, o: zip_cmp(s, o, operator.lt)
+        le = lambda s, o: zip_cmp(s, o, operator.le)
+        gt = lambda s, o: zip_cmp(s, o, operator.gt)
+        ge = lambda s, o: zip_cmp(s, o, operator.ge)
+        Ord(type_constructor, __lt__=lt, __le__=le, __gt__=gt, __ge__=ge)
+        return
+
+
 
 
 class Bounded(Typeclass):
@@ -225,7 +160,7 @@ class Enum(Typeclass):
     def toEnum(a):
         if is_builtin(type(a)):
             if in_typeclass(type(a), Num):
-                return a
+                return int(a)
             elif type(a) == str:
                 return ord(a)
         return a.toEnum()

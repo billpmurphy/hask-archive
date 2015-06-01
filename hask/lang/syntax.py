@@ -44,6 +44,7 @@ class Syntax(object):
     __contains__ = __syntaxerr__
     __missing__ = __syntaxerr__
 
+    __delattr__ = __syntaxerr__
     __call__ = __syntaxerr__
     __enter__ = __syntaxerr__
     __exit__ = __syntaxerr__
@@ -115,7 +116,6 @@ class Syntax(object):
 # Operator sections
 
 
-
 class __section__(Syntax):
 
     def __init__(self, syntax_err_msg):
@@ -123,7 +123,7 @@ class __section__(Syntax):
         return
 
     @staticmethod
-    def __wrap(fn):
+    def __make_section(fn):
         """
         Create an operator section from a binary operator.
         """
@@ -136,45 +136,48 @@ class __section__(Syntax):
             return hof.F(lambda a: fn(a, y))
         return section_wrapper
 
-    __make_section = __wrap.__func__
+    # left section, e.g. (__+1)
+    __wrap = __make_section.__func__
+
+    # right section, e.g. (1+__)
     __flip = lambda f: lambda x, y: f(y, x)
 
-    __add__ = __make_section(operator.add)
-    __sub__ = __make_section(operator.sub)
-    __mul__ = __make_section(operator.mul)
-    __div__ = __make_section(operator.div)
-    __truediv__ = __make_section(operator.truediv)
-    __floordiv__ = __make_section(operator.floordiv)
-    __mod__ = __make_section(operator.mod)
-    __divmod__ = __make_section(divmod)
-    __pow__ = __make_section(operator.pow)
-    __lshift__ = __make_section(operator.lshift)
-    __rshift__ = __make_section(operator.rshift)
-    __or__ =  __make_section(operator.or_)
-    __and__ = __make_section(operator.and_)
-    __xor__ = __make_section(operator.xor)
+    __add__ = __wrap(operator.add)
+    __sub__ = __wrap(operator.sub)
+    __mul__ = __wrap(operator.mul)
+    __div__ = __wrap(operator.div)
+    __truediv__ = __wrap(operator.truediv)
+    __floordiv__ = __wrap(operator.floordiv)
+    __mod__ = __wrap(operator.mod)
+    __divmod__ = __wrap(divmod)
+    __pow__ = __wrap(operator.pow)
+    __lshift__ = __wrap(operator.lshift)
+    __rshift__ = __wrap(operator.rshift)
+    __or__ =  __wrap(operator.or_)
+    __and__ = __wrap(operator.and_)
+    __xor__ = __wrap(operator.xor)
 
-    __eq__ = __make_section(operator.eq)
-    __ne__ = __make_section(operator.ne)
-    __gt__ = __make_section(operator.gt)
-    __lt__ = __make_section(operator.lt)
-    __ge__ = __make_section(operator.ge)
-    __le__ = __make_section(operator.le)
+    __eq__ = __wrap(operator.eq)
+    __ne__ = __wrap(operator.ne)
+    __gt__ = __wrap(operator.gt)
+    __lt__ = __wrap(operator.lt)
+    __ge__ = __wrap(operator.ge)
+    __le__ = __wrap(operator.le)
 
-    __radd__ = __make_section(__flip(operator.add))
-    __rsub__ = __make_section(__flip(operator.sub))
-    __rmul__ = __make_section(__flip(operator.mul))
-    __rdiv__ = __make_section(__flip(operator.div))
-    __rtruediv__ = __make_section(__flip(operator.truediv))
-    __rfloordiv__ = __make_section(__flip(operator.floordiv))
-    __rmod__ = __make_section(__flip(operator.mod))
-    __rdivmod__ = __make_section(__flip(divmod))
-    __rpow__ = __make_section(__flip(operator.pow))
-    __rlshift__ = __make_section(__flip(operator.lshift))
-    __rrshift__ = __make_section(__flip(operator.rshift))
-    __ror__ = __make_section(__flip(operator.or_))
-    __rand__ = __make_section(__flip(operator.and_))
-    __rxor__ = __make_section(__flip(operator.xor))
+    __radd__ = __wrap(__flip(operator.add))
+    __rsub__ = __wrap(__flip(operator.sub))
+    __rmul__ = __wrap(__flip(operator.mul))
+    __rdiv__ = __wrap(__flip(operator.div))
+    __rtruediv__ = __wrap(__flip(operator.truediv))
+    __rfloordiv__ = __wrap(__flip(operator.floordiv))
+    __rmod__ = __wrap(__flip(operator.mod))
+    __rdivmod__ = __wrap(__flip(divmod))
+    __rpow__ = __wrap(__flip(operator.pow))
+    __rlshift__ = __wrap(__flip(operator.lshift))
+    __rrshift__ = __wrap(__flip(operator.rshift))
+    __ror__ = __wrap(__flip(operator.or_))
+    __rand__ = __wrap(__flip(operator.and_))
+    __rxor__ = __wrap(__flip(operator.xor))
 
 
 __ = __section__("Error in section")
@@ -257,10 +260,18 @@ class __unmatched_guard__(__guard_base__):
     def __or__(self, cond):
         if isinstance(cond, __guard_test__):
             self.raise_invalid("Guard expression is missing return value")
+
         elif not isinstance(cond, __guard_conditional__):
-            self.raise_invalid()
+            self.raise_invalid("Guard condition expected, got %s" % cond)
+
+        # If the condition is satisfied, change the evaluation state to
+        # __matched_guard__, setting the return value to the value provided on
+        # the current line
         elif cond.check(self.value):
             return __matched_guard__(cond.return_value)
+
+        # If the condition is not satisfied, continue on with the next line,
+        # still in __unmatched_guard__ state with the return value not set
         return __unmatched_guard__(self.value)
 
     def __invert__(self):
@@ -275,6 +286,8 @@ class __matched_guard__(__guard_base__):
     See help(guard) for more details.
     """
     def __or__(self, cond):
+        # Since a condition has already been satisfied, we can ignore the rest
+        # of the lines in the guard expression
         if isinstance(cond, __guard_conditional__):
             return self
         self.raise_invalid()
@@ -301,7 +314,9 @@ class guard(__unmatched_guard__):
          | otherwise          >> "unsure"
     )
 
-    # Using guards with sections. See help(__) for more on sections.
+    # Using guards with sections. See help(__) for information on sections.
+
+
     """
     def __invert__(self):
         self.raise_invalid()
@@ -366,6 +381,10 @@ from hindley_milner import *
 
 class __constraints__(Syntax):
     """
+    H/ creates a new function type annotation.
+
+    Usage:
+
     See help(sig) for more information on type signature decorators.
     """
     def __init__(self, constraints=()):
@@ -381,7 +400,8 @@ class __constraints__(Syntax):
 
 
 class __signature__(Syntax):
-
+    """
+    """
     def __init__(self, args, constraints):
         self.args = args
         self.constraints = constraints
@@ -396,7 +416,11 @@ class sig(Syntax):
     """
     Usage:
 
-    @sig(H/ int >> int >> t.Maybe . int >> t.Maybe . int)
+    @sig(H/ Int >> Int >> Int )
+    def add(x, y):
+        return x + y
+
+    @sig(H/ int >> int >> Maybe(int) >> Maybe(int))
     def safe_div(x, y):
         if y == 0:
             return Nothing
@@ -472,6 +496,10 @@ def parse_sig_item(item, var_dict):
     elif hasattr(item, "type"):
         return TypeOperator(item.type().hkt,
                 map(lambda x: parse_sig_item(x, var_dict), item.type().params))
+
+    # None: The unit type
+    elif item is None:
+        return TypeOperator(type(None), [])
 
     # Tuples: ("a", "b"), (int, ("a", float)), etc.
     elif isinstance(item, tuple):

@@ -1,3 +1,8 @@
+from ..lang.builtins import Either
+from ..lang.builtins import Left
+from ..lang.builtins import Right
+
+
 def either(f_a, f_b, either_a_b):
     """
     either :: (a -> c) -> (b -> c) -> Either a b -> c

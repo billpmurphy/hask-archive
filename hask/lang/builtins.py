@@ -1,7 +1,9 @@
 import collections
 import itertools
 
-from type_system import _t
+# not sure about this
+from type_system import HM_typeof
+
 from typeclasses import Show
 from typeclasses import Eq
 from typeclasses import Ord
@@ -21,6 +23,7 @@ from typeclasses import Traversable
 from typeclasses import Iterator
 from typeclasses import Foldable
 
+from hof import Func
 
 #=============================================================================#
 # Wrappers for Python builtins (for cosmetic purposes only)
@@ -119,9 +122,9 @@ class Maybe(object):
         return (Maybe, self._value.__class__)
 
     def __eq__(self, other):
-        if _t(self) != _t(other):
+        if not isinstance(other, Maybe):
             return False
-        elif self._is_nothing and other._is_nothing:
+        if self._is_nothing and other._is_nothing:
             return True
         elif not self._is_nothing and not other._is_nothing:
             return self._value == other._value
@@ -361,3 +364,56 @@ Monad(List, List.bind)
 Foldable(List, List.foldr)
 Traversable(List, List.__iter__, List.__getitem__, List.__len__)
 Iterator(List, List.__next__)
+
+Functor(Func, Func.fmap)
+
+
+#=============================================================================#
+# REPL tools
+
+def _q(status):
+    """
+    Shorthand for sys.exit() or exit() with no arguments. Equivalent to :q in
+    Haskell. Should only be used in the REPL.
+
+    Usage:
+
+    >>> _q()
+    """
+    exit()
+
+
+def _t(obj):
+    """
+    Returns a string representing the type of an object, including
+    higher-kinded types and ADTs. Equivalent to `:t` in Haskell. Meant to be
+    used in the REPL, but might also be useful for debugging.
+
+    Args:
+        obj: the object to inspect
+
+    Returns:
+        A string representation of the type
+
+    Usage:
+
+    >>> _t(1)
+    int
+
+    >>> _t(Just("hello world"))
+    Maybe String
+    """
+    if hasattr(obj, "type"):
+        print str(obj.type())
+    print str(HM_typeof(obj))
+
+
+def _i(obj):
+    """
+    Show information about an object. Equivalent to `:i` in Haskell or
+    help(obj) in Python. Should only be used in the REPL.
+
+    Args:
+        obj: the object to inspect
+    """
+    help(obj)

@@ -7,20 +7,41 @@ from .lang.builtins import List
 
 
 #=============================================================================#
-# Basic data types
+# Standard types, classes, and related functions
+## Basic data types
 
+from Data.Maybe import Maybe
+from Data.Maybe import Just
+from Data.Maybe import Nothing
 from Data.Maybe import maybe
 
+from Data.Either import Either
+from Data.Either import Left
+from Data.Either import Right
+from Data.Either import either
 
 
 #=============================================================================#
-# Tuples
+### Tuples
 
 
 from Data.Tuple import fst
 from Data.Tuple import snd
 from Data.Tuple import curry
 from Data.Tuple import uncurry
+
+
+#=============================================================================#
+## Basic type classes
+
+
+#=============================================================================#
+## Numbers
+### Numeric types
+
+
+#=============================================================================#
+# Numeric type classes
 
 
 #=============================================================================#
@@ -73,6 +94,14 @@ def lcm(x, y):
     lcm(x,y) is the smallest positive integer that both x and y divide.
     """
     pass
+
+
+#=============================================================================#
+# Monads and functors
+
+
+#=============================================================================#
+# Miscellaneous functions
 
 
 #sig(H/ ("a" >> bool) >> ("a" >> "a") >> "a" >> "a" )
@@ -171,7 +200,6 @@ def reverse(xs):
 #=============================================================================#
 ### Infinite lists
 
-
 from Data.List import iterate
 from Data.List import repeat
 from Data.List import replicate
@@ -193,7 +221,7 @@ from Data.List import cycle
 #=============================================================================#
 ## Functions on strings
 
-from Data.String import lines
-from Data.String import words
-from Data.String import unlines
-from Data.String import unwords
+from Data.List import lines
+from Data.List import words
+from Data.List import unlines
+from Data.List import unwords

@@ -1,41 +1,33 @@
-import operator
-import re
-import string
-import types
 from collections import namedtuple
 
-from ..lang import syntax
-from ..lang import type_system
-from ..lang import typeclasses
-
+from syntax import Syntax
+from type_system import Typeclass
+from type_system import __typeclass_flag__
 
 #=============================================================================#
 # ADT internals
 
-
-def nt_to_tuple(nt):
-    """
-    Convert an instance of namedtuple to tuple, even if the instance's __iter__
-    method has been changed.
-    """
-    return tuple((getattr(nt, f) for f in nt.__class__._fields))
+class ADT(object):
+    """Base class for Hask algebraic data types."""
+    pass
 
 
 def make_type_const(name, typeargs):
     """
     Build a new type constructor given a name and the type parameters.
-    A new type constructor is a new class with a field `_params` that contains
-    the list of type parameter names.
+    A new type constructor is a new class with a field __params__ that
+    contains a tuple of type parameter names, and a field __constructors__ with
+    a list of data constructors for that type.
     """
     def raise_fn(err):
         raise err()
 
-    cls = type(name, (object,), {"__params__":tuple(typeargs),
-                                 "__constructors__":(),
-                                 "__typeclasses__":()})
+    default_attrs = {"__params__":tuple(typeargs), "__constructors__":(),
+             __typeclass_flag__:()}
+    cls = type(name, (ADT,), default_attrs)
 
     # TODO
-    cls._type = lambda self: self.typeargs
+    cls.type = lambda self: self.typeargs
 
     cls.__iter__ = lambda self: raise_fn(TypeError)
     cls.__contains__ = lambda self, other: raise_fn(TypeError)
@@ -63,86 +55,33 @@ def make_data_const(name, fields, type_constructor):
     `namedtuple` such as equality and comparison operators stripped out.
     """
     base = namedtuple(name, ["i%s" % i for i, _ in enumerate(fields)])
+
+    # create the data constructor
     cls = type(name, (type_constructor, base), {})
 
     # TODO: make sure __init__ or __new__ is typechecked
 
+    # If the data constructor takes no arguments, create an instance of the
+    # data constructor class and return that instance rather than returning the
+    # class
+    if len(fields) == 0:
+        cls = cls()
+
+    type_constructor.__constructors__ += (cls,)
     return cls
-
-
-def derive_eq(type_constructor):
-    """
-    Add default __eq__ and __ne__ methods to a type constructor.
-    """
-    def __eq__(self, other):
-        return self.__class__ == other.__class__ and \
-               nt_to_tuple(self) == nt_to_tuple(other)
-
-    def __ne__(self, other):
-        return self.__class__ != other.__class__ or  \
-               nt_to_tuple(self) != nt_to_tuple(other)
-
-    type_constructor.__eq__ = __eq__
-    type_constructor.__ne__ = __ne__
-    return type_constructor
-
-
-def derive_show(type_constructor):
-    """
-    Add a default __repr__ method to a data constructor.
-    """
-    def __str__(self):
-        if len(self.__class__._fields) == 0:
-            return self.__class__.__name__
-
-        nt_tup = nt_to_tuple(self)
-        tuple_str = "(%s)" % nt_tup[0] if len(nt_tup) == 1 else str(nt_tup)
-        return "{0}{1}".format(self.__class__.__name__, tuple_str)
-    type_constructor.__str__ = __str__
-    return type_constructor
-
-
-def derive_read(type_constructor):
-    """
-    Add a default __read__ method to a data constructor.
-    """
-    pass
-
-
-def derive_ord(type_constructor):
-    """
-    Add default comparison operators to a data constructor.
-    """
-    # compare all of the _fields of two objects
-    def zip_cmp(self, other, fn):
-        zipped = zip(nt_to_tuple(self), nt_to_tuple(other))
-        return all((fn(a, b) for a, b in zipped))
-
-    type_constructor.__lt__ = lambda s, o: zip_cmp(s, o, operator.lt)
-    return type_constructor
 
 
 #=============================================================================#
 # User-facing syntax
 
 
-class __dotwrapper__(object):
-
-    def __init__(self, cls):
-        self.cls = cls
-
-    def __getattr__(self, value):
-        return getattr(self, "cls")(value)
-
-
-class __new_tcon__(syntax.Syntax):
+class __new_tcon__(Syntax):
 
     def __init__(self, tcon_name):
         self.tcon_name = tcon_name
         self.type_args = ()
 
-        syntax_err_msg = "Syntax error in `data`"
-        super(self.__class__, self).__init__(syntax_err_msg)
+        super(__new_tcon__, self).__init__("Syntax error in `data`")
         return
 
     def __call__(self, *typeargs):
@@ -150,28 +89,25 @@ class __new_tcon__(syntax.Syntax):
         return self
 
     def __eq__(self, ds):
+        # create the new type constructor and data constructors
         newtype = make_type_const(self.tcon_name, self.type_args)
-        dcons = [make_data_const(d[0], d[1], newtype) for d in ds.donstructors]
+        dcons = [make_data_const(d[0], d[1], newtype) for d in ds.dconstructors]
 
-        for add_tclass in ds.derived_classes:
-            newtype = add_tclass(newtype)
+        # derive typeclass instances for the new type constructore
+        for tclass in ds.derives:
+            tclass.derive_instance(newtype)
 
         # make the type constructor and data constructors available globally
-        globals()[self.tcon_name] = newtype
-        for dcon in dcons:
-            globals()[dcon.__name__] = dcon
-        return
+        return tuple([newtype,] + dcons)
 
 
-class __new_dcon__(syntax.Syntax):
+class __new_dcon__(Syntax):
 
     def __init__(self, dcon_name):
         self.dcon_name = dcon_name
-        self.dconstructors = [(dcon_name, type_args)]
-        self.type_args = ()
-
-        syntax_err_msg = "Syntax error in `d`"
-        super(self.__class__, self).__init__(syntax_err_msg)
+        self.dconstructors = [(self.dcon_name, ())]
+        self.derives = ()
+        super(__new_dcon__, self).__init__("Syntax error in `d`")
         return
 
     def __call__(self, *typeargs):
@@ -194,19 +130,25 @@ class __new_dcon__(syntax.Syntax):
         return self
 
 
-data = __dotwrapper__(__new_tcon__)
-d = __dotwrapper__(__new_dcon__)
+class __data__(Syntax):
+    def __getattr__(self, value):
+        return __new_tcon__(value)
 
 
-class deriving(syntax.Syntax):
-    __supported__ = {typeclasses.Show:derive_show,
-                     typeclasses.Eq:derive_eq,
-                     typeclasses.Ord:derive_ord,
-                     typeclasses.Read:derive_read}
+class __d__(Syntax):
+    def __getattr__(self, value):
+        return __new_dcon__(value)
+
+
+data = __data__()
+d = __d__()
+
+
+class deriving(Syntax):
 
     def __init__(self, *tclasses):
-        for tclass in set(tclasses):
-            if tclass not in self.__class__.__supported__:
-                raise TypeError("Cannot derive typeclass %s" % tclass)
-        self.derived_classes = [__supported__[t] for t in tclasses]
+        for tclass in tclasses:
+            if not issubclass(tclass, Typeclass):
+                raise TypeError("Cannot derive non-typeclass %s" % tclass)
+        self.derived_classes = tclasses
         return

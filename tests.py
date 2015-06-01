@@ -1,6 +1,5 @@
 import functools
 
-
 import unittest
 
 from hask import in_typeclass, arity
@@ -27,11 +26,8 @@ from hask import Prelude
 # internals
 from hask.lang.syntax import Syntax
 
-from hask.lang.adt import make_data_const, make_type_const
-from hask.lang.adt import derive_eq
-from hask.lang.adt import derive_show
-from hask.lang.adt import derive_read
-from hask.lang.adt import derive_ord
+from hask.lang.adt import make_data_const
+from hask.lang.adt import make_type_const
 
 from hask.lang.hindley_milner import Var
 from hask.lang.hindley_milner import App
@@ -301,11 +297,14 @@ class TestHindleyMilner(unittest.TestCase):
         # builtin/non-ADT types
         self.unified(parse_sig_item(int, {}), TypeOperator(int, []))
         self.unified(parse_sig_item(float, {}), TypeOperator(float, []))
-        self.unified(parse_sig_item(type(None), {}),
-                TypeOperator(type(None), []))
+        self.unified(parse_sig_item(None, {}), TypeOperator(type(None), []))
         self.unified(parse_sig_item(__test__, {}), TypeOperator(__test__, []))
 
         # tuple
+
+        # list
+
+        # adts
 
 
 class TestTypeSystem(unittest.TestCase):
@@ -368,7 +367,7 @@ class TestADTInternals(unittest.TestCase):
         with self.assertRaises(te): self.M1(1) == self.M1(1)
         with self.assertRaises(te): self.M1(1) != self.M1(1)
 
-        self.Type_Const = derive_eq(self.Type_Const)
+        Eq.derive_instance(self.Type_Const)
 
         self.assertTrue(self.M1(1) == self.M1(1))
         self.assertTrue(self.M2(1, "b") == self.M2(1, "b"))
@@ -385,12 +384,11 @@ class TestADTInternals(unittest.TestCase):
     def test_derive_show_data(self):
         self.assertNotEquals("M1(1)", str(self.M1(1)))
 
-        self.Type_Const = derive_show(self.Type_Const)
+        Show.derive_instance(self.Type_Const)
 
         self.assertEqual("M1(1)", str(self.M1(1)))
-
-    def test_derive_read_data(self):
-        pass
+        self.assertEqual("M2(1, \'a\')", str(self.M2(1, "a")))
+        self.assertEqual("M3(1, 2, 3)", str(self.M3(1, 2, 3)))
 
     def test_derive_ord_data(self):
         with self.assertRaises(te): self.M1(1) > self.M1(1)
@@ -398,7 +396,11 @@ class TestADTInternals(unittest.TestCase):
         with self.assertRaises(te): self.M1(1) < self.M1(1)
         with self.assertRaises(te): self.M1(1) <= self.M1(1)
 
-        self.Type_Const = derive_ord(self.Type_Const)
+        Eq.derive_instance(self.Type_Const)
+        Ord.derive_instance(self.Type_Const)
+
+        self.assertTrue(self.M1(1) < self.M1(2))
+        self.assertFalse(self.M1(1) > self.M1(2))
 
 
 class TestADT(unittest.TestCase):
@@ -410,10 +412,6 @@ class TestADT(unittest.TestCase):
 
     def test_d(self):
         pass
-
-    def test_deriving(self):
-        with self.assertRaises(te): deriving(Num)
-        with self.assertRaises(te): deriving(Ord, Num)
 
     def test_holistic(self):
         pass

@@ -1,12 +1,11 @@
 __version__ = "0.0.1"
 
 # Core language
-from hask.lang.type_system import _t
-from hask.lang.type_system import arity
 
-from hask.lang.typeclasses import in_typeclass
-from hask.lang.typeclasses import is_builtin
-from hask.lang.typeclasses import Typeclass
+from hask.lang.type_system import in_typeclass
+from hask.lang.type_system import Typeclass
+
+# Standard Hask typeclasses and associated functions
 from hask.lang.typeclasses import Read
 from hask.lang.typeclasses import Show
 from hask.lang.typeclasses import Eq
@@ -25,7 +24,6 @@ from hask.lang.typeclasses import Monad
 from hask.lang.typeclasses import Traversable
 from hask.lang.typeclasses import Foldable
 from hask.lang.typeclasses import Iterator
-
 from hask.lang.typeclasses import read
 from hask.lang.typeclasses import show
 from hask.lang.typeclasses import succ
@@ -42,12 +40,14 @@ from hask.lang.typeclasses import length
 from hask.lang.typeclasses import mempty
 from hask.lang.typeclasses import mappend
 
+from hask.lang.hof import arity
 from hask.lang.hof import const
 from hask.lang.hof import flip
 from hask.lang.hof import id
 from hask.lang.hof import F
 from hask.lang.hof import Func
 
+# builtin types (Python builtins + Hask builtins)
 from hask.lang.builtins import Int
 from hask.lang.builtins import Float
 from hask.lang.builtins import String
@@ -77,6 +77,10 @@ from hask.lang.adt import data
 from hask.lang.adt import d
 from hask.lang.adt import deriving
 
+## REPL tools
+from hask.lang.builtins import _t
+from hask.lang.builtins import _i
+from hask.lang.builtins import _q
 
 # Haskell base
 from Prelude import map

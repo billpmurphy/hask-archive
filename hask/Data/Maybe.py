@@ -1,3 +1,4 @@
+from ..lang.builtins import Maybe
 from ..lang.builtins import Just
 from ..lang.builtins import Nothing
 

@@ -1,8 +1,33 @@
+import inspect
 import functools
+import types
 
-from type_system import arity
-from type_system import ArityError
-from typeclasses import Functor
+
+def arity(f):
+    """
+    Find the arity of a function or method, including functools.partial
+    objects.
+    """
+    if not hasattr(f, "__call__"):
+        return 0
+
+    if isinstance(f, types.MethodType):
+        f = f.__func__
+
+    count = 0
+    while isinstance(f, functools.partial):
+        if f.args:
+            count += len(f.args)
+        f = f.func
+    spec = inspect.getargspec(f)
+    args = spec.args
+
+    var = 0
+    if not args and (spec.varargs is not None or spec.keywords is not None):
+        var = 1
+
+    argcount = len(spec.args) + var
+    return argcount - count
 
 
 def _apply(wrapper, f, *args, **kwargs):
@@ -28,7 +53,8 @@ def _apply(wrapper, f, *args, **kwargs):
 
     # if the function takes no arguments and some are given, raise error
     elif f_arity == 0 and arglen > 0:
-        raise ArityError("Too many arguments supplied")
+        return _apply(wrapper, f(*args, **kwargs))
+        #raise TypeError("Too many arguments supplied")
 
     # if the function takes no arguments and none are given, call it
     elif f_arity == arglen == 0:
@@ -87,7 +113,6 @@ def F(fn=Func(), *args, **kwargs):
     return _apply(Func, fn, *args, **kwargs)
 
 
-Functor(Func, Func.fmap)
 id = Func()
 
 

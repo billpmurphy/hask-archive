@@ -24,6 +24,7 @@ def snd(tup):
     return y
 
 
+#@sig( H/ (H/ ("a", "b") >> "c") >> "a" >> "b" >> "c")
 def curry(tup_fn, x, y):
     """
     curry :: ((a, b) -> c) -> a -> b -> c
@@ -35,7 +36,7 @@ def curry(tup_fn, x, y):
 
 def uncurry(fn, tup):
     """
-    curry :: ((a, b) -> c) -> a -> b -> c
+    uncurry :: (a -> b -> c) -> (a, b) -> c
 
     uncurry converts a curried function to a function on pairs.
     """
