@@ -20,14 +20,13 @@ from hask import Num, Real, RealFrac, Fractional, Floating, RealFloat
 from hask import Enum, succ, pred
 from hask import Functor, Applicative, Monad
 from hask import Traversable, Foldable, Iterator
-
 from hask import Prelude
 
 # internals
 from hask.lang.syntax import Syntax
 
-from hask.lang.adt import make_data_const
-from hask.lang.adt import make_type_const
+from hask.lang.type_system import make_data_const
+from hask.lang.type_system import make_type_const
 
 from hask.lang.hindley_milner import Var
 from hask.lang.hindley_milner import App
@@ -406,11 +405,33 @@ class TestADTInternals(unittest.TestCase):
 class TestADT(unittest.TestCase):
 
     def test_data(self):
+        # these are not syntactically valid
         with self.assertRaises(se): data.N("a", "a")
         with self.assertRaises(se): data.N(1, "b")
+        with self.assertRaises(se): data.N("a")("b")
+        with self.assertRaises(se): data.N()
+
+        # these should all work fine
+        self.assertIsNotNone(data.N)
+        self.assertIsNotNone(data.N("a"))
+        self.assertIsNotNone(data.N("a", "b"))
 
     def test_d(self):
-        pass
+        # these are not syntactically valid
+        with self.assertRaises(se): d.A | deriving(Eq)
+        with self.assertRaises(se): deriving(Eq, Show) | d.B
+
+        # these should all work fine
+        self.assertIsNotNone(d.A)
+        self.assertIsNotNone(d.A("a"))
+        self.assertIsNotNone(d.A("a", "b", "c"))
+        self.assertIsNotNone(d.A("a") | d.B("b"))
+        self.assertIsNotNone(d.A("a") | d.B)
+        self.assertIsNotNone(d.B | d.A("a"))
+        self.assertIsNotNone(d.B | d.A)
+        self.assertIsNotNone(d.A("a") | d.B("b") | d.C("a"))
+        self.assertIsNotNone(d.A("a", "b") & deriving(Eq, Show))
+        self.assertIsNotNone(d.A("a") | d.B("b") & deriving(Eq, Show))
 
     def test_holistic(self):
         T, M1, M2, M3 =\

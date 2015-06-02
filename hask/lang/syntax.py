@@ -3,7 +3,9 @@ import operator
 import hof
 from builtins import List
 from typeclasses import Enum
+from type_system import Typeclass
 from type_system import HM_typeof
+from type_system import build_ADT
 
 
 #=============================================================================#
@@ -529,3 +531,179 @@ def parse_sig(items):
 
     var_dict = {}
     return make_fn_type([parse_sig_item(i, var_dict) for i in items])
+
+
+#=============================================================================#
+# ADT creation syntax ("data" expressions)
+
+
+## "data"/type constructor half of the expression
+
+class __data__(Syntax):
+    """
+    Examples:
+
+    Maybe, Nothing, Just =\
+    data.Maybe("a") == d.Nothing | d.Just("a") deriving(Read, Show, Eq, Ord)
+
+    """
+    def __init__(self):
+        super(__data__, self).__init__("Syntax error in `data`")
+
+    def __getattr__(self, value):
+        return __new_tcon_enum__(value)
+
+
+
+class __new_tcon__(Syntax):
+    """
+    """
+    def __init__(self, name, args=()):
+        self.name = name
+        self.args = args
+        super(__new_tcon__, self).__init__("Syntax error in `data`")
+
+    def __eq__(self, d):
+        # one data constructor, no derived typedclasses
+        if isinstance(d, __new_dcon__):
+            return build_ADT(self.name, self.args, [(d.name, d.args)], ())
+
+        # one data constructor, one or more derived typeclasses
+        elif isinstance(d, __new_dcon_deriving__):
+            return build_ADT(self.name, self.args, [(d.name, d.args)],
+                             d.classes)
+
+        # one or more data constructors, no derived typeclasses
+        elif isinstance(d, __new_dcons__):
+            return build_ADT(self.name, self.args, d.dcons, ())
+
+        # one or more data constructors, one or more derived typeclasses
+        elif isinstance(d, __new_dcons_deriving__):
+            return build_ADT(self.name, self.args, d.dcons, d.classes)
+
+        self.raise_invalid()
+        return
+
+
+class __new_tcon_enum__(__new_tcon__):
+    """
+    """
+    def __call__(self, *typeargs):
+        if len(typeargs) < 1:
+            msg = "Missing type args in statement: `data.%s()`" % self.name
+            self.raise_invalid(msg)
+
+        # make sure all type params are strings
+        if not all((type(arg) == str for arg in typeargs)):
+            self.raise_invalid("Type parameters must be strings")
+
+        # all type parameters must have unique names
+        if len(typeargs) != len(set(typeargs)):
+            self.raise_invalid("Type parameters are not unique")
+
+        return __new_tcon_hkt__(self.name, typeargs)
+
+
+class __new_tcon_hkt__(__new_tcon__):
+    pass
+
+
+## "d"/data constructor half of the expression
+
+
+class __d__(Syntax):
+    """
+    `d` is part of hask's special syntax for defining algebraic data types.
+
+    See help(data) for more information.
+    """
+    def __init__(self):
+        super(__d__, self).__init__("Syntax error in `d`")
+
+    def __getattr__(self, value):
+        return __new_dcon_enum__(value)
+
+
+class __new_dcon__(Syntax):
+
+    def __init__(self, dcon_name, args=(), classes=()):
+        self.name = dcon_name
+        self.args = args
+        self.classes = classes
+        super(__new_dcon__, self).__init__("Syntax error in `d`")
+        return
+
+
+class __new_dcon_params__(__new_dcon__):
+
+    def __and__(self, derive_exp):
+        if not isinstance(derive_exp, deriving):
+            self.raise_invalid()
+        return __new_dcon_deriving__(self.name, self.args, derive_exp.classes)
+
+    def __or__(self, dcon):
+        if isinstance(dcon, __new_dcon__):
+            constructors = ((self.name, self.args), (dcon.name, dcon.args))
+
+            if isinstance(dcon, __new_dcon_deriving__):
+                return __new_dcons_deriving__(constructors, dcon.classes)
+            return __new_dcons__(constructors)
+
+        self.raise_invalid()
+        return
+
+
+class __new_dcon_deriving__(__new_dcon__):
+    pass
+
+
+class __new_dcon_enum__(__new_dcon_params__):
+
+    def __call__(self, *typeargs):
+        return __new_dcon_params__(self.name, typeargs)
+
+
+class __new_dcons_deriving__(Syntax):
+
+    def __init__(self, data_consts, classes=()):
+        self.dcons = data_consts
+        self.classes = classes
+        super(__new_dcons_deriving__, self).__init__("Syntax error in `d`")
+        return
+
+
+class __new_dcons__(__new_dcons_deriving__):
+
+    def __init__(self, data_consts):
+        super(__new_dcons__, self).__init__(data_consts)
+        return
+
+    def __or__(self, new_dcon):
+        if isinstance(new_dcon, __new_dcon__):
+            constructor = ((new_dcon.name, new_dcon.args),)
+
+            if isinstance(new_dcon, __new_dcon_deriving__):
+                return __new_dcons_deriving__(self.dcons + constructor,
+                                              new_dcon.classes)
+            return __new_dcons__(self.dcons + constructor)
+        self.raise_invalid()
+
+
+data = __data__()
+d = __d__()
+
+
+class deriving(Syntax):
+    """
+    `deriving` is part of hask's special syntax for defining algebraic data
+    types.
+
+    See help(data) for more information.
+    """
+    def __init__(self, *tclasses):
+        for tclass in tclasses:
+            if not issubclass(tclass, Typeclass):
+                raise TypeError("Cannot derive non-typeclass %s" % tclass)
+        self.classes = tclasses
+        super(deriving, self).__init__("Syntax error in `deriving`")
+        return

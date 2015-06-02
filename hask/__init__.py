@@ -47,7 +47,7 @@ from hask.lang.hof import id
 from hask.lang.hof import F
 from hask.lang.hof import Func
 
-# builtin types (Python builtins + Hask builtins)
+# Builtin types (Python builtins + Hask builtins)
 from hask.lang.builtins import Int
 from hask.lang.builtins import Float
 from hask.lang.builtins import String
@@ -61,26 +61,38 @@ from hask.lang.builtins import Left
 from hask.lang.builtins import Right
 from hask.lang.builtins import in_either
 
+# REPL tools
+from hask.lang.builtins import _t
+from hask.lang.builtins import _i
+from hask.lang.builtins import _q
+
+
+# Syntax
+
+## Operator sections
 from hask.lang.syntax import __
+
+## Guard expressions
 from hask.lang.syntax import guard
 from hask.lang.syntax import c
 from hask.lang.syntax import otherwise
 from hask.lang.syntax import NoGuardMatchException
+
+## List comprehensions
 from hask.lang.syntax import L
 
+## Data expressions (ADT creation)
+from hask.lang.syntax import data
+from hask.lang.syntax import d
+from hask.lang.syntax import deriving
+
+## Type signatures
 from hask.lang.syntax import sig
 from hask.lang.syntax import H
 
+## Pattern matching
 from hask.lang.caseof import caseof
 
-from hask.lang.adt import data
-from hask.lang.adt import d
-from hask.lang.adt import deriving
-
-## REPL tools
-from hask.lang.builtins import _t
-from hask.lang.builtins import _i
-from hask.lang.builtins import _q
 
 # Haskell base
 from Prelude import map

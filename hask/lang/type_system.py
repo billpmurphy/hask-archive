@@ -1,5 +1,6 @@
 import abc
 import types
+from collections import namedtuple
 
 from hindley_milner import TypeVariable
 from hindley_milner import TypeOperator
@@ -152,6 +153,87 @@ class Typeclass(object):
 
 #=============================================================================#
 # ADT creation
+
+
+class ADT(object):
+    """Base class for Hask algebraic data types."""
+    pass
+
+
+def make_type_const(name, typeargs):
+    """
+    Build a new type constructor given a name and the type parameters.
+
+    Args:
+        name: the name of the new type constructor to be created
+        typeargs: the type parameters to the constructor
+
+    Returns:
+        A new class that acts as a type constructor
+    """
+    def raise_fn(err):
+        raise err()
+
+    default_attrs = {"__params__":tuple(typeargs), "__constructors__":(),
+             __typeclass_flag__:()}
+    cls = type(name, (ADT,), default_attrs)
+
+    # TODO
+    cls.type = lambda self: self.typeargs
+
+    cls.__iter__ = lambda self: raise_fn(TypeError)
+    cls.__contains__ = lambda self, other: raise_fn(TypeError)
+    cls.__add__ = lambda self, other: raise_fn(TypeError)
+    cls.__rmul__ = lambda self, other: raise_fn(TypeError)
+    cls.__mul__ = lambda self, other: raise_fn(TypeError)
+    cls.__lt__ = lambda self, other: raise_fn(TypeError)
+    cls.__gt__ = lambda self, other: raise_fn(TypeError)
+    cls.__le__ = lambda self, other: raise_fn(TypeError)
+    cls.__ge__ = lambda self, other: raise_fn(TypeError)
+    cls.__eq__ = lambda self, other: raise_fn(TypeError)
+    cls.__ne__ = lambda self, other: raise_fn(TypeError)
+    cls.__repr__ = object.__repr__
+    cls.__str__ = object.__str__
+    return cls
+
+
+def make_data_const(name, fields, type_constructor):
+    """
+    Build a data constructor given the name, the list of field types, and the
+    corresponding type constructor.
+
+    The general approach is to create a subclass of the type constructor and a
+    new class created with `namedtuple`, with some of the features from
+    `namedtuple` such as equality and comparison operators stripped out.
+    """
+    base = namedtuple(name, ["i%s" % i for i, _ in enumerate(fields)])
+
+    # create the data constructor
+    cls = type(name, (type_constructor, base), {})
+
+    # TODO: make sure __init__ or __new__ is typechecked
+
+    # If the data constructor takes no arguments, create an instance of the
+    # data constructor class and return that instance rather than returning the
+    # class
+    if len(fields) == 0:
+        cls = cls()
+
+    type_constructor.__constructors__ += (cls,)
+    return cls
+
+
+def build_ADT(typename, type_args, data_constructors, to_derive):
+    # create the new type constructor and data constructors
+    newtype = make_type_const(typename, type_args)
+    dcons = [make_data_const(d[0], d[1], newtype) for d in data_constructors]
+
+    # derive typeclass instances for the new type constructors
+    for tclass in to_derive:
+        tclass.derive_instance(newtype)
+
+    # return everything
+    return tuple([newtype,] + dcons)
 
 
 #=============================================================================#
