@@ -300,6 +300,9 @@ class __matched_guard__(__guard_base__):
 
 class guard(__unmatched_guard__):
     """
+    Args:
+        value: the value being tested in the guard expression
+
     Usage:
 
     ~(guard(<expr to test>)
@@ -318,7 +321,11 @@ class guard(__unmatched_guard__):
 
     # Using guards with sections. See help(__) for information on sections.
 
-
+    ~(guard(20)
+        | c(__ > 10)  >> 20
+        | c(__ == 10) >> 10
+        | c(__ > 5)   >> 5
+        | otherwise   >> 0)
     """
     def __invert__(self):
         self.raise_invalid()
@@ -330,6 +337,7 @@ otherwise = c(lambda _: True)
 
 #=============================================================================#
 # List comprehension
+
 
 class __list_comprehension__(Syntax):
     """
@@ -422,7 +430,7 @@ class sig(Syntax):
     def add(x, y):
         return x + y
 
-    @sig(H/ int >> int >> Maybe(int) >> Maybe(int))
+    @sig(H/ Int >> Int >> Maybe(Int) >> Maybe(Int))
     def safe_div(x, y):
         if y == 0:
             return Nothing
