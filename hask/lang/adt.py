@@ -115,15 +115,20 @@ class __new_tcon__(Syntax):
 
     def __eq__(self, d):
         # one data constructor, no derived typedclasses
-        if isinstance(ds, __new_dcon__):
+        if isinstance(d, __new_dcon__):
             return build_ADT(self.__name, self.__args, [(d.name, d.args)], ())
 
-        # two or more data constructors, no derived typeclasses
-        elif isinstance(ds, __new_dcons__):
+        # one data constructor, derived typeclasses
+        elif isinstance(d, __new_dcon_deriving__):
+            return build_ADT(self.__name, self.__args, [(d.name, d.args)],
+                             d.classes)
+
+        # one or more data constructors, no derived typeclasses
+        elif isinstance(d, __new_dcons__):
             return build_ADT(self.__name, self.__args, d.dcons, ())
 
         # one or more data constructors, one or more derived typeclasses
-        elif isinstance(ds, __new_deoncs_deriving__):
+        elif isinstance(d, __new_dcons_deriving__):
             return build_ADT(self.__name, self.__args, d.dcons, d.classes)
 
         self.raise_invalid()
@@ -142,32 +147,46 @@ class __new_dcon__(Syntax):
         return __new_dcon__(self.name, typeargs)
 
     def __or__(self, dcon):
-        if not isinstance(dcon, __new_dcon__):
-            self.raise_invalid()
-        return __new_dcons__(((self.name, self.args), (dcon.name, dcon.args)))
+        if isinstance(dcon, __new_dcon__):
+            return __new_dcons__(((self.name, self.args),
+                                  (dcon.name, dcon.args),))
+        elif isinstance(dcon, __new_dcon_deriving__):
+            return __new_dcons__(((self.name, self.args),
+                                  (dcon.name, dcon.args),),
+                                 dcon.classes)
+        self.raise_invalid()
+        return
 
     def __and__(self, derive):
         if not isinstance(derive, deriving):
             self.raise_invalid()
-        return __new_dcons_deriving__(((self.name, self.args),), derive.classes)
+        return __new_dcon_deriving__(self.name, self.args, derive.classes)
+
+
+class __new_dcon_deriving__(Syntax):
+
+    def __init__(self, dcon_name, args, classes):
+        self.name = dcon_name
+        self.args = args
+        self.classes = classes
 
 
 class __new_dcons__(Syntax):
 
-    def __init__(self, data_consts):
+    def __init__(self, data_consts, deriving=()):
         self.dcons = data_consts
         super(__new_dcons__, self).__init__("Syntax error in `d`")
         return
 
     def __or__(self, new_dcon):
-        if not isinstance(new_dcon, __new_dcon__):
-            self.raise_invalid()
-        return __new_dcons__(self.dcons + (new_dcon.name, new_dcon.args))
-
-    def __and__(self, derive):
-        if not isinstance(derive, deriving):
-            self.raise_invalid()
-        return __new_dcons_deriving__(self.dcons, derive)
+        if isinstance(new_dcon, __new_dcon__):
+            return __new_dcons__(self.dcons + \
+                                 ((new_dcon.name, new_dcon.args),))
+        elif isinstance(new_dcon, __new_dcon_deriving__):
+            return __new_dcons_deriving__(self.dcons + \
+                                          ((new_dcon.name, new_dcon.args),),
+                                          new_dcon.classes)
+        self.raise_invalid()
 
 
 class __new_dcons_deriving__(Syntax):
@@ -176,6 +195,7 @@ class __new_dcons_deriving__(Syntax):
         self.dcons = data_consts
         self.classes = classes
         super(__new_dcons_deriving__, self).__init__("Syntax error in `d`")
+        return
 
 
 class __data__(Syntax):
