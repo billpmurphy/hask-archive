@@ -2,6 +2,8 @@ import functools
 
 import unittest
 
+from hask import H
+from hask import sig
 from hask import in_typeclass, arity
 from hask import guard, c, otherwise, NoGuardMatchException
 from hask import caseof
@@ -40,6 +42,7 @@ from hask.lang.hindley_milner import analyze
 from hask.lang.hindley_milner import unify
 
 from hask.lang.syntax import parse_sig_item
+from hask.lang.syntax import parse_sig
 
 
 te = TypeError
@@ -288,22 +291,58 @@ class TestHindleyMilner(unittest.TestCase):
             self.Integer)
 
     def test_parse_sig_item(self):
-        """Test type signature parsing"""
+        """Test type signature parsing internals - make sure that types are
+           translated in a reasonable way"""
 
         class __test__(object):
             pass
 
+        # type variables
+        self.assertTrue(isinstance(parse_sig_item("a", {}), TypeVariable))
+        self.assertTrue(isinstance(parse_sig_item("abc", {}), TypeVariable))
+
         # builtin/non-ADT types
+        self.unified(parse_sig_item(str, {}), TypeOperator(str, []))
         self.unified(parse_sig_item(int, {}), TypeOperator(int, []))
         self.unified(parse_sig_item(float, {}), TypeOperator(float, []))
+        self.unified(parse_sig_item(list, {}), TypeOperator(list, []))
         self.unified(parse_sig_item(None, {}), TypeOperator(type(None), []))
         self.unified(parse_sig_item(__test__, {}), TypeOperator(__test__, []))
 
         # tuple
+        self.unified(
+                parse_sig_item((int, int), {}),
+                Tuple([TypeOperator(int, []), TypeOperator(int, [])]))
 
         # list
 
         # adts
+
+    def test_signature_parsing(self):
+        """Make sure type signatures are parsed correctly"""
+        # int -> int
+        self.unified(
+                parse_sig((H/ int >> int).args),
+                Function(TypeOperator(int, []), TypeOperator(int, [])))
+
+        # a -> a
+        a = TypeVariable()
+        self.unified(
+                parse_sig((H/ "a" >> "a").args),
+                Function(a, a))
+
+        # a -> b
+        a, b  = TypeVariable(), TypeVariable()
+        self.unified(
+                parse_sig((H/ "a" >> "b").args),
+                Function(a, b))
+
+        # (int -> int) -> int -> int
+        self.unified(
+                parse_sig((H/ (H/ int >> int) >> int >> int).args),
+                Function(
+                    Function(TypeOperator(int, []), TypeOperator(int, [])),
+                    Function(TypeOperator(int, []), TypeOperator(int, []))))
 
 
 class TestTypeSystem(unittest.TestCase):

@@ -5,7 +5,11 @@ from builtins import List
 from typeclasses import Enum
 from type_system import Typeclass
 from type_system import HM_typeof
+from type_system import TypedFunc
+
 from type_system import build_ADT
+
+from hindley_milner import *
 
 
 #=============================================================================#
@@ -386,9 +390,6 @@ L = __list_comprehension__("Invalid list comprehension")
 # Type signatures
 
 
-from hindley_milner import *
-
-
 class __constraints__(Syntax):
     """
     H/ creates a new function type annotation.
@@ -408,6 +409,8 @@ class __constraints__(Syntax):
     def __div__(self, arg1):
         return __signature__((arg1,), self.constraints)
 
+
+H = __constraints__()
 
 class __signature__(Syntax):
     """
@@ -455,43 +458,6 @@ class sig(Syntax):
         return TypedFunc(fn, self.fn_type)
 
 
-class TypedFunc(object):
-
-    def __init__(self, fn, fn_type):
-        self.__doc__ = fn.__doc__
-        self.func = fn
-        self.fn_type = fn_type
-        return
-
-    def type(self):
-        return self.fn_type
-
-    def __call__(self, *args, **kwargs):
-        # the evironment contains the type of the function and the types
-        # of the arguments
-        env = {id(self.func):self.fn_type}
-        env.update({id(arg):HM_typeof(arg) for arg in args})
-
-        ap = Var(id(self.func))
-        for arg in args:
-            ap = App(ap, Var(id(arg)))
-
-        result_type = analyze(ap, env)
-        result = self.func.__call__(*args, **kwargs)
-        unify(result_type, HM_typeof(result))
-
-        if hof.F(result) is result:
-            return result
-        return result
-
-
-H = __constraints__()
-
-
-class TypeSignatureError(Exception):
-    pass
-
-
 def parse_sig_item(item, var_dict):
     if isinstance(item, TypeVariable) or isinstance(item, TypeOperator):
         return item
@@ -501,6 +467,10 @@ def parse_sig_item(item, var_dict):
         if item not in var_dict:
             var_dict[item] = TypeVariable()
         return var_dict[item]
+
+    # subsignature, e.g. H/ (H/ int >> int) >> int >> int
+    elif isinstance(item, __signature__):
+        return parse_sig(item.args, var_dict)
 
     # an ADT or something else created in hask
     elif hasattr(item, "type"):
@@ -517,7 +487,7 @@ def parse_sig_item(item, var_dict):
 
     # Lists: ["a"], [int], etc.
     elif isinstance(item, list) and len(item) == 1:
-        return TypeOperator(List, [parse_sig_item(item[0], var_dict)])
+        return TypeOperator(ListType, [parse_sig_item(item[0], var_dict)])
 
     # any other type
     elif isinstance(item, type):
@@ -526,18 +496,18 @@ def parse_sig_item(item, var_dict):
     raise TypeSignatureError("Invalid item in type signature: %s" % item)
 
 
-def parse_sig(items):
+def parse_sig(items, var_dict=None):
     def make_fn_type(args):
         """
         Turn a list of arguments into a function type. E.g., convert
-        [int, int, int] into int -> int -> int
+        [int, int, int] into Function(int, Function(int, int)).
         """
         if len(args) == 2:
             last_input, return_type = args
             return Function(last_input, return_type)
         return Function(args[0], make_fn_type(args[1:]))
 
-    var_dict = {}
+    var_dict = {} if var_dict is None else var_dict
     return make_fn_type([parse_sig_item(i, var_dict) for i in items])
 
 

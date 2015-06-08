@@ -1,8 +1,9 @@
-# based on implementation of Hindley-Milner for OWL BASIC by Robert Smallshire
+# Implementation of Hindley-Milner type inference system for Python, based on
+# by Robert Smallshire's implementation for OWL BASIC
 
 
 #=============================================================================#
-# Class definitions for the AST nodes which comprise the little language for
+# Class definitions for the AST nodes which comprise the type language for
 # which types will be inferred
 
 
@@ -54,12 +55,13 @@ class Let(object):
 #=============================================================================#
 # Types and type constructors
 
+
 class TypeVariable(object):
     """
     A type variable standing for an arbitrary type. All type variables have
     a unique id, but names are only assigned lazily, when required.
 
-    Not thread-safe.
+    Note that this approach is *not* thread-safe.
     """
 
     next_variable_id = 0
@@ -117,7 +119,7 @@ class Function(TypeOperator):
 
 
 class Tuple(TypeOperator):
-    """N-ary constructure which builds tuple types"""
+    """N-ary constructor which builds tuple types"""
 
     def __init__(self, types):
         super(self.__class__, self).__init__(tuple, types)
@@ -126,8 +128,19 @@ class Tuple(TypeOperator):
         return "({0})".format(", ".join(map(str, self.types)))
 
 
+class ListType(TypeOperator):
+    """Unary constructor which builds list types"""
+
+    def __init__(self, types):
+        super(self.__class__, self).__init__("[]", types)
+
+    def __str__(self):
+        return "[{0}]".format(self.types)
+
+
 #=============================================================================#
 # Type inference machinery
+
 
 def analyze(node, env, non_generic=None):
     """
@@ -245,7 +258,6 @@ def unify(t1, t2):
     Raises:
         TypeError: Raised if the types cannot be unified.
     """
-
     a = prune(t1)
     b = prune(t2)
     if isinstance(a, TypeVariable):

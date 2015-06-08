@@ -371,6 +371,7 @@ Functor(Func, Func.fmap)
 #=============================================================================#
 # REPL tools
 
+
 def _q(status):
     """
     Shorthand for sys.exit() or exit() with no arguments. Equivalent to :q in
@@ -415,5 +416,11 @@ def _i(obj):
 
     Args:
         obj: the object to inspect
+
+    Usage:
+
+    >>> _i(Just("hello world"))
+
+    >>> _i(Either)
     """
     help(obj)

@@ -2,9 +2,16 @@ import abc
 import types
 from collections import namedtuple
 
+import hof
 from hindley_milner import TypeVariable
 from hindley_milner import TypeOperator
+from hindley_milner import Var
+from hindley_milner import App
+from hindley_milner import unify
+from hindley_milner import analyze
+from hindley_milner import Function
 from hindley_milner import Tuple
+from hindley_milner import ListType
 
 
 #=============================================================================#
@@ -21,11 +28,51 @@ def HM_typeof(obj):
     elif isinstance(obj, tuple):
         return Tuple(map(HM_typeof, obj))
 
+    elif obj is None:
+        return TypeOperator(None, [])
+
     return TypeOperator(type(obj), [])
+
+
+
+class TypedFunc(object):
+
+    def __init__(self, fn, fn_type):
+        self.__doc__ = fn.__doc__
+        self.func = fn
+        self.fn_type = fn_type
+        return
+
+    def type(self):
+        return self.fn_type
+
+    def __call__(self, *args, **kwargs):
+        # the evironment contains the type of the function and the types
+        # of the arguments
+        env = {id(self.func):self.fn_type}
+        env.update({id(arg):HM_typeof(arg) for arg in args})
+
+        ap = Var(id(self.func))
+        for arg in args:
+            ap = App(ap, Var(id(arg)))
+
+        result_type = analyze(ap, env)
+        result = self.func.__call__(*args, **kwargs)
+        unify(result_type, HM_typeof(result))
+
+        if hof.F(result) is result:
+            return result
+        return hof.F(result)
+
+
+class TypeSignatureError(Exception):
+    pass
+
 
 
 #=============================================================================#
 # Typeclasses
+
 
 __typeclass_flag__ = "__typeclasses__"
 
@@ -99,7 +146,7 @@ class Typeclass(object):
                 raise TypeError(msg)
 
         if is_builtin(cls):
-            # 2a) If the class is a builtin, make it a subclass
+            # 2a) If the class is a builtin make it a subclass of the typeclass
             self.__class__.register(cls)
         else:
             # 2b) Otherwise, add attributes to the class
