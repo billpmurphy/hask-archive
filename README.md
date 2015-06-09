@@ -5,8 +5,8 @@
 Wish you could use all those elegant Haskell features in Python? All you have
 to do is `import hask`.
 
-Hask is a pure-Python library that mimics most of the core language tools from
-Haskell, including:
+Hask is a pure-Python, zero-dependencies library that mimics most of the core
+language tools from Haskell, including:
 
 * Full Hindley-Milner type system (with typeclasses) that will typecheck any
   function decorated with a Hask type signature
@@ -18,14 +18,20 @@ Haskell, including:
   comprehensions
 * All your favorite syntax and control flow tools, including operator sections,
   monadic error handling, guards, and more
-* Full Python port of (some of) the standard libraries from Haskell's `base`,
+* Python port of (some of) the standard libraries from Haskell's `base`,
   including:
     * Typeclasses from the Haskell `base` libraries, including `Functor`,
       `Applicative`, `Monad`, `Enum`, `Num`, and all the rest
     * Algebraic datatypes from the Haskell `Prelude`, including `Maybe` and
       `Either`
     * Standard library functions from `base`, including all functions from
-      `Prelude`, `Control.Monad`, `Data.List`, and many more
+      `Prelude`, `Data.List`, `Data.Maybe`, and more
+
+
+Features not yet implemented, but coming soon:
+
+* More of the Haskell standard library
+* QuickCheck (property-based testing)
 
 
 ## Installation
@@ -331,266 +337,15 @@ Right(11)
 #### Standard libraries
 
 All of your favorite functions from `Prelude`, `Data.List`, `Data.Maybe`,
-`Data.Either`, `Data.String`, `Data.Tuple`, and `Control.Monad` are implemented
+`Data.Either`, `Data.String`, and `Data.Tuple`, are implemented
 too. Some highlights:
 
 
 ```python
 ```
 
--------------------------------------------
 
+## Contribute
 
-***Notes y'all***
-
-This is still in "throw everything at the wall" phase. Goal here is to push the
-boundaries as far as physically possible, to get as close to Haskell as Python
-can go, then strip out all the hideous hacks and see if there's an actually
-useful Haskell-features-and-syntax-that-aren't-ugly-in-Python kinda library in
-there.
-
-What needs work:
-* the type system. this is #1 priority. need to design datatypes to represent
-  higher-kinded types, type signatures, and do some basic typechecking to get
-  things rolling, just to make sure no redesign of typeclasses is needed
-* ADTs - work on this after type system is built out
-* pattern matching (case of) - is there a better way of handling local binidng
-  that horrid global state? in general, need to clean this filth up
-* laziness everywhere - can generators/coroutines-made-from-generators do this?
-* immutable variables - can we mess with `globals()` to prevent regular
-  assignment? or use coroutines somehow?
-* pattern matching in regular assignment
-* other monads/functors
-* tail call optimization - again, read fn.py's decorator
-* port more Haskell standard libraries (probably want to wait for later to do
-  this)
-* arrows
-
-
-More notes:
-
-`import hask` should give you everything in the language (including all
-typeclasses) plus everything in the Prelude. Therefore, you can do `hask.map`
-but not `hask.permutations`. To import things in the Base libraries that are
-not also in the Prelude, use `from hask import Data` and then
-`Data.List.permutations`.
-
-
-Add more corner case tests for LazyList indexing.
-
-
-Haskell API status table
-
-| Haskell Feature        | Pythaskell Name | Status |
-| :--------------------- | :-------------- | :----: |
-| *Syntax*               |                 |        |
-| type signatures        | sig             | part   |
-| pattern matching (case)| caseof          | idea   |
-| data (defining ADTs)   | data            | part   |
-| type (type synonym)    |                 | ?      |
-| newtype (type wrapper) |                 | nix    |
-| list comprehensions    | L (see below)   | part   |
-| slicing (e.g. `(+1)`)  | `(__+1)`        |        |
-| guards                 | guard           | good   |
-| *Typeclasses*          |                 |        |
-| Show                   | Show            | good   |
-| &nbsp;&nbsp;show       | &nbsp;&nbsp;show|        |
-| Read                   |                 | ?      |
-| Eq                     | Eq              | good   |
-| Ord                    | Ord             | good   |
-| Enum                   | Enum            |        |
-| Bounded                | Bounded         |        |
-| Num                    | Num             | part   |
-| Integral               |                 | ?      |
-| Fractional             |                 | ?      |
-| Floating               |                 | ?      |
-| RealFloat              |                 | ?      |
-| Real                   |                 | ?      |
-| RealFrac               |                 | ?      |
-| Functor                | Functor         | good   |
-|   fmap                 |   fmap          | good   |
-| Applicative            | Applicative     | good   |
-|   pure                 |   pure          | good   |
-| Monad                  | Monad           | good   |
-|   >>=                  | >> / bind       | good   |
-| Foldable               | Foldable        |        |
-| Traversable            | Traversable     | good   |
-| Ix                     | Ix              | good   |
-|                        | _Iterator_      | good   |
-| *Prelude*              |                 |        |
-|                        |                 |        |
-| *Control.Applicative*  |                 |        |
-|                        |                 |        |
-| *Control.Monad*        |                 |        |
-| >>=                    | >>              | good   |
-| >>                     |                 | ?      |
-| return                 | pure            | import |
-| fail                   |                 |        |
-| MonadPlus              |                 |        |
-|   mzero                |                 |        |
-|   mplus                |                 |        |
-| mapM                   |                 |        |
-| mapM\_                 |                 |        |
-| forM                   |                 |        |
-| forM\_                 |                 |        |
-| sequence               |                 |        |
-| sequence\_             |                 |        |
-| =<<                    |                 |        |
-| >=>                    |                 |        |
-| forever                |                 |        |
-| void                   |                 |        |
-| join                   |                 |        |
-| msum                   |                 |        |
-| mfilter                |                 |        |
-| filterM                |                 |        |
-| mapAndUnzipM           |                 |        |
-| zipWithM               |                 |        |
-| zipWithM\_             |                 |        |
-| foldM                  |                 |        |
-| foldM\_                |                 |        |
-| replicateM             |                 |        |
-| replicateM\_           |                 |        |
-| guard                  |                 |        |
-| when                   |                 |        |
-| unless                 |                 |        |
-| liftM                  |                 |        |
-| liftM2 .. liftM5       |                 |        |
-| ap                     |                 |        |
-| <\$!>                  |                 |        |
-| *Data.Either*          |                 |        |
-| Either                 | Either          |        |
-| Left a                 | Left(a)         |        |
-| Right a                | Right(a)        |        |
-| either                 |                 |        |
-| lefts                  |                 |        |
-| rights                 |                 |        |
-| isLeft                 |                 |        |
-| isRight                |                 |        |
-| partitionEithers       |                 |        |
-| *Data.List*            |                 |        |
-| ++                     |                 |        |
-| head                   |                 |        |
-| last                   |                 |        |
-| tail                   |                 |        |
-| init                   |                 |        |
-| uncons                 |                 |        |
-| null                   |                 |        |
-| length                 |                 |        |
-| map                    |                 |        |
-| reverse                |                 |        |
-| intersperse            |                 |        |
-| intercalate            |                 |        |
-| transpose              |                 |        |
-| subsequences           |                 |        |
-| permutations           |                 |        |
-| foldl                  |                 |        |
-| foldl'                 |                 |        |
-| foldl1                 |                 |        |
-| foldr                  |                 |        |
-| foldr1                 |                 |        |
-| concat                 |                 |        |
-| and                    |                 |        |
-| or                     |                 |        |
-| any                    |                 |        |
-| all                    |                 |        |
-| sum                    |                 |        |
-| product                |                 |        |
-| maximum                |                 |        |
-| minimum                |                 |        |
-| scanl                  |                 |        |
-| scanl'                 |                 |        |
-| scanl1                 |                 |        |
-| scanr                  |                 |        |
-| scanr1                 |                 |        |
-| mapAccumL              |                 |        |
-| mapAccumR              |                 |        |
-| iterate                |                 |        |
-| repeat                 |                 |        |
-| replicate              |                 |        |
-| cycle                  |                 |        |
-| unfoldr                |                 |        |
-| take                   |                 |        |
-| drop                   |                 |        |
-| splitAt                |                 |        |
-| takeWhile              |                 |        |
-| dropWhile              |                 |        |
-| dropWhileEnd           |                 |        |
-| span                   |                 |        |
-| break                  |                 |        |
-| stripPrefix            |                 |        |
-| group                  |                 |        |
-| inits                  |                 |        |
-| tails                  |                 |        |
-| isPrefixOf             |                 |        |
-| isSuffixOf             |                 |        |
-| isInfixOf              |                 |        |
-| isSubsequenceOf        |                 |        |
-| elem                   |                 |        |
-| notElem                |                 |        |
-| lookup                 |                 |        |
-| find                   |                 |        |
-| filter                 |                 |        |
-| partition              |                 |        |
-| !!                     |                 | python |
-| elemIndex              |                 |        |
-| elemIndicies           |                 |        |
-| findIndex              |                 |        |
-| findIndicies           |                 |        |
-| zip                    |                 |        |
-| zip3 .. zip7           |                 |        |
-| zipWith                |                 |        |
-| zipWith3 .. zipWith7   |                 |        |
-| unzip                  |                 |        |
-| unzip3 .. unzip7       |                 |        |
-| lines                  | lines           | import |
-| words                  | words           | import |
-| unlines                | unlines         | import |
-| unwords                | unwords         | import |
-| nub                    |                 |        |
-| delete                 |                 |        |
-| \\\\                   |                 |        |
-| union                  |                 |        |
-| intersect              |                 |        |
-| sort                   |                 |        |
-| sortOn                 |                 |        |
-| insert                 |                 |        |
-| nubBy                  |                 |        |
-| deleteBy               |                 |        |
-| deleteFirstBy          |                 |        |
-| unionBy                |                 |        |
-| intersectBy            |                 |        |
-| groupBy                |                 |        |
-| sortBy                 |                 |        |
-| insertBy               |                 |        |
-| maximumBy              |                 |        |
-| minimumBy              |                 |        |
-| genericLength          |                 | nix    |
-| genericTake            |                 | nix    |
-| genericDrop            |                 | nix    |
-| genericSplitAt         |                 | nix    |
-| genericIndex           |                 | nix    |
-| genericReplicate       |                 | nix    |
-| *Data.Maybe*           |                 |        |
-| Maybe                  | Maybe           | import |
-| Nothing                | Nothing         | import |
-| Just a                 | Just(a)         | import |
-| maybe                  | maybe           |        |
-| isJust                 | isJust          |        |
-| isNothing              | isNothing       |        |
-| fromJust               | fromJust        |        |
-| fromMaybe              | fromMaybe       |        |
-| listToMaybe            | listToMaybe     |        |
-| maybeToList            | maybeToList     |        |
-| catMaybes              | catMaybes       |        |
-| mapMaybe               | mapMaybe        |        |
-| *Data.String*          |                 |        |
-| lines                  | lines           |        |
-| words                  | words           |        |
-| unlines                | unlines         |        |
-| unwords                | unwords         |        |
-| *Data.Tuple*           |                 |        |
-| fst                    | fst             |        |
-| snd                    | snd             |        |
-| curry                  | curry           |        |
-| uncurry                | uncurry         |        |
-| swap                   | swap            |        |
+Contributions are always welcome! Feel free to submit a pull request, open an
+issue, or email me.
