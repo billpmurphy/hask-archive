@@ -1,6 +1,10 @@
+import itertools
+
 from ..lang.syntax import H
 from ..lang.syntax import sig
 from ..lang.syntax import L
+
+from ..lang.typeclasses import Ord
 
 from ..lang.builtins import Maybe
 from ..lang.builtins import Just
@@ -11,6 +15,48 @@ from ..lang.builtins import Nothing
 # Basic functions
 
 
+@sig(H/ ["a"] >> "a" )
+def head(xs):
+    """
+    head :: [a] -> a
+
+    Extract the first element of a list, which must be non-empty.
+    """
+    return xs[0]
+
+
+@sig(H/ ["a"] >> "a" )
+def last(xs):
+    """
+    last :: [a] -> a
+
+    Extract the last element of a list, which must be finite and non-empty.
+    """
+    return xs[-1]
+
+
+@sig(H/ ["a"] >> ["a"] )
+def tail(xs):
+    """
+    tail :: [a] -> [a]
+
+    Extract the elements after the head of a list, which must be non-empty.
+    """
+    return L[(x for x in xs[1:])]
+
+
+@sig(H/ ["a"] >> ["a"] )
+def init(xs):
+    """
+    init :: [a] -> [a]
+
+    Return all the elements of a list except the last one. The list must be
+    non-empty.
+    """
+    return L[(x for x in xs[:-1])]
+
+
+#@sig(H/ ["a"] >> Maybe(("a", ["a"])))
 def uncons(xs):
     """
     uncons :: [a] -> Maybe (a, [a])
@@ -22,7 +68,7 @@ def uncons(xs):
     return Just((xs[0], xs[1:])) if xs else Nothing
 
 
-@sig( H/ ["a"] >> bool )
+@sig(H/ ["a"] >> bool )
 def null(xs):
     """
     null :: [a] -> bool
@@ -32,7 +78,8 @@ def null(xs):
     return bool(xs)
 
 
-@sig( H/ ["a"] >> int )
+# TODO: use typeclass version?
+@sig(H/ ["a"] >> int )
 def length(xs):
     """
     length :: [a] -> int
@@ -43,11 +90,31 @@ def length(xs):
     """
     return len(x)
 
+
 #=============================================================================#
 # List transformations
 
 
-@sig( H/ "a" >> ["a"] >> ["a"] )
+def map(fn, iterable):
+    return L[(itertools.imap(fn, iterable))]
+
+#@sig(H[Traversable . m]/ ("a" >> bool) >> t.m("a") >> List("a") )
+def filter(fn, iterable):
+    return L[(itertools.ifilter(fn, iterable))]
+
+
+
+@sig(H/ ["a"] >> ["a"] )
+def reverse(xs):
+    """
+    reverse :: [a] -> [a]
+
+    reverse(xs) returns the elements of xs in reverse order. xs must be finite.
+    """
+    return L[(x for x in xs[::-1])]
+
+
+@sig(H/ "a" >> ["a"] >> ["a"] )
 def intersperse(a, xs):
     """
     intersperse :: a -> [a] -> [a]
@@ -58,7 +125,7 @@ def intersperse(a, xs):
     pass
 
 
-@sig( H/ ["a"] >> [["a"]] >> ["a"] )
+@sig(H/ ["a"] >> [["a"]] >> ["a"] )
 def intercalate(xs, xss):
     """
     intercalate :: [a] -> [[a]] -> [a]
@@ -71,7 +138,7 @@ def intercalate(xs, xss):
     return concat(intersperse(xs, xss))
 
 
-@sig( H/ [["a"]] >> [["a"]] )
+@sig(H/ [["a"]] >> [["a"]] )
 def transpose(xs):
     """
     transpose :: [[a]] -> [[a]]
@@ -81,7 +148,7 @@ def transpose(xs):
     pass
 
 
-@sig( H/ ["a"] >> [["a"]] )
+@sig(H/ ["a"] >> [["a"]] )
 def subsequences(xs):
     """
     subsequences :: [a] -> [[a]]
@@ -94,7 +161,7 @@ def subsequences(xs):
     pass
 
 
-@sig( H/ ["a"] >> [["a"]] )
+@sig(H/ ["a"] >> [["a"]] )
 def permutations(xs):
     """
     permutations :: [a] -> [[a]]
@@ -134,7 +201,7 @@ def foldr1(f, b, xs):
 ## Special folds
 
 
-@sig( H/ [["a"]] >> ["a"] )
+@sig(H/ [["a"]] >> ["a"] )
 def concat(xss):
     """
     Concatenate a list of lists.
@@ -185,7 +252,15 @@ def minimum(xs):
 #=============================================================================#
 ## Infinite lists
 
+
+@sig(H/ (H/ "a" >> "a") >> "a" >> ["a"])
 def iterate(f, x):
+    """
+    iterate :: (a -> a) -> a -> [a]
+
+    iterate(f, x) returns an infinite List of repeated applications of f to x:
+    iterate(f, x) == [x, f(x), f(f(x)), ...]
+    """
     def __iterate(f, x):
         while True:
             yield x
@@ -193,20 +268,53 @@ def iterate(f, x):
     return L[__iterate(f, x)]
 
 
-def repeat(a):
-    pass
+@sig(H/ "a" >> ["a"])
+def repeat(x):
+    """
+    repeat :: a -> [a]
+
+    repeat(x) is an infinite list, with x the value of every element.
+    """
+    def __repeat(x):
+        while True:
+            yield x
+    return L[__repeat(x)]
 
 
-def replicate(i, a):
-    pass
+@sig(H/ int >> "a" >> ["a"])
+def replicate(n, x):
+    """
+    replicate :: Int -> a -> [a]
+
+    replicate(n, x) is a list of length n with x the value of every element.
+    """
+    def __replicate(n, x):
+        for _ in range(n):
+            yield x
+    return L[__replicate(n, x)]
 
 
-def cycle(a):
-    pass
+@sig(H/ ["a"] >> ["a"])
+def cycle(x):
+    """
+    cycle :: [a] -> [a]
+
+    cycle ties a finite list into a circular one, or equivalently, the infinite
+    repetition of the original list. It is the identity on infinite lists.
+    """
+    def __cycle(x):
+        while True:
+            for i in x:
+                yield i
+    return L[__cycle(x)]
 
 
 #=============================================================================#
 ## Unfolding
+
+
+def unfoldr(f, x):
+    pass
 
 
 #=============================================================================#
@@ -229,11 +337,13 @@ def isSuffixOf(xs, ys):
 def isSubsequenceOf(xs, ys):
     pass
 
+
 #=============================================================================#
 # Searching lists
 
 #=============================================================================#
 ## Searching by equality
+
 
 def elem(a, list_a):
     """
@@ -331,25 +441,33 @@ def intersect(xs, ys):
 #=============================================================================#
 ## Ordered lists
 
+
+@sig(H[(Ord, "a")]/ ["a"] >> ["a"])
 def sort(xs):
     pass
 
 
+@sig(H[(Ord, "b")]/ (H/ "a" >> "b") >> ["a"] >> ["a"])
 def sortOn(f, xs):
     pass
 
 
+@sig(H[(Ord, "a")]/ "a" >> ["a"] >> ["a"])
 def insert(x, xs):
     """
+    insert :: Ord a => a -> [a] -> [a]
+
     The insert function takes an element and a list and inserts the element
     into the list at the first position where it is less than or equal to the
     next element. In particular, if the list is sorted before the call, the
     result will also be sorted.
     """
-    for i in xs:
-        if i > x:
-            yield x
-        yield i
+    def __insert(x, xs):
+        for i in xs:
+            if i > x:
+                yield x
+            yield i
+    return L[__insert(x, xs)]
 
 
 #=============================================================================#

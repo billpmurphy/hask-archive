@@ -3,7 +3,7 @@ from ..lang.syntax import sig
 from ..lang.syntax import L
 
 
-@sig( H/ str >> [str])
+@sig(H/ str >> [str])
 def lines(string):
     """
     lines :: String -> [String]
@@ -14,7 +14,7 @@ def lines(string):
     return L[string.split("\n")]
 
 
-@sig( H/ str >> [str])
+@sig(H/ str >> [str])
 def words(string):
     """
     words :: String -> [String]
@@ -25,7 +25,7 @@ def words(string):
     return L[string.split(" ")]
 
 
-@sig( H/ [str] >> str)
+@sig(H/ [str] >> str)
 def unlines(strings):
     """
     lines :: [String] -> String
@@ -36,7 +36,7 @@ def unlines(strings):
     return "\n".join(strings)
 
 
-@sig( H/ str >> [str])
+@sig(H/ str >> [str])
 def unwords(strings):
     """
     unwords :: [String] -> String

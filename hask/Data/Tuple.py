@@ -2,7 +2,7 @@ from ..lang.syntax import H
 from ..lang.syntax import sig
 
 
-@sig(H/ ("a", "b") >> "a" )
+@sig(H/ ("a", "b") >> "a")
 def fst(tup):
     """
     fst :: (a, b) -> a
@@ -13,7 +13,7 @@ def fst(tup):
     return x
 
 
-@sig(H/ ("a", "b") >> "b" )
+@sig(H/ ("a", "b") >> "b")
 def snd(tup):
     """
     snd :: (a, b) -> b
@@ -24,7 +24,7 @@ def snd(tup):
     return y
 
 
-#@sig( H/ (H/ ("a", "b") >> "c") >> "a" >> "b" >> "c")
+@sig(H/ (H/ ("a", "b") >> "c") >> "a" >> "b" >> "c")
 def curry(tup_fn, x, y):
     """
     curry :: ((a, b) -> c) -> a -> b -> c
@@ -34,6 +34,7 @@ def curry(tup_fn, x, y):
     return tup_fn((a, b))
 
 
+@sig( H/ (H/ "a" >> "b" >> "c") >> ("a", "b") >> "c")
 def uncurry(fn, tup):
     """
     uncurry :: (a -> b -> c) -> (a, b) -> c

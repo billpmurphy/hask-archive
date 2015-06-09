@@ -1,11 +1,13 @@
 from ..lang.builtins import Maybe
 from ..lang.builtins import Just
 from ..lang.builtins import Nothing
+from ..lang.syntax import L
 
 
 def maybe(default, f, maybe_a):
     """
     maybe :: b -> (a -> b) -> Maybe a -> b
+
     The maybe function takes a default value, a function, and a Maybe value. If
     the Maybe value is Nothing, the function returns the default value.
     Otherwise, it applies the function to the value inside the Just and returns
@@ -46,6 +48,6 @@ def catMaybes(list_maybes):
 
 def mapMaybe(fn, list_a):
     maybe_bs = (fn(a) for a in list(a))
-    return [fromJust(b) for b in maybe_bs if isJust(b)]
+    return (fromJust(b) for b in maybe_bs if isJust(b))
 
 

@@ -123,7 +123,10 @@ class Syntax(object):
 
 
 class __section__(Syntax):
+    """
+    Special syntax for operator sections.
 
+    """
     def __init__(self, syntax_err_msg):
         super(__section__, self).__init__(syntax_err_msg)
         return
@@ -304,8 +307,7 @@ class __matched_guard__(__guard_base__):
 
 class guard(__unmatched_guard__):
     """
-    Args:
-        value: the value being tested in the guard expression
+    Special syntax for guard expression.
 
     Usage:
 
@@ -324,12 +326,21 @@ class guard(__unmatched_guard__):
     )
 
     # Using guards with sections. See help(__) for information on sections.
-
     ~(guard(20)
         | c(__ > 10)  >> 20
         | c(__ == 10) >> 10
         | c(__ > 5)   >> 5
         | otherwise   >> 0)
+
+    Args:
+        value: the value being tested in the guard expression
+
+    Returns:
+        the return value corresponding to the first matching condition
+
+    Raises:
+        NoGuardMatchException (if no match is found)
+
     """
     def __invert__(self):
         self.raise_invalid()
@@ -345,7 +356,8 @@ otherwise = c(lambda _: True)
 
 class __list_comprehension__(Syntax):
     """
-    Syntactic construct for Haskell-style list comprehensions.
+    Syntactic construct for Haskell-style list comprehensions and lazy list
+    creation.
 
     List comprehensions can be used with any instance of Enum, including the
     built-in types int, long, float, and char.
@@ -353,13 +365,16 @@ class __list_comprehension__(Syntax):
     There are four basic list comprehension patterns:
 
     >>> L[1, ...]
+    # list from 1 to infinity, counting by ones
 
     >>> L[1, 3, ...]
+    # list from 1 to infinity, counting by twos
 
     >>> L[1, ..., 20]
+    # list from 1 to 20 (inclusive), counting by ones
 
     >>> L[1, 5, ..., 20]
-
+    # list from 1 to 20 (inclusive), counting by fours
     """
     def __getitem__(self, lst):
         if isinstance(lst, tuple) and len(lst) < 5 and Ellipsis in lst:
@@ -392,7 +407,7 @@ L = __list_comprehension__("Invalid list comprehension")
 
 class __constraints__(Syntax):
     """
-    H/ creates a new function type annotation.
+    H/ creates a new function type signature.
 
     Usage:
 
@@ -410,8 +425,6 @@ class __constraints__(Syntax):
         return __signature__((arg1,), self.constraints)
 
 
-H = __constraints__()
-
 class __signature__(Syntax):
     """
     """
@@ -425,21 +438,32 @@ class __signature__(Syntax):
         return __signature__(self.args + (next_arg,), self.constraints)
 
 
+H = __constraints__()
+
+
 class sig(Syntax):
     """
+    Decorator to convert a Python function into a statically typed function
+    (TypedFunc object).
+
+    Typed functions are automagically curried, and polymorphic type arguments
+    will be inferred.
+
     Usage:
 
-    @sig(H/ Int >> Int >> Int )
+    @sig(H/ int >> int >> int )
     def add(x, y):
         return x + y
 
-    @sig(H/ Int >> Int >> Maybe(Int) >> Maybe(Int))
+
+    @sig(H/ int >> int >> Maybe(int) >> Maybe(int))
     def safe_div(x, y):
         if y == 0:
             return Nothing
         return Just(x / y)
 
-    @sig(H[t.Show("a")]/ >> "a" >> str)
+
+    @sig(H[(Show, "a")]/ >> "a" >> str)
     def to_str(x):
         return str(x)
     """
@@ -447,9 +471,12 @@ class sig(Syntax):
         super(self.__class__, self).__init__("Syntax error in type signature")
 
         if not isinstance(signature, __signature__):
-            self.raise_invalid()
+            msg = "Signature expected in sig(); found %s" % signature
+            self.raise_invalid(msg)
+
         elif len(signature.args) < 2:
             self.raise_invalid("Not enough type arguments in signature")
+
         self.signature = signature
         self.fn_type = parse_sig(self.signature.args)
         return
@@ -496,17 +523,29 @@ def parse_sig_item(item, var_dict):
     raise TypeSignatureError("Invalid item in type signature: %s" % item)
 
 
-def parse_sig(items, var_dict=None):
-    def make_fn_type(args):
-        """
-        Turn a list of arguments into a function type. E.g., convert
-        [int, int, int] into Function(int, Function(int, int)).
-        """
-        if len(args) == 2:
-            last_input, return_type = args
-            return Function(last_input, return_type)
-        return Function(args[0], make_fn_type(args[1:]))
+def make_fn_type(params):
+    """
+    Turn a list of type parameters into the corresponding internal type system
+    object that represents the type of a function over the parameters.
 
+    Args:
+        params: a list of type paramaters, e.g. from a type signature. These
+                should be instances of TypeOperator or TypeVariable
+
+    Returns:
+        An instance of TypeOperator representing the function type
+    """
+    if len(params) == 2:
+        last_input, return_type = params
+        return Function(last_input, return_type)
+    return Function(params[0], make_fn_type(params[1:]))
+
+
+def parse_sig(items, var_dict=None):
+    """
+    Parse a list of items (representing a type signature) and convert it to the
+    internal type system language.
+    """
     var_dict = {} if var_dict is None else var_dict
     return make_fn_type([parse_sig_item(i, var_dict) for i in items])
 
@@ -523,14 +562,12 @@ class __data__(Syntax):
 
     Maybe, Nothing, Just =\
     data.Maybe("a") == d.Nothing | d.Just("a") deriving(Read, Show, Eq, Ord)
-
     """
     def __init__(self):
         super(__data__, self).__init__("Syntax error in `data`")
 
     def __getattr__(self, value):
         return __new_tcon_enum__(value)
-
 
 
 class __new_tcon__(Syntax):
@@ -565,6 +602,11 @@ class __new_tcon__(Syntax):
 
 class __new_tcon_enum__(__new_tcon__):
     """
+    Examples:
+
+    data.Either
+
+    data.Ordering
     """
     def __call__(self, *typeargs):
         if len(typeargs) < 1:
@@ -583,6 +625,11 @@ class __new_tcon_enum__(__new_tcon__):
 
 
 class __new_tcon_hkt__(__new_tcon__):
+    """
+    Example:
+
+    data.Either("a", "b")
+    """
     pass
 
 

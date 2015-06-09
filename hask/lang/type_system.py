@@ -18,9 +18,19 @@ from hindley_milner import ListType
 # Static typing and type signatures
 
 
+def unary_type(typ):
+    return TypeOperator(typ, [])
+
+
 def HM_typeof(obj):
     """
     Returns the type of an object within the internal type system.
+
+    Args:
+        obj: the object to inspect
+
+    Returns:
+        An obj
     """
     if hasattr(obj, "type"):
         return obj.type()
@@ -29,9 +39,9 @@ def HM_typeof(obj):
         return Tuple(map(HM_typeof, obj))
 
     elif obj is None:
-        return TypeOperator(None, [])
+        return unary_type(None)
 
-    return TypeOperator(type(obj), [])
+    return unary_type(type(obj))
 
 
 
@@ -271,6 +281,8 @@ def make_data_const(name, fields, type_constructor):
 
 
 def build_ADT(typename, type_args, data_constructors, to_derive):
+    """
+    """
     # create the new type constructor and data constructors
     newtype = make_type_const(typename, type_args)
     dcons = [make_data_const(d[0], d[1], newtype) for d in data_constructors]
