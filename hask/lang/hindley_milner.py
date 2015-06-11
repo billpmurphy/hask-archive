@@ -19,7 +19,7 @@ class Lam(object):
 
 
 class Var(object):
-    """Variable"""
+    """Variable/Identifier"""
 
     def __init__(self, name):
         self.name = name
@@ -278,9 +278,9 @@ def unify(t1, t2):
 
 
 def prune(t):
-    """Returns the currently defining instance of t.
-
-    As a side effect, collapses the list of type instances. The function Prune
+    """
+    Returns the currently defining instance of t.
+    As a side effect, collapses the list of type instances. The function prune
     is used whenever a type expression has to be inspected: it will always
     return a type expression which is either an uninstantiated type variable or
     a type operator; i.e. it will skip instantiated variables, and will
@@ -301,7 +301,8 @@ def prune(t):
 
 
 def isGeneric(v, non_generic):
-    """Checks whether a given variable occurs in a list of non-generic variables
+    """
+    Checks whether a given variable occurs in a list of non-generic variables
 
     Note that a variables in such a list may be instantiated to a type term,
     in which case the variables contained in the type term are considered
@@ -340,7 +341,8 @@ def occursInType(v, type2):
 
 
 def occursIn(t, types):
-    """Checks whether a types variable occurs in any other types.
+    """
+    Checks whether a types variable occurs in any other types.
 
     Args:
         v:  The TypeVariable to be tested for

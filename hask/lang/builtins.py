@@ -26,8 +26,10 @@ from typeclasses import Foldable
 
 from hof import Func
 
+
 #=============================================================================#
 # Wrappers for Python builtins (for cosmetic purposes only)
+
 
 Int = int
 Integer = long
@@ -133,57 +135,22 @@ def in_maybe(fn, *args, **kwargs):
 #=============================================================================#
 # Either
 
-class Either(object):
-    def __init__(self, value):
-        self._value = value
 
-    def __eq__(self, other):
-        if self._is_left == other._is_left:
-            return self._value == other._value
-        return False
-
-    def __repr__(self):
-        if self._is_left:
-            return "Left(%s)" % self._value
-        return "Right(%s)" % self._value
-
-    def fmap(self, fn):
-        return self if self._is_left else Right(fn(self._value))
-
-    def pure(self, value):
-        return Right(value)
-
-    def bind(self, fn):
-        return self if self._is_left else fn(self._value)
+Either, Left, Right = build_ADT("Either", ["a", "b"],
+                                 [("Left", ["b"]), ("Right", ["a"])],
+                                 [Show, Eq, Ord])
 
 
-
-class Left(Either):
-    def __init__(self, value, is_left=True):
-        super(self.__class__, self).__init__(value)
-        self._is_left = True
-
-
-class Right(Either):
-    def __init__(self, value, is_left=False):
-        super(self.__class__, self).__init__(value)
-        self._is_left = False
-
-
-## Either instances
-
-Show(Either, Either.__repr__)
-Eq(Either, Either.__eq__)
-Functor(Either, Either.fmap)
-Applicative(Either, Either.pure)
-Monad(Either, Either.bind)
+Functor(Either, lambda v, f: v if Left(v[0]) == v else Right(f(v[0])))
+Applicative(Either, Right)
+Monad(Either, lambda v, f: v if Left(v[0]) == v else f(v[0]))
 
 
 def in_either(fn, *args, **kwargs):
     """
-    Apply arguments to a function. If the function call raises an exception,
-    return the exception inside Left. Otherwise, take the result and wrap it in
-    a Right.
+    Decorator for monadic error handling.
+    If the decorated function raises an exception, return the exception inside
+    Left. Otherwise, take the result and wrap it in Right.
     """
     def _closure_in_either(*args, **kwargs):
         try:
@@ -197,6 +164,7 @@ def in_either(fn, *args, **kwargs):
 
 #=============================================================================#
 # List
+
 
 class List(collections.Sequence):
     """
@@ -235,7 +203,7 @@ class List(collections.Sequence):
         self.unevaluated = itertools.chain(self.unevaluated, iterable)
         return self
 
-    def __repr__(self):
+    def __str__(self):
         # this needs to be better
         return str(list(self.evaluated))[:-1] + "...]"
 
@@ -328,7 +296,7 @@ Functor(Func, Func.fmap)
 # REPL tools
 
 
-def _q(status):
+def _q(status=None):
     """
     Shorthand for sys.exit() or exit() with no arguments. Equivalent to :q in
     Haskell. Should only be used in the REPL.
@@ -337,7 +305,10 @@ def _q(status):
 
     >>> _q()
     """
-    exit()
+    if status is None:
+        exit()
+    exit(status)
+    return
 
 
 def _t(obj):
@@ -358,11 +329,10 @@ def _t(obj):
     int
 
     >>> _t(Just("hello world"))
-    Maybe String
+    Maybe str
     """
-    if hasattr(obj, "type"):
-        print str(obj.type())
-    print str(HM_typeof(obj))
+    print(str(HM_typeof(obj)))
+    return
 
 
 def _i(obj):

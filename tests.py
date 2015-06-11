@@ -945,7 +945,9 @@ class TestMaybe(unittest.TestCase):
         self.assertNotEqual(Just(1), Just("1"))
         self.assertNotEqual(Just(3), Nothing)
         self.assertNotEqual(Nothing, Just(0))
-        self.assertNotEqual(Nothing, None) # questionable
+        self.assertNotEqual(Nothing, None)
+        self.assertNotEqual(Nothing, 1)
+        self.assertNotEqual(Just(1), 1)
 
         self.assertTrue(Just(1) == Just(1))
         self.assertFalse(Just(1) == Just(2))
@@ -975,6 +977,22 @@ class TestMaybe(unittest.TestCase):
         self.assertEqual(Nothing, Just(1) >>
                 F(lambda x: Nothing) >>
                 F(lambda x: Just(x * 10)))
+
+
+class TestEither(unittest.TestCase):
+
+    def test_instances(self):
+        self.assertTrue(in_typeclass(Maybe, Show))
+        self.assertTrue(in_typeclass(Maybe, Eq))
+        self.assertTrue(in_typeclass(Maybe, Functor))
+        self.assertTrue(in_typeclass(Maybe, Applicative))
+        self.assertTrue(in_typeclass(Maybe, Monad))
+
+        self.assertFalse(in_typeclass(Maybe, Typeclass))
+        self.assertFalse(in_typeclass(Maybe, Num))
+        self.assertFalse(in_typeclass(Maybe, Foldable))
+        self.assertFalse(in_typeclass(Maybe, Traversable))
+        self.assertFalse(in_typeclass(Maybe, Iterator))
 
 
 class TestList(unittest.TestCase):
@@ -1173,8 +1191,7 @@ class Test_README_Examples(unittest.TestCase):
 
         either_problematic = in_either(a_problematic_function)
         self.assertEqual(either_problematic(10), Right(9))
-        #self.assertEqual(either_problematic(0)
-        #                 Left(ValueError('Out of cheese error',)))
+        self.assertTrue(isinstance(either_problematic(0)[0], ValueError))
 
         @in_either
         def my_fn_that_raises_errors(n):
@@ -1185,9 +1202,10 @@ class Test_README_Examples(unittest.TestCase):
 
             return n + 10
 
-        #self.assertEqual(my_fn_that_raises_errors("hello"),
+        #self.assertTrue(my_fn_that_raises_errors("hello"),
         #                 Left(AssertionError('not an int!',)))
-        #self.assertEqual(my_fn_that_raises_errors(-10),
+        self.assertTrue(isinstance(my_fn_that_raises_errors(-10)[0],
+                ValueError))
         #                 Left(ValueError('Too low!',)))
         self.assertEqual(my_fn_that_raises_errors(1), Right(11))
 

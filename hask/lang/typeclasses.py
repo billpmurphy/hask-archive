@@ -337,6 +337,7 @@ class Monad(Typeclass):
 
 
 class Foldable(Typeclass):
+
     def __init__(self, cls, foldr):
         super(Foldable, self).__init__(cls, attrs={"foldr":foldr})
         return
