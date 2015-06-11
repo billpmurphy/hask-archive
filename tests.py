@@ -307,8 +307,10 @@ class TestHindleyMilner(unittest.TestCase):
         self.unified(parse_sig_item(int, {}), TypeOperator(int, []))
         self.unified(parse_sig_item(float, {}), TypeOperator(float, []))
         self.unified(parse_sig_item(list, {}), TypeOperator(list, []))
-        self.unified(parse_sig_item(None, {}), TypeOperator(type(None), []))
         self.unified(parse_sig_item(__test__, {}), TypeOperator(__test__, []))
+
+        # unit type (None)
+        self.unified(parse_sig_item(None, {}), TypeOperator(None, []))
 
         # tuple
         self.unified(
@@ -931,8 +933,8 @@ class TestMaybe(unittest.TestCase):
         self.assertFalse(in_typeclass(Maybe, Iterator))
 
     def test_show(self):
-        self.assertEqual("Just(3)", Just(3).__repr__())
-        self.assertEqual("Nothing", Nothing.__repr__())
+        self.assertEqual("Just(3)", str(Just(3)))
+        self.assertEqual("Nothing", str(Nothing))
 
     def test_eq(self):
         self.assertEqual(Nothing, Nothing)

@@ -506,7 +506,7 @@ def parse_sig_item(item, var_dict):
 
     # None: The unit type
     elif item is None:
-        return TypeOperator(type(None), [])
+        return TypeOperator(None, [])
 
     # Tuples: ("a", "b"), (int, ("a", float)), etc.
     elif isinstance(item, tuple):

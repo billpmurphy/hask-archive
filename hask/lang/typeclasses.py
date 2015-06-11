@@ -33,6 +33,8 @@ class Show(Typeclass):
 
     @staticmethod
     def show(a):
+        if type(a) == str:
+            return "'%s'" % a
         return str(a)
 
     @staticmethod
@@ -270,19 +272,19 @@ class RealFloat(Typeclass):
 
 class Functor(Typeclass):
 
-    def __init__(self, cls, __fmap__):
+    def __init__(self, cls, fmap):
         """
         Transform a class into a member of Functor. The fmap function must be
         supplied when making the class a member of Functor.
         """
-        def fmap(self, fn):
-            return __fmap__(self, fn)
+        def _fmap(self, fn):
+            return fmap(self, fn)
 
         # `*` syntax for fmap
         def mul(self, fn):
             return self.fmap(fn)
 
-        super(Functor, self).__init__(cls, attrs={"fmap":fmap, "__mul__":mul})
+        super(Functor, self).__init__(cls, attrs={"fmap":_fmap, "__mul__":mul})
         return
 
     @staticmethod
