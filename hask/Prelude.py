@@ -78,6 +78,7 @@ def odd(x):
     """
     return x % 2 == 1
 
+
 @sig(H[(Integral, "a")]/ "a" >> "a" >> "a")
 def gcd(x, y):
     """

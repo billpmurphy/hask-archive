@@ -44,6 +44,81 @@ def HM_typeof(obj):
     return unary_type(type(obj))
 
 
+class TypeSignature(object):
+
+    def __init__(self, args, constraints):
+        self.args = args
+        self.constraints = constraints
+
+
+class TypeSignatureError(Exception):
+    pass
+
+
+def build_sig_arg(arg, var_dict):
+    if isinstance(arg, TypeVariable) or isinstance(arg, TypeOperator):
+        return arg
+
+    # string representing type variable
+    elif isinstance(arg, str):
+        if arg not in var_dict:
+            var_dict[arg] = TypeVariable()
+        return var_dict[arg]
+
+    # subsignature, e.g. H/ (H/ int >> int) >> int >> int
+    elif isinstance(arg, TypeSignature):
+        return build_sig(arg.args, var_dict)
+
+    # an ADT or something else created in hask
+    elif hasattr(arg, "type"):
+        return TypeOperator(arg.type().hkt,
+                map(lambda x: build_sig_arg(x, var_dict), arg.type().params))
+
+    # None: The unit type
+    elif arg is None:
+        return TypeOperator(None, [])
+
+    # Tuples: ("a", "b"), (int, ("a", float)), etc.
+    elif isinstance(arg, tuple):
+        return Tuple(map(lambda x: build_sig_arg(x, var_dict), arg))
+
+    # Lists: ["a"], [int], etc.
+    elif isinstance(arg, list) and len(arg) == 1:
+        return TypeOperator(ListType, [build_sig_arg(arg[0], var_dict)])
+
+    # any other type
+    elif isinstance(arg, type):
+        return TypeOperator(arg, [])
+
+    raise TypeSignatureError("Invalid item in type signature: %s" % arg)
+
+
+def make_fn_type(params):
+    """
+    Turn a list of type parameters into the corresponding internal type system
+    object that represents the type of a function over the parameters.
+
+    Args:
+        params: a list of type paramaters, e.g. from a type signature. These
+                should be instances of TypeOperator or TypeVariable
+
+    Returns:
+        An instance of TypeOperator representing the function type
+    """
+    if len(params) == 2:
+        last_input, return_type = params
+        return Function(last_input, return_type)
+    return Function(params[0], make_fn_type(params[1:]))
+
+
+def build_sig(args, var_dict=None):
+    """
+    Parse a list of items (representing a type signature) and convert it to the
+    internal type system language.
+    """
+    var_dict = {} if var_dict is None else var_dict
+    return make_fn_type([build_sig_arg(i, var_dict) for i in args])
+
 
 class TypedFunc(object):
 
@@ -73,11 +148,6 @@ class TypedFunc(object):
         if hof.F(result) is result:
             return result
         return hof.F(result)
-
-
-class TypeSignatureError(Exception):
-    pass
-
 
 
 #=============================================================================#
@@ -128,9 +198,14 @@ def nt_to_tuple(nt):
     namedtuple) to a tuple, even if the instance's __iter__
     method has been changed. Useful for writing derived instances of
     typeclasses.
+
+    Args:
+        nt: an instance of namedtuple
+
+    Returns:
+        A tuple containing each of the items in nt
     """
     return tuple((getattr(nt, f) for f in nt.__class__._fields))
-
 
 
 class Typeclass(object):
@@ -235,9 +310,8 @@ def make_type_const(name, typeargs):
              __typeclass_flag__:()}
     cls = type(name, (ADT,), default_attrs)
 
-    # TODO
-    cls.type = lambda self: self.typeargs
-
+    cls.type = lambda self: TypeOperator(cls,
+            [TypeVariable() for i in cls.__params__])
     cls.__iter__ = lambda self: raise_fn(TypeError)
     cls.__contains__ = lambda self, other: raise_fn(TypeError)
     cls.__add__ = lambda self, other: raise_fn(TypeError)
@@ -263,35 +337,53 @@ def make_data_const(name, fields, type_constructor):
     new class created with `namedtuple`, with some of the features from
     `namedtuple` such as equality and comparison operators stripped out.
     """
-    base = namedtuple(name, ["i%s" % i for i, _ in enumerate(fields)])
-
     # create the data constructor
+    base = namedtuple(name, ["i%s" % i for i, _ in enumerate(fields)])
     cls = type(name, (type_constructor, base), {})
 
-    # TODO: make sure __init__ or __new__ is typechecked
-
-    # If the data constructor takes no arguments, create an instance of the
-    # data constructor class and return that instance rather than returning the
-    # class
+    # If the data constructor takes no arguments, create an instance of it
+    # and return that instance rather than returning the class
+    # The type() method does not need to be modified in this case
     if len(fields) == 0:
         cls = cls()
+    # Otherwise, modify type() so that it matches up fields from the data
+    # constructor with type params from the type constructor
+    else:
+        def _type(self):
+            args = [HM_typeof(self[fields.index(p)]) \
+                    if p in fields else TypeVariable()
+                    for p in type_constructor.__params__]
+            return TypeOperator(type_constructor, args)
+        cls.type = _type
+
+    # TODO: make sure __init__ or __new__ is typechecked
 
     type_constructor.__constructors__ += (cls,)
     return cls
 
 
-def build_ADT(typename, type_args, data_constructors, to_derive):
+def build_ADT(typename, typeargs, data_constructors, to_derive):
     """
     """
     # create the new type constructor and data constructors
-    newtype = make_type_const(typename, type_args)
+    newtype = make_type_const(typename, typeargs)
+
+    @classmethod
+    def make_tcon(cls, *args):
+        if len(args) != len(typeargs):
+            print args, typeargs
+            raise TypeError("Invalid number of arguments to type constructor")
+
+        var_dict = {}
+        return TypeOperator(newtype, [build_sig_arg(a, var_dict)
+                                      for a in args])
+    newtype.t = make_tcon
     dcons = [make_data_const(d[0], d[1], newtype) for d in data_constructors]
 
     # derive typeclass instances for the new type constructors
     for tclass in to_derive:
         tclass.derive_instance(newtype)
 
-    # return everything
     return tuple([newtype,] + dcons)
 
 

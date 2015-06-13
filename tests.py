@@ -27,7 +27,10 @@ from hask import Prelude
 # internals
 from hask.lang.syntax import Syntax
 
+from hask.lang.type_system import build_sig_arg
+from hask.lang.type_system import build_sig
 from hask.lang.type_system import build_ADT
+from hask.lang.type_system import HM_typeof
 from hask.lang.type_system import make_data_const
 from hask.lang.type_system import make_type_const
 
@@ -42,8 +45,6 @@ from hask.lang.hindley_milner import Tuple
 from hask.lang.hindley_milner import analyze
 from hask.lang.hindley_milner import unify
 
-from hask.lang.syntax import parse_sig_item
-from hask.lang.syntax import parse_sig
 
 
 te = TypeError
@@ -291,61 +292,91 @@ class TestHindleyMilner(unittest.TestCase):
                 App(Var("factorial"), Var("4"))),
             self.Integer)
 
-    def test_parse_sig_item(self):
-        """Test type signature parsing internals - make sure that types are
+    def test_build_sig_item(self):
+        """Test type signature building internals - make sure that types are
            translated in a reasonable way"""
 
         class __test__(object):
             pass
 
         # type variables
-        self.assertTrue(isinstance(parse_sig_item("a", {}), TypeVariable))
-        self.assertTrue(isinstance(parse_sig_item("abc", {}), TypeVariable))
+        self.assertTrue(isinstance(build_sig_arg("a", {}), TypeVariable))
+        self.assertTrue(isinstance(build_sig_arg("abc", {}), TypeVariable))
 
         # builtin/non-ADT types
-        self.unified(parse_sig_item(str, {}), TypeOperator(str, []))
-        self.unified(parse_sig_item(int, {}), TypeOperator(int, []))
-        self.unified(parse_sig_item(float, {}), TypeOperator(float, []))
-        self.unified(parse_sig_item(list, {}), TypeOperator(list, []))
-        self.unified(parse_sig_item(__test__, {}), TypeOperator(__test__, []))
+        self.unified(build_sig_arg(str, {}), TypeOperator(str, []))
+        self.unified(build_sig_arg(int, {}), TypeOperator(int, []))
+        self.unified(build_sig_arg(float, {}), TypeOperator(float, []))
+        self.unified(build_sig_arg(list, {}), TypeOperator(list, []))
+        self.unified(build_sig_arg(__test__, {}), TypeOperator(__test__, []))
 
         # unit type (None)
-        self.unified(parse_sig_item(None, {}), TypeOperator(None, []))
+        self.unified(build_sig_arg(None, {}), TypeOperator(None, []))
 
         # tuple
         self.unified(
-                parse_sig_item((int, int), {}),
+                build_sig_arg((int, int), {}),
                 Tuple([TypeOperator(int, []), TypeOperator(int, [])]))
 
         # list
 
         # adts
 
-    def test_signature_parsing(self):
-        """Make sure type signatures are parsed correctly"""
+    def test_signature_build(self):
+        """Make sure type signatures are built correctly"""
         # int -> int
         self.unified(
-                parse_sig((H/ int >> int).args),
+                build_sig((H/ int >> int).sig.args),
                 Function(TypeOperator(int, []), TypeOperator(int, [])))
 
         # a -> a
         a = TypeVariable()
         self.unified(
-                parse_sig((H/ "a" >> "a").args),
+                build_sig((H/ "a" >> "a").sig.args),
                 Function(a, a))
 
         # a -> b
         a, b  = TypeVariable(), TypeVariable()
         self.unified(
-                parse_sig((H/ "a" >> "b").args),
+                build_sig((H/ "a" >> "b").sig.args),
                 Function(a, b))
 
         # (int -> int) -> int -> int
         self.unified(
-                parse_sig((H/ (H/ int >> int) >> int >> int).args),
+                build_sig((H/ (H/ int >> int) >> int >> int).sig.args),
                 Function(
                     Function(TypeOperator(int, []), TypeOperator(int, [])),
                     Function(TypeOperator(int, []), TypeOperator(int, []))))
+
+    def test_builtins(self):
+        """Make sure builtin types typecheck correctly"""
+
+        self.unified(HM_typeof(1), TypeOperator(int, []))
+
+        self.unified(
+                HM_typeof(Nothing),
+                TypeOperator(Maybe, [TypeVariable()]))
+
+        self.unified(
+                HM_typeof(Just(1)),
+                TypeOperator(Maybe, [TypeOperator(int, [])]))
+
+        self.unified(
+                HM_typeof(Just(Just(Nothing))),
+                TypeOperator(Maybe,
+                    [TypeOperator(Maybe,
+                        [TypeOperator(Maybe, [TypeVariable()])])]))
+
+        self.unified(
+                HM_typeof(Right("error")),
+                TypeOperator(Either, [TypeVariable(),
+                    TypeOperator(str, [])]))
+
+        self.unified(
+                HM_typeof(Left(2.0)),
+                TypeOperator(Either,
+                    [TypeOperator(float, []), TypeVariable()]))
+
 
 
 class TestTypeSystem(unittest.TestCase):

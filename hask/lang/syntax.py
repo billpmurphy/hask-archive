@@ -4,8 +4,9 @@ import hof
 from builtins import List
 from typeclasses import Enum
 from type_system import Typeclass
-from type_system import HM_typeof
 from type_system import TypedFunc
+from type_system import TypeSignature
+from type_system import build_sig
 
 from type_system import build_ADT
 
@@ -421,21 +422,21 @@ class __constraints__(Syntax):
     def __getitem__(self, constraints):
         return __constraints__(constraints)
 
-    def __div__(self, arg1):
-        return __signature__((arg1,), self.constraints)
+    def __div__(self, arg):
+        return __signature__((), self.constraints).__rshift__(arg)
 
 
 class __signature__(Syntax):
     """
     """
     def __init__(self, args, constraints):
-        self.args = args
-        self.constraints = constraints
+        self.sig = TypeSignature(args, constraints)
         super(__signature__, self).__init__("Syntax error in type signature")
         return
 
-    def __rshift__(self, next_arg):
-        return __signature__(self.args + (next_arg,), self.constraints)
+    def __rshift__(self, arg):
+        arg = arg.sig if isinstance(arg, __signature__) else arg
+        return __signature__(self.sig.args + (arg,), self.sig.constraints)
 
 
 H = __constraints__()
@@ -446,8 +447,8 @@ class sig(Syntax):
     Decorator to convert a Python function into a statically typed function
     (TypedFunc object).
 
-    Typed functions are automagically curried, and polymorphic type arguments
-    will be inferred.
+    TypedFuncs are automagically curried, and polymorphic type arguments will
+    be inferred by the type system.
 
     Usage:
 
@@ -474,80 +475,14 @@ class sig(Syntax):
             msg = "Signature expected in sig(); found %s" % signature
             self.raise_invalid(msg)
 
-        elif len(signature.args) < 2:
+        elif len(signature.sig.args) < 2:
             self.raise_invalid("Not enough type arguments in signature")
 
-        self.signature = signature
-        self.fn_type = parse_sig(self.signature.args)
+        self.fn_type = build_sig(signature.sig.args)
         return
 
     def __call__(self, fn):
         return TypedFunc(fn, self.fn_type)
-
-
-def parse_sig_item(item, var_dict):
-    if isinstance(item, TypeVariable) or isinstance(item, TypeOperator):
-        return item
-
-    # string representing type variable
-    elif isinstance(item, str):
-        if item not in var_dict:
-            var_dict[item] = TypeVariable()
-        return var_dict[item]
-
-    # subsignature, e.g. H/ (H/ int >> int) >> int >> int
-    elif isinstance(item, __signature__):
-        return parse_sig(item.args, var_dict)
-
-    # an ADT or something else created in hask
-    elif hasattr(item, "type"):
-        return TypeOperator(item.type().hkt,
-                map(lambda x: parse_sig_item(x, var_dict), item.type().params))
-
-    # None: The unit type
-    elif item is None:
-        return TypeOperator(None, [])
-
-    # Tuples: ("a", "b"), (int, ("a", float)), etc.
-    elif isinstance(item, tuple):
-        return Tuple(map(lambda x: parse_sig_item(x, var_dict), item))
-
-    # Lists: ["a"], [int], etc.
-    elif isinstance(item, list) and len(item) == 1:
-        return TypeOperator(ListType, [parse_sig_item(item[0], var_dict)])
-
-    # any other type
-    elif isinstance(item, type):
-        return TypeOperator(item, [])
-
-    raise TypeSignatureError("Invalid item in type signature: %s" % item)
-
-
-def make_fn_type(params):
-    """
-    Turn a list of type parameters into the corresponding internal type system
-    object that represents the type of a function over the parameters.
-
-    Args:
-        params: a list of type paramaters, e.g. from a type signature. These
-                should be instances of TypeOperator or TypeVariable
-
-    Returns:
-        An instance of TypeOperator representing the function type
-    """
-    if len(params) == 2:
-        last_input, return_type = params
-        return Function(last_input, return_type)
-    return Function(params[0], make_fn_type(params[1:]))
-
-
-def parse_sig(items, var_dict=None):
-    """
-    Parse a list of items (representing a type signature) and convert it to the
-    internal type system language.
-    """
-    var_dict = {} if var_dict is None else var_dict
-    return make_fn_type([parse_sig_item(i, var_dict) for i in items])
 
 
 #=============================================================================#
@@ -612,7 +547,6 @@ class __new_tcon_enum__(__new_tcon__):
         if len(typeargs) < 1:
             msg = "Missing type args in statement: `data.%s()`" % self.name
             self.raise_invalid(msg)
-
         # make sure all type params are strings
         if not all((type(arg) == str for arg in typeargs)):
             self.raise_invalid("Type parameters must be strings")
