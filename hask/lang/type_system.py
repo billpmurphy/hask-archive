@@ -72,15 +72,14 @@ def build_sig_arg(arg, var_dict):
     elif isinstance(arg, TypeSignature):
         return build_sig(arg.args, var_dict)
 
-    # HKT
+    # HKT, e.g. t(Maybe "a") or t("m", "a", "b")
     elif isinstance(arg, TypeSignatureHKT):
         if type(arg.tcon) == str:
-            return TypeOperator(build_sig_arg(arg.tcon, var_dict),
-                    [build_sig_arg(a, var_dict) for a in arg.params])
-
-    # ADT with no type parmeters
-    #elif issubclass(arg, ADT):
-    #    return TypeOperator(arg, [])
+            hkt = build_sig_arg(arg.tcon, var_dict)
+        else:
+            hkt = arg.tcon
+        return TypeOperator(hkt,
+                            [build_sig_arg(a, var_dict) for a in arg.params])
 
     # None: The unit type
     elif arg is None:
@@ -98,7 +97,6 @@ def build_sig_arg(arg, var_dict):
     elif isinstance(arg, type):
         return TypeOperator(arg, [])
 
-    print isinstance(arg, TypeSigatureHKT)
     raise TypeSignatureError("Invalid item in type signature: %s" % arg)
 
 

@@ -4,6 +4,7 @@ import unittest
 
 from hask import H
 from hask import sig
+from hask import t
 from hask import in_typeclass, arity
 from hask import guard, c, otherwise, NoGuardMatchException
 from hask import caseof
@@ -377,6 +378,22 @@ class TestHindleyMilner(unittest.TestCase):
                 TypeOperator(Either,
                     [TypeOperator(float, []), TypeVariable()]))
 
+    def test_builtin_HKT(self):
+        self.unified(HM_typeof(1), build_sig_arg(t(int), {}))
+        self.unified(HM_typeof(Nothing), build_sig_arg(t(Maybe, "a"), {}))
+        self.unified(HM_typeof(Just(1)), build_sig_arg(t(Maybe, int), {}))
+
+        self.unified(
+                HM_typeof(Just(Just(Nothing))),
+                build_sig_arg(t(Maybe, t(Maybe, t(Maybe, "a"))), {}))
+
+        self.unified(
+                HM_typeof(Right("error")),
+                build_sig_arg(t(Either, "a", str), {}))
+
+        self.unified(
+                HM_typeof(Left(2.0)),
+                build_sig_arg(t(Either, int, "a"), {}))
 
 
 class TestTypeSystem(unittest.TestCase):

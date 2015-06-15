@@ -89,6 +89,7 @@ from hask.lang.syntax import deriving
 ## Type signatures
 from hask.lang.syntax import sig
 from hask.lang.syntax import H
+from hask.lang.syntax import t
 
 ## Pattern matching
 from hask.lang.caseof import caseof
