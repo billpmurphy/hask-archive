@@ -22,38 +22,60 @@ def maybe(default, f, maybe_a):
 
 @sig(H/ t(Maybe, "a") >> bool)
 def isJust(maybe_a):
-    return not maybe_a is Nothing
+    return not maybe_a == Nothing
 
 
 @sig(H/ t(Maybe, "a")  >> bool)
 def isNothing(maybe_a):
     return not isJust(maybe_a)
 
+
 @sig(H/ t(Maybe, "a") >> "a")
-def fromJust(maybe_a):
-    if isJust(maybe_a):
-        return maybe_a._value
+def fromJust(x):
+    if isJust(x):
+        return x[0]
     raise ValueError("Cannot call fromJust on Nothing.")
 
 
+@sig(H/ ["a"] >> t(Maybe, "a"))
 def listToMaybe(list_a):
     if list_a:
         return Just(list_a)
     return Nothing
 
 
+@sig(H/ t(Maybe, "a") >> ["a"])
 def maybeToList(maybe_a):
+    """
+    maybeToList :: Maybe a -> [a]
+
+    The maybeToList function returns an empty list when given Nothing or a
+    singleton list when not given Nothing.
+    """
     if isJust(maybe_a):
-        return [fromJust(maybe_a)]
-    return []
+        return L[[fromJust(maybe_a)]]
+    return L[[]]
 
 
-def catMaybes(list_maybes):
-    return [maybe_item for maybe_item in list_maybes if isJust(maybe_item)]
+@sig(H/ [t(Maybe, "a")] >> ["a"])
+def catMaybes(a):
+    """
+    catMaybes :: [Maybe a] -> [a]
+
+    The catMaybes function takes a list of Maybes and returns a list of all the
+    Just values.
+    """
+    return L[(item for item in a if isJust(item))]
 
 
-def mapMaybe(fn, list_a):
-    maybe_bs = (fn(a) for a in list(a))
-    return (fromJust(b) for b in maybe_bs if isJust(b))
+@sig(H/ (H/ "a" >> (Maybe, "a")) >> ["a"] >> ["b"])
+def mapMaybe(f, la):
+    """
+    mapMaybe :: (a -> Maybe b) -> [a] -> [b]
 
-
+    The mapMaybe function is a version of map which can throw out elements. In
+    particular, the functional argument returns something of type Maybe b. If
+    this is Nothing, no element is added on to the result list. If it is Just
+    b, then b is included in the result list.
+    """
+    return L[(fromJust(b) for b in (f(a) for a in la) if isJust(b))]

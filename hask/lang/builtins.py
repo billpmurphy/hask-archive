@@ -67,7 +67,6 @@ Ord(float, float.__lt__, float.__le__, float.__gt__, float.__ge__)
 Ord(complex, complex.__lt__, complex.__le__, complex.__gt__, complex.__ge__)
 Ord(bool, bool.__lt__, bool.__le__, bool.__gt__, bool.__ge__)
 
-
 Enum(int,  toEnum=lambda a: a,      fromEnum=lambda a: a)
 Enum(long, toEnum=lambda a: a,      fromEnum=lambda a: a)
 Enum(bool, toEnum=lambda a: int(a), fromEnum=lambda a: bool(a))

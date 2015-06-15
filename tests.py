@@ -1163,6 +1163,15 @@ class TestPrelude(unittest.TestCase):
             self.assertEqual(msg, e.message)
 
 
+class TestDataMaybe(unittest.TestCase):
+
+    def test_all(self):
+        from hask.Data.Maybe import isJust
+
+        self.assertTrue(isJust(Just(1)))
+        # add more
+
+
 class TestDataString(unittest.TestCase):
 
     def test_string(self):
