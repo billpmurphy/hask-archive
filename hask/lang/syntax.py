@@ -6,6 +6,8 @@ from typeclasses import Enum
 from type_system import Typeclass
 from type_system import TypedFunc
 from type_system import TypeSignature
+from type_system import TypeSignatureHKT
+from type_system import ADT
 from type_system import build_sig
 
 from type_system import build_ADT
@@ -483,6 +485,14 @@ class sig(Syntax):
 
     def __call__(self, fn):
         return TypedFunc(fn, self.fn_type)
+
+
+def t(type_constructor, *params):
+    if isinstance(type_constructor, ADT) and \
+       len(type_constructor.__params__) != len(params):
+            raise TypeError("Incorrect number of type parameters to %s" % \
+                            type_constructor.__name__)
+    return TypeSignatureHKT(type_constructor, params)
 
 
 #=============================================================================#

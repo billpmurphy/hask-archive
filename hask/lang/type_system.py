@@ -18,10 +18,6 @@ from hindley_milner import ListType
 # Static typing and type signatures
 
 
-def unary_type(typ):
-    return TypeOperator(typ, [])
-
-
 def HM_typeof(obj):
     """
     Returns the type of an object within the internal type system.
@@ -39,9 +35,16 @@ def HM_typeof(obj):
         return Tuple(map(HM_typeof, obj))
 
     elif obj is None:
-        return unary_type(None)
+        return TypeOperator(None, [])
 
-    return unary_type(type(obj))
+    return TypeOperator(type(obj), [])
+
+
+class TypeSignatureHKT(object):
+
+    def __init__(self, tcon, params):
+        self.tcon = tcon
+        self.params = params
 
 
 class TypeSignature(object):
@@ -69,10 +72,15 @@ def build_sig_arg(arg, var_dict):
     elif isinstance(arg, TypeSignature):
         return build_sig(arg.args, var_dict)
 
-    # an ADT or something else created in hask
-    elif hasattr(arg, "type"):
-        return TypeOperator(arg.type().hkt,
-                map(lambda x: build_sig_arg(x, var_dict), arg.type().params))
+    # HKT
+    elif isinstance(arg, TypeSignatureHKT):
+        if type(arg.tcon) == str:
+            return TypeOperator(build_sig_arg(arg.tcon, var_dict),
+                    [build_sig_arg(a, var_dict) for a in arg.params])
+
+    # ADT with no type parmeters
+    #elif issubclass(arg, ADT):
+    #    return TypeOperator(arg, [])
 
     # None: The unit type
     elif arg is None:
@@ -90,6 +98,7 @@ def build_sig_arg(arg, var_dict):
     elif isinstance(arg, type):
         return TypeOperator(arg, [])
 
+    print isinstance(arg, TypeSigatureHKT)
     raise TypeSignatureError("Invalid item in type signature: %s" % arg)
 
 
@@ -367,17 +376,6 @@ def build_ADT(typename, typeargs, data_constructors, to_derive):
     """
     # create the new type constructor and data constructors
     newtype = make_type_const(typename, typeargs)
-
-    @classmethod
-    def make_tcon(cls, *args):
-        if len(args) != len(typeargs):
-            print args, typeargs
-            raise TypeError("Invalid number of arguments to type constructor")
-
-        var_dict = {}
-        return TypeOperator(newtype, [build_sig_arg(a, var_dict)
-                                      for a in args])
-    newtype.t = make_tcon
     dcons = [make_data_const(d[0], d[1], newtype) for d in data_constructors]
 
     # derive typeclass instances for the new type constructors

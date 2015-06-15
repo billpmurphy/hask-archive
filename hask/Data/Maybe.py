@@ -4,9 +4,10 @@ from ..lang.builtins import Nothing
 from ..lang.syntax import L
 from ..lang.syntax import H
 from ..lang.syntax import sig
+from ..lang.syntax import t
 
 
-#@sig(H/ "b" >> (H/ "a" >> "b") >> Maybe.t("a") >> "b")
+@sig(H/ "b" >> (H/ "a" >> "b") >> t(Maybe, "a") >> "b")
 def maybe(default, f, maybe_a):
     """
     maybe :: b -> (a -> b) -> Maybe a -> b
@@ -19,16 +20,16 @@ def maybe(default, f, maybe_a):
     pass
 
 
-@sig(H/ Maybe.t("a") >> bool)
+@sig(H/ t(Maybe, "a") >> bool)
 def isJust(maybe_a):
     return not maybe_a is Nothing
 
 
-@sig(H/ Maybe.t("a") >> bool)
+@sig(H/ t(Maybe, "a")  >> bool)
 def isNothing(maybe_a):
     return not isJust(maybe_a)
 
-
+@sig(H/ t(Maybe, "a") >> "a")
 def fromJust(maybe_a):
     if isJust(maybe_a):
         return maybe_a._value

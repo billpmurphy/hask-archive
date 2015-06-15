@@ -66,9 +66,6 @@ Ord(long, long.__lt__, long.__le__, long.__gt__, long.__ge__)
 Ord(float, float.__lt__, float.__le__, float.__gt__, float.__ge__)
 Ord(complex, complex.__lt__, complex.__le__, complex.__gt__, complex.__ge__)
 Ord(bool, bool.__lt__, bool.__le__, bool.__gt__, bool.__ge__)
-Show(list, list.__ord__)
-Show(tuple, tuple.__ord__)
-
 
 
 Enum(int,  toEnum=lambda a: a,      fromEnum=lambda a: a)
