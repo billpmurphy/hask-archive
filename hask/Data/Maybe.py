@@ -21,13 +21,13 @@ def maybe(default, f, maybe_a):
 
 
 @sig(H/ t(Maybe, "a") >> bool)
-def isJust(maybe_a):
-    return not maybe_a == Nothing
+def isJust(a):
+    return not isNothing(a)
 
 
 @sig(H/ t(Maybe, "a")  >> bool)
-def isNothing(maybe_a):
-    return not isJust(maybe_a)
+def isNothing(a):
+    return a == Nothing
 
 
 @sig(H/ t(Maybe, "a") >> "a")
@@ -38,9 +38,9 @@ def fromJust(x):
 
 
 @sig(H/ ["a"] >> t(Maybe, "a"))
-def listToMaybe(list_a):
-    if list_a:
-        return Just(list_a)
+def listToMaybe(a):
+    if len(a) > 0:
+        return Just(a[0])
     return Nothing
 
 

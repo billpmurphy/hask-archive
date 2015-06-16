@@ -156,6 +156,9 @@ class TypedFunc(object):
             return result
         return hof.F(result)
 
+    def __mod__(self, arg):
+        return self.__call__(arg)
+
 
 #=============================================================================#
 # Typeclasses
