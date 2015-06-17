@@ -36,7 +36,7 @@ def unlines(strings):
     return "\n".join(strings)
 
 
-@sig(H/ str >> [str])
+@sig(H/ [str] >> str)
 def unwords(strings):
     """
     unwords :: [String] -> String

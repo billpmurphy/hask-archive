@@ -1180,7 +1180,8 @@ class TestDataString(unittest.TestCase):
         from hask.Data.String import unlines
         from hask.Data.String import unwords
 
-        # add tests
+        self.assertEqual(lines("a\nb \n\nc"), L[["a", "b ", "", "c"]])
+        self.assertEqual(unlines(L[["a", "b ", "", "c"]]), "a\nb \n\nc")
 
 
 class TestDataTuple(unittest.TestCase):

@@ -2,6 +2,10 @@ import collections
 import itertools
 
 # not sure about this
+from hindley_milner import TypeOperator
+from hindley_milner import TypeVariable
+from hindley_milner import ListType
+
 from type_system import HM_typeof
 from type_system import build_ADT
 
@@ -217,6 +221,11 @@ class List(collections.Sequence):
     def __len__(self):
         self.eval_all()
         return len(self.evaluated)
+
+    def type(self):
+        if len(self) == 0:
+            return TypeOperator(ListType, [TypeVariable()])
+        return TypeOperator(ListType, [HM_typeof(self[0])])
 
     def fmap(self, fn):
         return List(itertools.imap(fn, iter(self)))
