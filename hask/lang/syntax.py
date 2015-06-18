@@ -1,6 +1,5 @@
 import operator
 
-import hof
 from builtins import List
 from typeclasses import Enum
 from type_system import Typeclass
@@ -119,289 +118,6 @@ class Syntax(object):
 
     __bool__ = __syntaxerr__
     __nonzero__ = __syntaxerr__
-
-
-#=============================================================================#
-# Operator sections
-
-
-class __section__(Syntax):
-    """
-    Special syntax for operator sections.
-
-    """
-    def __init__(self, syntax_err_msg):
-        super(__section__, self).__init__(syntax_err_msg)
-        return
-
-    @staticmethod
-    def __make_section(fn):
-        """
-        Create an operator section from a binary operator.
-        """
-        def section_wrapper(self, y):
-            # double section, e.g. (__+__)
-            if isinstance(y, __section__):
-                return hof.F(lambda x, y: fn(x, y))
-
-            # single section, e.g. (__+1) or (1+__)
-            return hof.F(lambda a: fn(a, y))
-        return section_wrapper
-
-    # left section, e.g. (__+1)
-    __wrap = __make_section.__func__
-
-    # right section, e.g. (1+__)
-    __flip = lambda f: lambda x, y: f(y, x)
-
-    __add__ = __wrap(operator.add)
-    __sub__ = __wrap(operator.sub)
-    __mul__ = __wrap(operator.mul)
-    __div__ = __wrap(operator.div)
-    __truediv__ = __wrap(operator.truediv)
-    __floordiv__ = __wrap(operator.floordiv)
-    __mod__ = __wrap(operator.mod)
-    __divmod__ = __wrap(divmod)
-    __pow__ = __wrap(operator.pow)
-    __lshift__ = __wrap(operator.lshift)
-    __rshift__ = __wrap(operator.rshift)
-    __or__ =  __wrap(operator.or_)
-    __and__ = __wrap(operator.and_)
-    __xor__ = __wrap(operator.xor)
-
-    __eq__ = __wrap(operator.eq)
-    __ne__ = __wrap(operator.ne)
-    __gt__ = __wrap(operator.gt)
-    __lt__ = __wrap(operator.lt)
-    __ge__ = __wrap(operator.ge)
-    __le__ = __wrap(operator.le)
-
-    __radd__ = __wrap(__flip(operator.add))
-    __rsub__ = __wrap(__flip(operator.sub))
-    __rmul__ = __wrap(__flip(operator.mul))
-    __rdiv__ = __wrap(__flip(operator.div))
-    __rtruediv__ = __wrap(__flip(operator.truediv))
-    __rfloordiv__ = __wrap(__flip(operator.floordiv))
-    __rmod__ = __wrap(__flip(operator.mod))
-    __rdivmod__ = __wrap(__flip(divmod))
-    __rpow__ = __wrap(__flip(operator.pow))
-    __rlshift__ = __wrap(__flip(operator.lshift))
-    __rrshift__ = __wrap(__flip(operator.rshift))
-    __ror__ = __wrap(__flip(operator.or_))
-    __rand__ = __wrap(__flip(operator.and_))
-    __rxor__ = __wrap(__flip(operator.xor))
-
-
-__ = __section__("Error in section")
-
-
-#=============================================================================#
-# Guards! Guards!
-
-
-class NoGuardMatchException(Exception):
-    pass
-
-
-class __guard_test__(Syntax):
-    """
-    c creates a new condition that can be used in a guard
-    expression.
-
-    otherwise is a guard condition that always evaluates to True.
-
-    Usage:
-
-    ~(guard(<expr to test>)
-        | c(<test_fn_1>) >> <return_value_1>
-        | c(<test_fn_2>) >> <return_value_2>
-        | otherwise      >> <return_value_3>
-    )
-
-    See help(guard) for more details.
-    """
-    def __init__(self, fn):
-        if not hasattr(fn, "__call__"):
-            raise ValueError("Guard condition must be callable")
-        self.__test = fn
-        super(__guard_test__, self).__init__("Syntax error in guard condition")
-
-    def __rshift__(self, value):
-        if isinstance(value, __guard_test__) or \
-           isinstance(value, __guard_conditional__) or \
-           isinstance(value, __guard_base__):
-            self.raise_invalid()
-        return __guard_conditional__(self.__test, value)
-
-
-class __guard_conditional__(Syntax):
-    """
-    Object that represents one line of a guard expression, consisting of a
-    condition (a test function wrapped in c and a value to be returned if that
-    condition is satisfied).
-
-    See help(guard) for more details.
-    """
-    def __init__(self, fn, return_value):
-        self.check = fn
-        self.return_value = return_value
-        msg = "Syntax error in guard condition"
-        super(__guard_conditional__, self).__init__(msg)
-
-
-class __guard_base__(Syntax):
-    """
-    Superclass for the classes __unmatched_guard__ and __matched_guard__ below,
-    which represent the internal state of a guard expression as it is being
-    evaluated.
-
-    See help(guard) for more details.
-    """
-    def __init__(self, value):
-        self.value = value
-        super(__guard_base__, self).__init__("Syntax error in guard")
-
-
-class __unmatched_guard__(__guard_base__):
-    """
-    Object that represents the state of a guard expression in mid-evaluation,
-    before one of the conditions in the expression has been satisfied.
-
-    See help(guard) for more details.
-    """
-    def __or__(self, cond):
-        if isinstance(cond, __guard_test__):
-            self.raise_invalid("Guard expression is missing return value")
-
-        elif not isinstance(cond, __guard_conditional__):
-            self.raise_invalid("Guard condition expected, got %s" % cond)
-
-        # If the condition is satisfied, change the evaluation state to
-        # __matched_guard__, setting the return value to the value provided on
-        # the current line
-        elif cond.check(self.value):
-            return __matched_guard__(cond.return_value)
-
-        # If the condition is not satisfied, continue on with the next line,
-        # still in __unmatched_guard__ state with the return value not set
-        return __unmatched_guard__(self.value)
-
-    def __invert__(self):
-        raise NoGuardMatchException("No match found in guard")
-
-
-class __matched_guard__(__guard_base__):
-    """
-    Object that represents the state of a guard expression in mid-evaluation,
-    after one of the conditions in the expression has been satisfied.
-
-    See help(guard) for more details.
-    """
-    def __or__(self, cond):
-        # Since a condition has already been satisfied, we can ignore the rest
-        # of the lines in the guard expression
-        if isinstance(cond, __guard_conditional__):
-            return self
-        self.raise_invalid()
-
-    def __invert__(self):
-        return self.value
-
-
-class guard(__unmatched_guard__):
-    """
-    Special syntax for guard expression.
-
-    Usage:
-
-    ~(guard(<expr to test>)
-        | c(<test_fn_1>) >> <return_value_1>
-        | c(<test_fn_2>) >> <return_value_2>
-        | otherwise      >> <return_value_3>
-    )
-
-    Examples:
-
-    ~(guard(8)
-         | c(lambda x: x < 5) >> "less than 5"
-         | c(lambda x: x < 9) >> "less than 9"
-         | otherwise          >> "unsure"
-    )
-
-    # Using guards with sections. See help(__) for information on sections.
-    ~(guard(20)
-        | c(__ > 10)  >> 20
-        | c(__ == 10) >> 10
-        | c(__ > 5)   >> 5
-        | otherwise   >> 0)
-
-    Args:
-        value: the value being tested in the guard expression
-
-    Returns:
-        the return value corresponding to the first matching condition
-
-    Raises:
-        NoGuardMatchException (if no match is found)
-
-    """
-    def __invert__(self):
-        self.raise_invalid()
-
-
-c = __guard_test__
-otherwise = c(lambda _: True)
-
-
-#=============================================================================#
-# List comprehension
-
-
-class __list_comprehension__(Syntax):
-    """
-    Syntactic construct for Haskell-style list comprehensions and lazy list
-    creation.
-
-    List comprehensions can be used with any instance of Enum, including the
-    built-in types int, long, float, and char.
-
-    There are four basic list comprehension patterns:
-
-    >>> L[1, ...]
-    # list from 1 to infinity, counting by ones
-
-    >>> L[1, 3, ...]
-    # list from 1 to infinity, counting by twos
-
-    >>> L[1, ..., 20]
-    # list from 1 to 20 (inclusive), counting by ones
-
-    >>> L[1, 5, ..., 20]
-    # list from 1 to 20 (inclusive), counting by fours
-    """
-    def __getitem__(self, lst):
-        if isinstance(lst, tuple) and len(lst) < 5 and Ellipsis in lst:
-            # L[x, ...]
-            if len(lst) == 2 and lst[1] is Ellipsis:
-                return List(Enum.enumFrom(lst[0]))
-
-            # L[x, y, ...]
-            elif len(lst) == 3 and lst[2] is Ellipsis:
-                return List(Enum.enumFromThen(lst[0], lst[1]))
-
-            # L[x, ..., y]
-            elif len(lst) == 3 and lst[1] is Ellipsis:
-                return List(Enum.enumFromTo(lst[0], lst[2]))
-
-            # L[x, y, ..., z]
-            elif len(lst) == 4 and lst[2] is Ellipsis:
-                return List(Enum.enumFromThenTo(lst[0], lst[1], lst[3]))
-
-            self.raise_invalid()
-        return List(lst)
-
-
-L = __list_comprehension__("Invalid list comprehension")
 
 
 #=============================================================================#
@@ -676,3 +392,294 @@ class deriving(Syntax):
         self.classes = tclasses
         super(deriving, self).__init__("Syntax error in `deriving`")
         return
+
+
+#=============================================================================#
+# Operator sections
+
+
+class __section__(Syntax):
+    """
+    Special syntax for operator sections.
+
+    """
+    def __init__(self, syntax_err_msg):
+        super(__section__, self).__init__(syntax_err_msg)
+        return
+
+    @staticmethod
+    def __make_section(fn):
+        """
+        Create an operator section from a binary operator.
+        """
+        def section_wrapper(self, y):
+            # double section, e.g. (__+__)
+            if isinstance(y, __section__):
+                @sig(H/ "a" >> "b" >> "c")
+                def double_section(a, b):
+                    return fn(a, b)
+                return double_section
+
+            # single section, e.g. (__+1) or (1+__)
+            @sig(H/ "a" >> "b")
+            def section(a):
+                return fn(a, y)
+            return section
+        return section_wrapper
+
+    # left section, e.g. (__+1)
+    __wrap = __make_section.__func__
+
+    # right section, e.g. (1+__)
+    __flip = lambda f: lambda x, y: f(y, x)
+
+    __add__ = __wrap(operator.add)
+    __sub__ = __wrap(operator.sub)
+    __mul__ = __wrap(operator.mul)
+    __div__ = __wrap(operator.div)
+    __truediv__ = __wrap(operator.truediv)
+    __floordiv__ = __wrap(operator.floordiv)
+    __mod__ = __wrap(operator.mod)
+    __divmod__ = __wrap(divmod)
+    __pow__ = __wrap(operator.pow)
+    __lshift__ = __wrap(operator.lshift)
+    __rshift__ = __wrap(operator.rshift)
+    __or__ =  __wrap(operator.or_)
+    __and__ = __wrap(operator.and_)
+    __xor__ = __wrap(operator.xor)
+
+    __eq__ = __wrap(operator.eq)
+    __ne__ = __wrap(operator.ne)
+    __gt__ = __wrap(operator.gt)
+    __lt__ = __wrap(operator.lt)
+    __ge__ = __wrap(operator.ge)
+    __le__ = __wrap(operator.le)
+
+    __radd__ = __wrap(__flip(operator.add))
+    __rsub__ = __wrap(__flip(operator.sub))
+    __rmul__ = __wrap(__flip(operator.mul))
+    __rdiv__ = __wrap(__flip(operator.div))
+    __rtruediv__ = __wrap(__flip(operator.truediv))
+    __rfloordiv__ = __wrap(__flip(operator.floordiv))
+    __rmod__ = __wrap(__flip(operator.mod))
+    __rdivmod__ = __wrap(__flip(divmod))
+    __rpow__ = __wrap(__flip(operator.pow))
+    __rlshift__ = __wrap(__flip(operator.lshift))
+    __rrshift__ = __wrap(__flip(operator.rshift))
+    __ror__ = __wrap(__flip(operator.or_))
+    __rand__ = __wrap(__flip(operator.and_))
+    __rxor__ = __wrap(__flip(operator.xor))
+
+
+__ = __section__("Error in section")
+
+
+#=============================================================================#
+# Guards! Guards!
+
+
+class NoGuardMatchException(Exception):
+    pass
+
+
+class __guard_test__(Syntax):
+    """
+    c creates a new condition that can be used in a guard
+    expression.
+
+    otherwise is a guard condition that always evaluates to True.
+
+    Usage:
+
+    ~(guard(<expr to test>)
+        | c(<test_fn_1>) >> <return_value_1>
+        | c(<test_fn_2>) >> <return_value_2>
+        | otherwise      >> <return_value_3>
+    )
+
+    See help(guard) for more details.
+    """
+    def __init__(self, fn):
+        if not hasattr(fn, "__call__"):
+            raise ValueError("Guard condition must be callable")
+        self.__test = fn
+        super(__guard_test__, self).__init__("Syntax error in guard condition")
+
+    def __rshift__(self, value):
+        if isinstance(value, __guard_test__) or \
+           isinstance(value, __guard_conditional__) or \
+           isinstance(value, __guard_base__):
+            self.raise_invalid()
+        return __guard_conditional__(self.__test, value)
+
+
+class __guard_conditional__(Syntax):
+    """
+    Object that represents one line of a guard expression, consisting of a
+    condition (a test function wrapped in c and a value to be returned if that
+    condition is satisfied).
+
+    See help(guard) for more details.
+    """
+    def __init__(self, fn, return_value):
+        self.check = fn
+        self.return_value = return_value
+        msg = "Syntax error in guard condition"
+        super(__guard_conditional__, self).__init__(msg)
+
+
+class __guard_base__(Syntax):
+    """
+    Superclass for the classes __unmatched_guard__ and __matched_guard__ below,
+    which represent the internal state of a guard expression as it is being
+    evaluated.
+
+    See help(guard) for more details.
+    """
+    def __init__(self, value):
+        self.value = value
+        super(__guard_base__, self).__init__("Syntax error in guard")
+
+
+class __unmatched_guard__(__guard_base__):
+    """
+    Object that represents the state of a guard expression in mid-evaluation,
+    before one of the conditions in the expression has been satisfied.
+
+    See help(guard) for more details.
+    """
+    def __or__(self, cond):
+        if isinstance(cond, __guard_test__):
+            self.raise_invalid("Guard expression is missing return value")
+
+        elif not isinstance(cond, __guard_conditional__):
+            self.raise_invalid("Guard condition expected, got %s" % cond)
+
+        # If the condition is satisfied, change the evaluation state to
+        # __matched_guard__, setting the return value to the value provided on
+        # the current line
+        elif cond.check(self.value):
+            return __matched_guard__(cond.return_value)
+
+        # If the condition is not satisfied, continue on with the next line,
+        # still in __unmatched_guard__ state with the return value not set
+        return __unmatched_guard__(self.value)
+
+    def __invert__(self):
+        raise NoGuardMatchException("No match found in guard")
+
+
+class __matched_guard__(__guard_base__):
+    """
+    Object that represents the state of a guard expression in mid-evaluation,
+    after one of the conditions in the expression has been satisfied.
+
+    See help(guard) for more details.
+    """
+    def __or__(self, cond):
+        # Since a condition has already been satisfied, we can ignore the rest
+        # of the lines in the guard expression
+        if isinstance(cond, __guard_conditional__):
+            return self
+        self.raise_invalid()
+
+    def __invert__(self):
+        return self.value
+
+
+class guard(__unmatched_guard__):
+    """
+    Special syntax for guard expression.
+
+    Usage:
+
+    ~(guard(<expr to test>)
+        | c(<test_fn_1>) >> <return_value_1>
+        | c(<test_fn_2>) >> <return_value_2>
+        | otherwise      >> <return_value_3>
+    )
+
+    Examples:
+
+    ~(guard(8)
+         | c(lambda x: x < 5) >> "less than 5"
+         | c(lambda x: x < 9) >> "less than 9"
+         | otherwise          >> "unsure"
+    )
+
+    # Using guards with sections. See help(__) for information on sections.
+    ~(guard(20)
+        | c(__ > 10)  >> 20
+        | c(__ == 10) >> 10
+        | c(__ > 5)   >> 5
+        | otherwise   >> 0)
+
+    Args:
+        value: the value being tested in the guard expression
+
+    Returns:
+        the return value corresponding to the first matching condition
+
+    Raises:
+        NoGuardMatchException (if no match is found)
+
+    """
+    def __invert__(self):
+        self.raise_invalid()
+
+
+c = __guard_test__
+otherwise = c(lambda _: True)
+
+
+#=============================================================================#
+# List comprehension
+
+
+class __list_comprehension__(Syntax):
+    """
+    Syntactic construct for Haskell-style list comprehensions and lazy list
+    creation.
+
+    List comprehensions can be used with any instance of Enum, including the
+    built-in types int, long, float, and char.
+
+    There are four basic list comprehension patterns:
+
+    >>> L[1, ...]
+    # list from 1 to infinity, counting by ones
+
+    >>> L[1, 3, ...]
+    # list from 1 to infinity, counting by twos
+
+    >>> L[1, ..., 20]
+    # list from 1 to 20 (inclusive), counting by ones
+
+    >>> L[1, 5, ..., 20]
+    # list from 1 to 20 (inclusive), counting by fours
+    """
+    def __getitem__(self, lst):
+        if isinstance(lst, tuple) and len(lst) < 5 and Ellipsis in lst:
+            # L[x, ...]
+            if len(lst) == 2 and lst[1] is Ellipsis:
+                return List(Enum.enumFrom(lst[0]))
+
+            # L[x, y, ...]
+            elif len(lst) == 3 and lst[2] is Ellipsis:
+                return List(Enum.enumFromThen(lst[0], lst[1]))
+
+            # L[x, ..., y]
+            elif len(lst) == 3 and lst[1] is Ellipsis:
+                return List(Enum.enumFromTo(lst[0], lst[2]))
+
+            # L[x, y, ..., z]
+            elif len(lst) == 4 and lst[2] is Ellipsis:
+                return List(Enum.enumFromThenTo(lst[0], lst[1], lst[3]))
+
+            self.raise_invalid()
+        return List(lst)
+
+
+L = __list_comprehension__("Invalid list comprehension")
+
+

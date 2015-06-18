@@ -670,6 +670,7 @@ class TestSyntax(unittest.TestCase):
         self.assertFalse((5 <= __)(4))
 
         # double sections
+        # TODO: add partially applied double sections
         self.assertEqual(3, (__+__)(1, 2))
         self.assertEqual(1, (__-__)(2, 1))
         self.assertEqual(4, (__*__)(1, 4))
