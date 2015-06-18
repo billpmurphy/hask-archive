@@ -5,12 +5,18 @@ import unittest
 from hask import H
 from hask import sig
 from hask import t
-from hask import in_typeclass, arity
-from hask import guard, c, otherwise, NoGuardMatchException
+from hask import in_typeclass
+from hask import guard
+from hask import c
+from hask import otherwise
+from hask import NoGuardMatchException
 from hask import caseof
 from hask import __
-from hask import data, d, deriving
-from hask import List, L
+from hask import data
+from hask import d
+from hask import deriving
+from hask import List
+from hask import L
 from hask import F, const, flip, Func
 from hask import map as hmap
 from hask import filter as hfilter
@@ -18,11 +24,16 @@ from hask import id as hid
 from hask import Maybe, Just, Nothing, in_maybe
 from hask import Either, Left, Right, in_either
 from hask import Typeclass
-from hask import Show, Eq, Ord, Bounded
+from hask import Hask, Show, Eq, Ord, Bounded
 from hask import Num, Real, RealFrac, Fractional, Floating, RealFloat
 from hask import Enum, succ, pred
-from hask import Functor, Applicative, Monad
-from hask import Traversable, Foldable, Iterator
+from hask import Functor
+from hask import Applicative
+from hask import Monad
+from hask import Traversable
+from hask import Foldable
+from hask import Iterator
+
 from hask import Prelude
 
 # internals
@@ -397,45 +408,6 @@ class TestHindleyMilner(unittest.TestCase):
 
 
 class TestTypeSystem(unittest.TestCase):
-
-    def test_arity(self):
-        self.assertEqual(0, arity(1))
-        self.assertEqual(0, arity("foo"))
-        self.assertEqual(0, arity([1, 2, 3]))
-        self.assertEqual(0, arity((1, 1)))
-        self.assertEqual(0, arity((lambda x: x + 1, 1)))
-        self.assertEqual(0, arity(lambda: "foo"))
-        self.assertEqual(1, arity(lambda **kwargs: kwargs))
-        self.assertEqual(1, arity(lambda *args: args))
-        self.assertEqual(1, arity(lambda x: 0))
-        self.assertEqual(1, arity(lambda x, *args: 0))
-        self.assertEqual(1, arity(lambda x, *args, **kw: 0))
-        self.assertEqual(1, arity(lambda x: x + 1))
-        self.assertEqual(2, arity(lambda x, y: x + y))
-        self.assertEqual(2, arity(lambda x, y, *args: x + y + z))
-        self.assertEqual(2, arity(lambda x, y, *args, **kw: x + y + z))
-        self.assertEqual(3, arity(lambda x, y, z: x + y + z))
-        self.assertEqual(3, arity(lambda x, y, z, *args: x + y + z))
-        self.assertEqual(3, arity(lambda x, y, z, *args, **kw: x + y + z))
-
-        self.assertEqual(1, arity(lambda x: lambda y: x))
-        self.assertEqual(1, arity(lambda x: lambda y: lambda z: x))
-        self.assertEqual(2, arity(lambda x, z: lambda y: x))
-        self.assertEqual(1, arity(functools.partial(lambda x,y: x+y, 2)))
-        self.assertEqual(2, arity(functools.partial(lambda x,y: x+y)))
-        self.assertEqual(2, arity(functools.partial(lambda x, y, z: x+y, 2)))
-
-        class X0(object):
-            def __init__(self):
-                pass
-
-        self.assertEqual(1, arity(X0.__init__))
-
-        class X1(object):
-            def __init__(self, a, b, c):
-                pass
-
-        self.assertEqual(4, arity(X1.__init__))
 
     def test_TypedFunc_builtin(self):
         """TypedFunc with builtin types"""
@@ -987,6 +959,7 @@ class TestHOF(unittest.TestCase):
 class TestMaybe(unittest.TestCase):
 
     def test_instances(self):
+        self.assertTrue(in_typeclass(Maybe, Hask))
         self.assertTrue(in_typeclass(Maybe, Show))
         self.assertTrue(in_typeclass(Maybe, Eq))
         self.assertTrue(in_typeclass(Maybe, Functor))
@@ -1076,14 +1049,14 @@ class TestList(unittest.TestCase):
         # add more corner cases
 
         ie = IndexError
-        self.assertEqual(3, List(range(10))[3])
-        self.assertEqual(3, List(range(4))[-1])
-        self.assertEqual(3, List((i for i in range(10)))[3])
-        self.assertEqual(3, List((i for i in range(4)))[-1])
-        self.assertEqual(2, List([0, 1, 2, 3])[2])
-        self.assertEqual(2, List([0, 1, 2, 3])[-2])
-        self.assertEqual(1, List((0, 1, 2, 3))[1])
-        self.assertEqual(1, List((0, 1, 2, 3))[-3])
+        self.assertEqual(3, L[range(10)][3])
+        self.assertEqual(3, L[range(4)][-1])
+        self.assertEqual(3, L[(i for i in range(10))][3])
+        self.assertEqual(3, L[(i for i in range(4))][-1])
+        self.assertEqual(2, L[[0, 1, 2, 3]][2])
+        self.assertEqual(2, L[[0, 1, 2, 3]][-2])
+        self.assertEqual(1, L[(0, 1, 2, 3)][1])
+        self.assertEqual(1, L[(0, 1, 2, 3)][-3])
 
         with self.assertRaises(ie): List((0, 1, 2))[3]
         with self.assertRaises(ie): List((0, 1, 2))[-4]
@@ -1316,8 +1289,8 @@ class Test_README_Examples(unittest.TestCase):
 
         #self.assertTrue(my_fn_that_raises_errors("hello"),
         #                 Left(AssertionError('not an int!',)))
-        self.assertTrue(isinstance(my_fn_that_raises_errors(-10)[0],
-                ValueError))
+        self.assertTrue(
+                isinstance(my_fn_that_raises_errors(-10)[0], ValueError))
         #                 Left(ValueError('Too low!',)))
         self.assertEqual(my_fn_that_raises_errors(1), Right(11))
 

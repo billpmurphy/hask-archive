@@ -2,10 +2,10 @@ __version__ = "0.0.1"
 
 # Core language
 
+## Standard Hask typeclasses and associated functions
 from hask.lang.type_system import in_typeclass
 from hask.lang.type_system import Typeclass
-
-# Standard Hask typeclasses and associated functions
+from hask.lang.type_system import Hask
 from hask.lang.typeclasses import Read
 from hask.lang.typeclasses import Show
 from hask.lang.typeclasses import Eq
@@ -40,17 +40,14 @@ from hask.lang.typeclasses import length
 from hask.lang.typeclasses import mempty
 from hask.lang.typeclasses import mappend
 
-from hask.lang.hof import arity
+# TODO: deprecate
 from hask.lang.hof import const
 from hask.lang.hof import flip
 from hask.lang.hof import id
 from hask.lang.hof import F
 from hask.lang.hof import Func
 
-# Builtin types (Python builtins + Hask builtins)
-from hask.lang.builtins import Int
-from hask.lang.builtins import Float
-from hask.lang.builtins import String
+## Builtin types (Python builtins + Hask builtins)
 from hask.lang.builtins import List
 from hask.lang.builtins import Maybe
 from hask.lang.builtins import Just
@@ -61,7 +58,7 @@ from hask.lang.builtins import Left
 from hask.lang.builtins import Right
 from hask.lang.builtins import in_either
 
-# REPL tools
+## REPL tools
 from hask.lang.builtins import _t
 from hask.lang.builtins import _i
 from hask.lang.builtins import _q
@@ -78,10 +75,10 @@ from hask.lang.syntax import c
 from hask.lang.syntax import otherwise
 from hask.lang.syntax import NoGuardMatchException
 
-## List comprehensions
+## Lists/list comprehensions
 from hask.lang.syntax import L
 
-## Data expressions (ADT creation)
+## ADT creation
 from hask.lang.syntax import data
 from hask.lang.syntax import d
 from hask.lang.syntax import deriving

@@ -110,7 +110,22 @@ def lcm(x, y):
 # Miscellaneous functions
 
 
-sig(H/ (H/ "a" >> bool) >> (H/ "a" >> "a") >> "a" >> "a")
+#@sig(H/ "a" >> "a")
+#def id(a):
+#   return a
+
+
+#@sig(H/ "a" >> "b" >> "a")
+#def const(a, b):
+#   return a
+
+
+#@sig(H/ (H/ "a" >> "b" >> "c") >> "b" >> "a" >> "c")
+#def flip(f, b, a):
+#   return f(a, b)
+
+
+@sig(H/ (H/ "a" >> bool) >> (H/ "a" >> "a") >> "a" >> "a")
 def until(p, f, a):
     """
     until :: (a -> Bool) -> (a -> a) -> a -> a
@@ -147,6 +162,7 @@ from Data.List import reverse
 
 #=============================================================================#
 ## Special folds
+
 
 #=============================================================================#
 ## Building lists

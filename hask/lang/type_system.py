@@ -223,7 +223,7 @@ def build_sig_arg(arg, var_dict):
         return TypeOperator(hkt,
                             [build_sig_arg(a, var_dict) for a in arg.params])
 
-    # None: The unit type
+    # None (the unit type)
     elif arg is None:
         return TypeOperator(None, [])
 
@@ -328,6 +328,7 @@ class TypedFunc(object):
         return TypedFunc(composed, newtype)
 
 
+# can probably move this elsewhere
 Hask(TypedFunc, TypedFunc.type)
 
 
@@ -420,7 +421,6 @@ def build_ADT(typename, typeargs, data_constructors, to_derive):
     # derive typeclass instances for the new type constructors
     for tclass in to_derive:
         tclass.derive_instance(newtype)
-
     return tuple([newtype,] + dcons)
 
 

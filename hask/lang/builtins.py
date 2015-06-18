@@ -1,8 +1,6 @@
 import collections
 import itertools
 
-# not sure about this
-from hindley_milner import TypeOperator
 from hindley_milner import TypeVariable
 from hindley_milner import ListType
 
@@ -31,17 +29,6 @@ from typeclasses import Iterator
 from typeclasses import Foldable
 
 from hof import Func
-
-
-#=============================================================================#
-# Wrappers for Python builtins (for cosmetic purposes only)
-
-
-Int = int
-Integer = long
-Float = float
-Complex = complex
-String = str
 
 
 #=============================================================================#
@@ -305,7 +292,6 @@ class List(collections.Sequence):
 
 
 ## Typeclass instances for list
-
 Hask(List, List.type)
 Read(List)
 Show(List, List.__repr__)
@@ -318,12 +304,12 @@ Traversable(List, List.__iter__, List.__getitem__, List.__len__)
 Iterator(List, List.__next__)
 
 
-# TODO: deprecate
+# TODO: deprecate this trash
 Functor(Func, Func.fmap)
 
 
 #=============================================================================#
-# REPL tools
+# REPL tools (:q, :t, :i)
 
 
 def _q(status=None):
