@@ -437,6 +437,24 @@ class TestTypeSystem(unittest.TestCase):
 
         self.assertEqual(4, arity(X1.__init__))
 
+    def test_TypedFunc_builtin(self):
+        """TypedFunc with builtin types"""
+
+        @sig(H/ int >> int)
+        def f(x):
+            return x + 2
+
+        @sig(H/ int >> int)
+        def g(x):
+            return x - 5
+
+        # basic type checking
+        self.assertEqual(2, f(g(5)))
+        with self.assertRaises(te): f(4.0)
+        with self.assertRaises(te): f("4")
+
+        self.assertEqual(2, f * g % 5)
+
 
 class TestADTInternals(unittest.TestCase):
 
@@ -1136,6 +1154,12 @@ class TestPrelude(unittest.TestCase):
         from hask.Prelude import unlines
         from hask.Prelude import unwords
 
+        # maybe
+
+        # either
+
+        # list
+
     def test_until(self):
         from hask.Prelude import until
 
@@ -1166,10 +1190,35 @@ class TestPrelude(unittest.TestCase):
 class TestDataMaybe(unittest.TestCase):
 
     def test_all(self):
+        from hask.Data.Maybe import maybe
         from hask.Data.Maybe import isJust
+        from hask.Data.Maybe import isNothing
+        from hask.Data.Maybe import fromJust
+        from hask.Data.Maybe import listToMaybe
+        from hask.Data.Maybe import maybeToList
+        from hask.Data.Maybe import catMaybes
+        from hask.Data.Maybe import mapMaybe
 
         self.assertTrue(isJust(Just(1)))
-        # add more
+        self.assertTrue(isJust(Just(Nothing)))
+        self.assertFalse(isJust(Nothing))
+        self.assertFalse(isNothing(Just(1)))
+        self.assertFalse(isNothing(Just(Nothing)))
+        self.assertTrue(isNothing(Nothing))
+
+        self.assertEqual(fromJust(Just("bird")), "bird")
+        self.assertEqual(fromJust(Just(Nothing)), Nothing)
+
+
+class TestDataEither(unittest.TestCase):
+
+    def test_all(self):
+        from hask.Data.Either import either
+        from hask.Data.Either import lefts
+        from hask.Data.Either import rights
+        from hask.Data.Either import isLeft
+        from hask.Data.Either import isRight
+        from hask.Data.Either import partitionEithers
 
 
 class TestDataString(unittest.TestCase):
@@ -1181,7 +1230,11 @@ class TestDataString(unittest.TestCase):
         from hask.Data.String import unwords
 
         self.assertEqual(lines("a\nb \n\nc"), L[["a", "b ", "", "c"]])
+        #self.assertEqual(lines(""), L[[]])
         self.assertEqual(unlines(L[["a", "b ", "", "c"]]), "a\nb \n\nc")
+        self.assertEqual(unlines(L[[]]), "")
+        self.assertEqual(words(" 1 2  4"), L[["", "1", "2", "", "4"]])
+        self.assertEqual(unwords(L[["", "1", "2", "", "4"]]), " 1 2  4")
 
 
 class TestDataTuple(unittest.TestCase):

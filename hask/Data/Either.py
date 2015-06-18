@@ -1,10 +1,13 @@
 from ..lang.builtins import Either
 from ..lang.builtins import Left
 from ..lang.builtins import Right
+from ..lang.syntax import sig
+from ..lang.syntax import H
+from ..lang.syntax import t
 from ..lang.syntax import L
 
 
-#@sig(H/ (H/ "a" >> "c") >> (H/ "b" >> "c") >> Either("a", "b") >> "c")
+@sig(H/ (H/ "a" >> "c") >> (H/ "b" >> "c") >> t(Either, "a", "b") >> "c")
 def either(f_a, f_b, either_a_b):
     """
     either :: (a -> c) -> (b -> c) -> Either a b -> c
@@ -15,7 +18,7 @@ def either(f_a, f_b, either_a_b):
     pass
 
 
-#@sig(H/ [Either("a", "b")] >> ["a"])
+@sig(H/ [t(Either, "a", "b")] >> ["a"])
 def lefts(xs):
     """
     lefts :: [Either a b] -> [a]
@@ -26,7 +29,7 @@ def lefts(xs):
     pass
 
 
-#@sig(H/ [Either("a", "b")] >> ["b"])
+@sig(H/ [t(Either, "a", "b")] >> ["b"])
 def rights(xs):
     """
     rights :: [Either a b] -> [b]
@@ -37,27 +40,27 @@ def rights(xs):
     pass
 
 
-#@sig(H/ Either("a", "b") >> Bool)
+@sig(H/ t(Either, "a", "b") >> bool)
 def isLeft(x):
     """
-    isLeft :: Either a b -> Bool
+    isLeft :: Either a b -> bool
 
     Return True if the given value is a Left-value, False otherwise.
     """
     pass
 
 
-#@sig(H/ Either("a", "b") >> Bool)
+@sig(H/ t(Either, "a", "b") >> bool)
 def isRight(x):
     """
-    isRight :: Either a b -> Bool
+    isRight :: Either a b -> bool
 
     Return True if the given value is a Right-value, False otherwise.
     """
     pass
 
 
-#@sig(H/ [Either("a", "b")] >> (["a"], ["b"]))
+@sig(H/ [t(Either, "a", "b")] >> (["a"], ["b"]))
 def partitionEithers(xs):
     """
     partitionEithers :: [Either a b] -> ([a], [b])

@@ -7,157 +7,12 @@ from hindley_milner import TypeVariable
 from hindley_milner import TypeOperator
 from hindley_milner import Var
 from hindley_milner import App
+from hindley_milner import Lam
 from hindley_milner import unify
 from hindley_milner import analyze
 from hindley_milner import Function
 from hindley_milner import Tuple
 from hindley_milner import ListType
-
-
-#=============================================================================#
-# Static typing and type signatures
-
-
-def HM_typeof(obj):
-    """
-    Returns the type of an object within the internal type system.
-
-    Args:
-        obj: the object to inspect
-
-    Returns:
-        An obj
-    """
-    if hasattr(obj, "type"):
-        return obj.type()
-
-    elif isinstance(obj, tuple):
-        return Tuple(map(HM_typeof, obj))
-
-    elif obj is None:
-        return TypeOperator(None, [])
-
-    return TypeOperator(type(obj), [])
-
-
-class TypeSignatureHKT(object):
-
-    def __init__(self, tcon, params):
-        self.tcon = tcon
-        self.params = params
-
-
-class TypeSignature(object):
-
-    def __init__(self, args, constraints):
-        self.args = args
-        self.constraints = constraints
-
-
-class TypeSignatureError(Exception):
-    pass
-
-
-def build_sig_arg(arg, var_dict):
-    if isinstance(arg, TypeVariable) or isinstance(arg, TypeOperator):
-        return arg
-
-    # string representing type variable
-    elif isinstance(arg, str):
-        if arg not in var_dict:
-            var_dict[arg] = TypeVariable()
-        return var_dict[arg]
-
-    # subsignature, e.g. H/ (H/ int >> int) >> int >> int
-    elif isinstance(arg, TypeSignature):
-        return build_sig(arg.args, var_dict)
-
-    # HKT, e.g. t(Maybe "a") or t("m", "a", "b")
-    elif isinstance(arg, TypeSignatureHKT):
-        if type(arg.tcon) == str:
-            hkt = build_sig_arg(arg.tcon, var_dict)
-        else:
-            hkt = arg.tcon
-        return TypeOperator(hkt,
-                            [build_sig_arg(a, var_dict) for a in arg.params])
-
-    # None: The unit type
-    elif arg is None:
-        return TypeOperator(None, [])
-
-    # Tuples: ("a", "b"), (int, ("a", float)), etc.
-    elif isinstance(arg, tuple):
-        return Tuple(map(lambda x: build_sig_arg(x, var_dict), arg))
-
-    # Lists: ["a"], [int], etc.
-    elif isinstance(arg, list) and len(arg) == 1:
-        return TypeOperator(ListType, [build_sig_arg(arg[0], var_dict)])
-
-    # any other type
-    elif isinstance(arg, type):
-        return TypeOperator(arg, [])
-
-    raise TypeSignatureError("Invalid item in type signature: %s" % arg)
-
-
-def make_fn_type(params):
-    """
-    Turn a list of type parameters into the corresponding internal type system
-    object that represents the type of a function over the parameters.
-
-    Args:
-        params: a list of type paramaters, e.g. from a type signature. These
-                should be instances of TypeOperator or TypeVariable
-
-    Returns:
-        An instance of TypeOperator representing the function type
-    """
-    if len(params) == 2:
-        last_input, return_type = params
-        return Function(last_input, return_type)
-    return Function(params[0], make_fn_type(params[1:]))
-
-
-def build_sig(args, var_dict=None):
-    """
-    Parse a list of items (representing a type signature) and convert it to the
-    internal type system language.
-    """
-    var_dict = {} if var_dict is None else var_dict
-    return make_fn_type([build_sig_arg(i, var_dict) for i in args])
-
-
-class TypedFunc(object):
-
-    def __init__(self, fn, fn_type):
-        self.__doc__ = fn.__doc__
-        self.func = fn
-        self.fn_type = fn_type
-        return
-
-    def type(self):
-        return self.fn_type
-
-    def __call__(self, *args, **kwargs):
-        # the evironment contains the type of the function and the types
-        # of the arguments
-        env = {id(self.func):self.fn_type}
-        env.update({id(arg):HM_typeof(arg) for arg in args})
-
-        ap = Var(id(self.func))
-        for arg in args:
-            ap = App(ap, Var(id(arg)))
-
-        result_type = analyze(ap, env)
-        result = self.func.__call__(*args, **kwargs)
-        unify(result_type, HM_typeof(result))
-
-        if hof.F(result) is result:
-            return result
-        return hof.F(result)
-
-    def __mod__(self, arg):
-        return self.__call__(arg)
 
 
 #=============================================================================#
@@ -191,7 +46,8 @@ def in_typeclass(cls, typeclass):
     Return True if cls is a member of typeclass, and False otherwise.
     """
     if is_builtin(typeclass):
-       return False
+        # a typeclass cannot be a python builtin
+        return False
     elif is_builtin(cls):
         try:
             return issubclass(cls, typeclass)
@@ -293,6 +149,188 @@ class Typeclass(object):
         return
 
 
+class Hask(Typeclass):
+    """Typeclass for objects within hask"""
+
+    def __init__(self, cls, typefn):
+        super(Hask, self).__init__(cls, attrs={"type":typefn})
+
+
+#=============================================================================#
+# Static typing and type signatures
+
+
+def HM_typeof(obj):
+    """
+    Returns the type of an object within the internal type system.
+
+    Args:
+        obj: the object to inspect
+
+    Returns:
+        An obj
+    """
+    if in_typeclass(obj, Hask):
+        return obj.type()
+
+    elif isinstance(obj, tuple):
+        return Tuple(map(HM_typeof, obj))
+
+    elif obj is None:
+        return TypeOperator(None, [])
+
+    return TypeOperator(type(obj), [])
+
+
+class TypeSignatureHKT(object):
+
+    def __init__(self, tcon, params):
+        self.tcon = tcon
+        self.params = params
+
+
+class TypeSignature(object):
+
+    def __init__(self, args, constraints):
+        self.args = args
+        self.constraints = constraints
+
+
+class TypeSignatureError(Exception):
+    pass
+
+
+def build_sig_arg(arg, var_dict):
+    if isinstance(arg, TypeVariable) or isinstance(arg, TypeOperator):
+        return arg
+
+    # string representing type variable
+    elif isinstance(arg, str):
+        if arg not in var_dict:
+            var_dict[arg] = TypeVariable()
+        return var_dict[arg]
+
+    # subsignature, e.g. H/ (H/ int >> int) >> int >> int
+    elif isinstance(arg, TypeSignature):
+        return build_sig(arg.args, var_dict)
+
+    # HKT, e.g. t(Maybe "a") or t("m", "a", "b")
+    elif isinstance(arg, TypeSignatureHKT):
+        if type(arg.tcon) == str:
+            hkt = build_sig_arg(arg.tcon, var_dict)
+        else:
+            hkt = arg.tcon
+        return TypeOperator(hkt,
+                            [build_sig_arg(a, var_dict) for a in arg.params])
+
+    # None: The unit type
+    elif arg is None:
+        return TypeOperator(None, [])
+
+    # Tuples: ("a", "b"), (int, ("a", float)), etc.
+    elif isinstance(arg, tuple):
+        return Tuple(map(lambda x: build_sig_arg(x, var_dict), arg))
+
+    # Lists: ["a"], [int], etc.
+    elif isinstance(arg, list) and len(arg) == 1:
+        return ListType(build_sig_arg(arg[0], var_dict))
+
+    # any other type, builtin or user-defined
+    elif isinstance(arg, type):
+        return TypeOperator(arg, [])
+
+    raise TypeSignatureError("Invalid item in type signature: %s" % arg)
+
+
+def make_fn_type(params):
+    """
+    Turn a list of type parameters into the corresponding internal type system
+    object that represents the type of a function over the parameters.
+
+    Args:
+        params: a list of type paramaters, e.g. from a type signature. These
+                should be instances of TypeOperator or TypeVariable
+
+    Returns:
+        An instance of TypeOperator representing the function type
+    """
+    if len(params) == 2:
+        last_input, return_type = params
+        return Function(last_input, return_type)
+    return Function(params[0], make_fn_type(params[1:]))
+
+
+def build_sig(args, var_dict=None):
+    """
+    Parse a list of items (representing a type signature) and convert it to the
+    internal type system language.
+    """
+    var_dict = {} if var_dict is None else var_dict
+    return make_fn_type([build_sig_arg(i, var_dict) for i in args])
+
+
+class TypedFunc(object):
+
+    def __init__(self, fn, fn_type):
+        self.__doc__ = fn.__doc__
+        self.func = fn
+        self.fn_type = fn_type
+        return
+
+    def type(self):
+        return self.fn_type
+
+    def __call__(self, *args, **kwargs):
+        # the evironment contains the type of the function and the types
+        # of the arguments
+        env = {id(self):self.fn_type}
+        env.update({id(arg):HM_typeof(arg) for arg in args})
+
+        ap = Var(id(self))
+        for arg in args:
+            ap = App(ap, Var(id(arg)))
+
+        result_type = analyze(ap, env)
+        result = self.func.__call__(*args, **kwargs)
+        unify(result_type, HM_typeof(result))
+
+        #if not isinstance(result_type, Function):
+        #    return self.func()
+        #return TypedFunc(self.func, result_type)
+
+        if hof.F(result) is result:
+            return result
+        return hof.F(result)
+
+    def __mod__(self, arg):
+        """
+        (%) :: (a -> b) -> a -> b
+
+        % is the apply operator, equivalent to $ in Haskell
+        """
+        return self.__call__(arg)
+
+    def __mul__(self, fn):
+        """
+        (*) :: (b -> c) -> (a -> b) -> (a -> c)
+
+        * is the function compose operator, equivalent to . in Haskell
+        """
+        if not isinstance(fn, TypedFunc):
+            raise TypeError("Cannot compose non-TypedFunc with TypedFunc")
+
+        composed = lambda x: self.func(fn.func(x))
+
+        env = {id(self):self.fn_type, id(fn):fn.fn_type}
+        ap = Lam("arg", App(Var(id(self)), App(Var(id(fn)), Var("arg"))))
+        newtype = analyze(ap, env)
+
+        return TypedFunc(composed, newtype)
+
+
+Hask(TypedFunc, TypedFunc.type)
+
+
 #=============================================================================#
 # ADT creation
 
@@ -320,8 +358,8 @@ def make_type_const(name, typeargs):
              __typeclass_flag__:()}
     cls = type(name, (ADT,), default_attrs)
 
-    cls.type = lambda self: TypeOperator(cls,
-            [TypeVariable() for i in cls.__params__])
+    Hask(cls, lambda self:
+            TypeOperator(cls, [TypeVariable() for i in cls.__params__]))
     cls.__iter__ = lambda self: raise_fn(TypeError)
     cls.__contains__ = lambda self, other: raise_fn(TypeError)
     cls.__add__ = lambda self, other: raise_fn(TypeError)
@@ -364,7 +402,7 @@ def make_data_const(name, fields, type_constructor):
                     if p in fields else TypeVariable()
                     for p in type_constructor.__params__]
             return TypeOperator(type_constructor, args)
-        cls.type = _type
+        Hask(cls, _type)
 
     # TODO: make sure __init__ or __new__ is typechecked
 

@@ -6,8 +6,10 @@ from hindley_milner import TypeOperator
 from hindley_milner import TypeVariable
 from hindley_milner import ListType
 
+from type_system import Hask
 from type_system import HM_typeof
 from type_system import build_ADT
+from type_system import TypedFunc
 
 from typeclasses import Show
 from typeclasses import Eq
@@ -111,8 +113,18 @@ RealFloat(float)
 
 
 #=============================================================================#
+# TypedFunc
+
+
+# functions are functors, fmap is just composition
+Functor(TypedFunc, TypedFunc.__mul__)
+
+
+#=============================================================================#
 # Maybe
 
+
+# data Maybe a = Nothing | Just a deriving(Show, Eq, Ord)
 Maybe, Nothing, Just = build_ADT("Maybe", ["a"],
                                  [("Nothing", []), ("Just", ["a"])],
                                  [Show, Eq, Ord])
@@ -129,20 +141,21 @@ def in_maybe(fn, *args, **kwargs):
     If the decorated function raises an exception, return Nothing. Otherwise,
     take the result and wrap it in a Just.
     """
-    def _closure_in_maybe(*args, **kwargs):
+    def closure_in_maybe(*args, **kwargs):
         try:
             return Just(fn(*args, **kwargs))
         except:
             return Nothing
     if len(args) > 0 or len(kwargs) > 0:
         return _closure_in_maybe(*args, **kwargs)
-    return _closure_in_maybe
+    return closure_in_maybe
 
 
 #=============================================================================#
 # Either
 
 
+# data Either a b = Left b | Right a deriving(Show, Eq, Ord)
 Either, Left, Right = build_ADT("Either", ["a", "b"],
                                  [("Left", ["b"]), ("Right", ["a"])],
                                  [Show, Eq, Ord])
@@ -159,14 +172,14 @@ def in_either(fn, *args, **kwargs):
     If the decorated function raises an exception, return the exception inside
     Left. Otherwise, take the result and wrap it in Right.
     """
-    def _closure_in_either(*args, **kwargs):
+    def closure_in_either(*args, **kwargs):
         try:
             return Right(fn(*args, **kwargs))
         except Exception as e:
             return Left(e)
     if len(args) > 0 or len(kwargs) > 0:
         return _closure_in_either(*args, **kwargs)
-    return _closure_in_either
+    return closure_in_either
 
 
 #=============================================================================#
@@ -204,7 +217,9 @@ class List(collections.Sequence):
 
     def __add__(self, iterable):
         """
-        + is the list concatenation operator (equivalent to ++ in Haskell and +
+        (+) :: [a] -> [a] -> [a]
+
+        + is the list concatenation operator, equivalent to ++ in Haskell and +
         for Python lists
         """
         self.unevaluated = itertools.chain(self.unevaluated, iterable)
@@ -224,8 +239,8 @@ class List(collections.Sequence):
 
     def type(self):
         if len(self) == 0:
-            return TypeOperator(ListType, [TypeVariable()])
-        return TypeOperator(ListType, [HM_typeof(self[0])])
+            return ListType(TypeVariable())
+        return ListType(HM_typeof(self[0]))
 
     def fmap(self, fn):
         return List(itertools.imap(fn, iter(self)))
@@ -291,6 +306,7 @@ class List(collections.Sequence):
 
 ## Typeclass instances for list
 
+Hask(List, List.type)
 Read(List)
 Show(List, List.__repr__)
 Eq(List, List.__eq__)
@@ -301,6 +317,8 @@ Foldable(List, List.foldr)
 Traversable(List, List.__iter__, List.__getitem__, List.__len__)
 Iterator(List, List.__next__)
 
+
+# TODO: deprecate
 Functor(Func, Func.fmap)
 
 
