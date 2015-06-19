@@ -1,10 +1,6 @@
 from .lang.syntax import H
 from .lang.syntax import sig
 from .lang.syntax import L
-from .lang.builtins import List
-from .lang.typeclasses import Num
-from .lang.typeclasses import Integral
-
 
 #=============================================================================#
 # Standard types, classes, and related functions
@@ -20,6 +16,11 @@ from Data.Either import Either
 from Data.Either import Left
 from Data.Either import Right
 from Data.Either import either
+
+from Data.Ord import Ordering
+from Data.Ord import LT
+from Data.Ord import EQ
+from Data.Ord import GT
 
 
 #=============================================================================#
@@ -43,6 +44,10 @@ from Data.Tuple import uncurry
 
 #=============================================================================#
 # Numeric type classes
+
+
+from .lang.typeclasses import Num
+from .lang.typeclasses import Integral
 
 
 #=============================================================================#
@@ -110,19 +115,34 @@ def lcm(x, y):
 # Miscellaneous functions
 
 
-#@sig(H/ "a" >> "a")
-#def id(a):
-#   return a
+@sig(H/ "a" >> "a")
+def id(a):
+    """
+    id :: a -> a
+
+    Identity function.
+    """
+    return a
 
 
-#@sig(H/ "a" >> "b" >> "a")
-#def const(a, b):
-#   return a
+@sig(H/ "a" >> "b" >> "a")
+def const(a, b):
+    """
+    const :: a -> b -> a
+
+    Constant function.
+    """
+    return a
 
 
-#@sig(H/ (H/ "a" >> "b" >> "c") >> "b" >> "a" >> "c")
-#def flip(f, b, a):
-#   return f(a, b)
+@sig(H/ (H/ "a" >> "b" >> "c") >> "b" >> "a" >> "c")
+def flip(f, b, a):
+    """
+    flip :: (a -> b -> c) -> b -> a -> c
+
+    flip(f) takes its (first) two arguments in the reverse order of f.
+    """
+    return f(a, b)
 
 
 @sig(H/ (H/ "a" >> bool) >> (H/ "a" >> "a") >> "a" >> "a")
@@ -134,6 +154,18 @@ def until(p, f, a):
     """
     while not p(a):
         a = f(a)
+    return a
+
+
+@sig(H/ "a" >> "a" >> "a")
+def asTypeOf(a, b):
+    """
+    asTypeOf :: a -> a -> a
+
+    asTypeOf is a type-restricted version of const. It is usually used as an
+    infix operator, and its typing forces its first argument (which is usually
+    overloaded) to have the same type as the second.
+    """
     return a
 
 

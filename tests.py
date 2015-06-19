@@ -424,14 +424,69 @@ class TestTypeSystem(unittest.TestCase):
         self.assertEqual(2, f(g(5)))
         with self.assertRaises(te): f(4.0)
         with self.assertRaises(te): f("4")
-
         self.assertEqual(2, f * g % 5)
 
 
-class TestADTInternals(unittest.TestCase):
+class TestADTInternals_Enum(unittest.TestCase):
 
     def setUp(self):
-        """Dummy type constructors and data constructors"""
+        """
+        Dummy type constructors and data constructors for an ADT with all
+        enum data constructors
+        """
+        ds =  [("E1", []), ("E2", []), ("E3", [])]
+        self.Type_Const, self.E1, self.E2, self.E3 =\
+                build_ADT("Type_Const", [], ds, [])
+
+    def test_adt(self):
+        self.assertEqual(list(self.Type_Const.__constructors__),
+                         [self.E1, self.E2, self.E3])
+        self.assertTrue(isinstance(self.E1, self.Type_Const))
+        self.assertTrue(isinstance(self.E2, self.Type_Const))
+        self.assertTrue(isinstance(self.E3, self.Type_Const))
+
+    def test_derive_eq_data(self):
+        with self.assertRaises(te): self.E1 == self.E1
+        with self.assertRaises(te): self.E1 != self.E1
+
+        Eq.derive_instance(self.Type_Const)
+
+        self.assertTrue(self.E1 == self.E1)
+        self.assertTrue(self.E2 == self.E2)
+        self.assertTrue(self.E3 == self.E3)
+
+    def test_derive_show_data(self):
+        self.assertNotEquals("E1", str(self.E1))
+
+        Show.derive_instance(self.Type_Const)
+
+        self.assertEqual("E1", str(self.E1))
+        self.assertEqual("E2", str(self.E2))
+        self.assertEqual("E3", str(self.E3))
+
+    def test_derive_ord_data(self):
+        with self.assertRaises(te): self.E1 > self.E1
+        with self.assertRaises(te): self.E1 >= self.E1
+        with self.assertRaises(te): self.E1 < self.E1
+        with self.assertRaises(te): self.E1 <= self.E1
+
+        Eq.derive_instance(self.Type_Const)
+        Ord.derive_instance(self.Type_Const)
+
+        self.assertTrue(self.E1 < self.E2)
+        self.assertFalse(self.E1 > self.E2)
+
+    def test_derive_bounded_data(self):
+        Bounded.derive_instance(self.Type_Const)
+
+
+class TestADTInternals_Builtin(unittest.TestCase):
+
+    def setUp(self):
+        """
+        Dummy type constructors and data constructors for an ADT with all
+        builtin (non-polymorphic) fields
+        """
         ds =  [("M1", [int]), ("M2", [int, str]), ("M3", [int, int, int])]
         self.Type_Const, self.M1, self.M2, self.M3 =\
                 build_ADT("Type_Const", [], ds, [])
@@ -479,6 +534,10 @@ class TestADTInternals(unittest.TestCase):
 
         self.assertTrue(self.M1(1) < self.M1(2))
         self.assertFalse(self.M1(1) > self.M1(2))
+
+    def test_derive_bounded_data(self):
+        with self.assertRaises(te):
+            Bounded.derive_instance(self.Type_Const)
 
 
 class TestADT(unittest.TestCase):
@@ -996,6 +1055,11 @@ class TestMaybe(unittest.TestCase):
         self.assertTrue(Just(1) == Just(1) or Just(1) != Just(1))
         self.assertFalse(Nothing == Nothing and Nothing != Nothing)
         self.assertFalse(Just(1) == Just(1) and Just(1) != Just(1))
+
+    def test_ord(self):
+        # add more
+        self.assertTrue(Nothing < Just(0))
+        self.assertTrue(Nothing < Just(-float("inf")))
 
     def test_fmap(self):
         # add more

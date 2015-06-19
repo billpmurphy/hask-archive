@@ -13,6 +13,7 @@ from typeclasses import Show
 from typeclasses import Eq
 from typeclasses import Ord
 from typeclasses import Enum
+from typeclasses import Bounded
 from typeclasses import Num
 from typeclasses import Real
 from typeclasses import Integral
@@ -167,6 +168,16 @@ def in_either(fn, *args, **kwargs):
     if len(args) > 0 or len(kwargs) > 0:
         return _closure_in_either(*args, **kwargs)
     return closure_in_either
+
+
+#=============================================================================#
+# Ordering
+
+
+# data Ordering = LT | EQ | GT deriving(Show, Eq, Ord, Bounded)
+Ordering, LT, EQ, GT = build_ADT("Ordering", [],
+                                  [("LT", []), ("EQ", []), ("GT", [])],
+                                  [Show, Eq, Ord, Bounded])
 
 
 #=============================================================================#

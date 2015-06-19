@@ -89,7 +89,6 @@ class Eq(Typeclass):
 
 
 
-
 class Ord(Typeclass):
 
     def __init__(self, cls, __lt__, __le__=None, __gt__=None, __ge__=None):
@@ -110,10 +109,18 @@ class Ord(Typeclass):
     def derive_instance(type_constructor):
         def zip_cmp(self, other, fn):
             """
-            Compare all of the fields of two ADTs.
+            Compare the data constructor and all of the fields of two ADTs.
             """
-            zipped_fields = zip(nt_to_tuple(self), nt_to_tuple(other))
-            return all((fn(a, b) for a, b in zipped_fields))
+            find_index = lambda x: type_constructor.__constructors__.index(x)
+
+            self_cls = self if nt_to_tuple(self) == () else self.__class__
+            other_cls = other if nt_to_tuple(other) == () else other.__class__
+            self_i, other_i = find_index(self_cls), find_index(other_cls)
+
+            if self_i == other_i:
+                zipped_fields = zip(nt_to_tuple(self), nt_to_tuple(other))
+                return all((fn(a, b) for a, b in zipped_fields))
+            return fn(self_i, other_i)
 
         lt = lambda s, o: zip_cmp(s, o, operator.lt)
         le = lambda s, o: zip_cmp(s, o, operator.le)
@@ -123,13 +130,24 @@ class Ord(Typeclass):
         return
 
 
-
-
 class Bounded(Typeclass):
 
     def __init__(self, cls, minBound, maxBound):
         attrs = {"minBound":minBound, "maxBound":maxBound}
         super(Bounded, self).__init__(cls, attrs=attrs)
+        return
+
+    @staticmethod
+    def derive_instance(type_constructor):
+        # All data constructors must be enums
+        for data_con in type_constructor.__constructors__:
+            if not isinstance(data_con, type_constructor):
+                raise TypeError("Cannot derive Bounded; %s is not an enum" %
+                                 data_con.__name__)
+
+        maxBound = lambda s: type_constructor.__constructors__[0]
+        minBound = lambda s: type_constructor.__constructors__[-1]
+        Bounded(type_constructor, minBound=minBound, maxBound=maxBound)
         return
 
     @staticmethod
@@ -395,7 +413,8 @@ class Iterator(Typeclass):
     Special typeclass for Python iterators, i.e. classes with a next or
     __next__ attribute.
 
-    Minimal complete definition: __next__
+    Minimal complete definition:
+        __next__
     """
     def __init__(self, cls, __next__):
         def _next(self):

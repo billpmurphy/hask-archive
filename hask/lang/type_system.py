@@ -36,14 +36,27 @@ __python_builtins__ = set((
 
 def is_builtin(cls):
     """
-    Return True if a type is a Python builtin type, and False otherwise.
+    Test whether a class or type is a Python builtin.
+
+    Args:
+        cls: The class or type to examine
+
+    Returns:
+        True if a type is a Python builtin type, and False otherwise.
     """
     return cls in __python_builtins__
 
 
 def in_typeclass(cls, typeclass):
     """
-    Return True if cls is a member of typeclass, and False otherwise.
+    Test whether a class is a member of a particular typeclass.
+
+    Args:
+        cls: The class or type to test for membership
+        typeclass: The typeclass to check
+
+    Returns:
+        True if cls is a member of typeclass, and False otherwise.
     """
     if is_builtin(typeclass):
         # a typeclass cannot be a python builtin
@@ -110,7 +123,7 @@ class Typeclass(object):
         return
 
     @staticmethod
-    def derive_instance(cls, type_constructor):
+    def derive_instance(type_constructor):
         """
         Derive a typeclass instance for the given type constructor.
 
@@ -118,7 +131,8 @@ class Typeclass(object):
         implementation. Note that this method should be decorated with
         @staticmethod.
         """
-        raise TypeError("Cannot derive instance for class %s" % cls.__name__)
+        raise TypeError("Cannot derive instance for type %s" %
+                        type_constructor.__name__)
 
     @staticmethod
     def add_attr(cls, attr_name, attr):
@@ -150,8 +164,9 @@ class Typeclass(object):
 
 
 class Hask(Typeclass):
-    """Typeclass for objects within hask"""
-
+    """
+    Typeclass for objects within hask
+    """
     def __init__(self, cls, typefn):
         super(Hask, self).__init__(cls, attrs={"type":typefn})
 
@@ -328,7 +343,6 @@ class TypedFunc(object):
         return TypedFunc(composed, newtype)
 
 
-# can probably move this elsewhere
 Hask(TypedFunc, TypedFunc.type)
 
 

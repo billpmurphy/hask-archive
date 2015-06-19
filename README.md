@@ -30,8 +30,10 @@ language tools from Haskell, including:
 
 Features not yet implemented, but coming soon:
 
-* More of the Haskell standard library
+* More of the Haskell standard library (`Control.*` libraries)
 * QuickCheck (property-based testing)
+* Better support for polymorphic return types
+* Monadic I/O
 
 
 ## Installation
@@ -207,7 +209,8 @@ Hask also supports operator sections (e.g. `(1+)` from Haskell), which create
 8172
 ```
 
-Double sections are also supported:
+Sections are just `TypedFunc` objects, so they are automagically curried and
+typechecked. Double sections are also supported:
 
 ```python
 >>> (__+__)(1, 2)
@@ -309,8 +312,7 @@ Left(ValueError('Out of cheese error',))
 ```
 
 
-You can also use `in_maybe` or `in_either` as decorators over newly-defined
-functions:
+You can also use `in_maybe` or `in_either` as decorators:
 
 ```python
 @in_either
@@ -349,3 +351,8 @@ too. Some highlights:
 
 Contributions are always welcome! Feel free to submit a pull request, open an
 issue, or email me.
+
+
+## Why did you make this?
+
+It was fun!
