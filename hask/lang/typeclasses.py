@@ -429,12 +429,6 @@ class Iterator(Typeclass):
 #=============================================================================#
 ## Exported typeclass functions
 
-# Read
-read = Read.read
-
-# Show
-show = Show.show
-
 # Enum
 succ = Enum.succ
 pred = Enum.pred

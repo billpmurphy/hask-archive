@@ -37,6 +37,26 @@ from Data.Tuple import uncurry
 ## Basic type classes
 
 
+from .lang.typeclasses import Read
+from .lang.typeclasses import Show
+from .lang.typeclasses import Eq
+
+
+@sig(H/ str >> "a")
+def read(string):
+    return Read.read(string)
+
+
+@sig(H/ "a" >> str)
+def show(obj):
+    return Show.show(obj)
+
+
+from Data.Ord import max
+from Data.Ord import min
+from Data.Ord import compare
+
+
 #=============================================================================#
 ## Numbers
 ### Numeric types
@@ -109,6 +129,11 @@ def lcm(x, y):
 
 #=============================================================================#
 # Monads and functors
+
+
+from .lang.typeclasses import Functor
+from .lang.typeclasses import Applicative
+from .lang.typeclasses import Monad
 
 
 #=============================================================================#

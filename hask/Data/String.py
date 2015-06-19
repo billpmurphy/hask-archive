@@ -11,7 +11,7 @@ def lines(string):
     lines breaks a string up into a list of strings at newline characters.
     The resulting strings do not contain newlines.
     """
-    return L[string.split("\n")]
+    return L[[]] if not string else L[string.split("\n")]
 
 
 @sig(H/ str >> [str])

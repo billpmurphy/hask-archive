@@ -2,6 +2,7 @@ import itertools
 
 from ..lang.syntax import H
 from ..lang.syntax import sig
+from ..lang.syntax import t
 from ..lang.syntax import L
 
 from ..lang.typeclasses import Ord
@@ -56,7 +57,7 @@ def init(xs):
     return L[(x for x in xs[:-1])]
 
 
-#@sig(H/ ["a"] >> Maybe(("a", ["a"])))
+@sig(H/ ["a"] >> t(Maybe, ("a", ["a"])))
 def uncons(xs):
     """
     uncons :: [a] -> Maybe (a, [a])
@@ -95,13 +96,14 @@ def length(xs):
 # List transformations
 
 
+@sig(H/ (H/ "a" >> "b") >> ["a"] >> ["b"])
 def map(fn, iterable):
     return L[(itertools.imap(fn, iterable))]
 
-#@sig(H[Traversable . m]/ ("a" >> bool) >> t.m("a") >> List("a") )
+
+@sig(H/ (H/ "a" >> bool) >> ["a"] >> ["a"])
 def filter(fn, iterable):
     return L[(itertools.ifilter(fn, iterable))]
-
 
 
 @sig(H/ ["a"] >> ["a"] )
@@ -133,8 +135,9 @@ def intercalate(xs, xss):
     intercalate(xs,xss) is equivalent to concat(intersperse(xs,xss)). It
     inserts the list xs in between the lists in xss and concatenates the
     result.
+
+    TODO: make this more efficient
     """
-    # this can probably be made more efficient
     return concat(intersperse(xs, xss))
 
 

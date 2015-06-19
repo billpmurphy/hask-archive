@@ -19,7 +19,7 @@ from hindley_milner import ListType
 # Typeclasses
 
 
-__typeclass_flag__ = "__typeclasses__"
+__typeclass_slot__ = "__typeclasses__"
 
 __python_builtins__ = set((
     types.NoneType, types.TypeType, types.BooleanType, types.IntType,
@@ -53,21 +53,20 @@ def in_typeclass(cls, typeclass):
 
     Args:
         cls: The class or type to test for membership
-        typeclass: The typeclass to check
+        typeclass: The typeclass to check. Must be a subclass of Typeclass.
 
     Returns:
         True if cls is a member of typeclass, and False otherwise.
     """
-    if is_builtin(typeclass):
-        # a typeclass cannot be a python builtin
+    if not issubclass(typeclass, Typeclass):
         return False
     elif is_builtin(cls):
         try:
             return issubclass(cls, typeclass)
         except TypeError:
             return False
-    elif hasattr(cls, __typeclass_flag__):
-        return typeclass in getattr(cls, __typeclass_flag__)
+    elif hasattr(cls, __typeclass_slot__):
+        return typeclass in getattr(cls, __typeclass_slot__)
     return False
 
 
@@ -155,17 +154,17 @@ class Typeclass(object):
         """
         if is_builtin(cls):
             typeclass.register(cls)
-        elif hasattr(cls, __typeclass_flag__):
-            setattr(cls, __typeclass_flag__,
-                    getattr(cls, __typeclass_flag__) + (typeclass,))
+        elif hasattr(cls, __typeclass_slot__):
+            setattr(cls, __typeclass_slot__,
+                    getattr(cls, __typeclass_slot__) + (typeclass,))
         else:
-            setattr(cls, __typeclass_flag__, (typeclass,))
+            setattr(cls, __typeclass_slot__, (typeclass,))
         return
 
 
 class Hask(Typeclass):
     """
-    Typeclass for objects within hask
+    Typeclass for objects within hask.
     """
     def __init__(self, cls, typefn):
         super(Hask, self).__init__(cls, attrs={"type":typefn})
@@ -185,7 +184,7 @@ def HM_typeof(obj):
     Returns:
         An obj
     """
-    if in_typeclass(obj, Hask):
+    if in_typeclass(type(obj), Hask):
         return obj.type()
 
     elif isinstance(obj, tuple):
@@ -370,7 +369,7 @@ def make_type_const(name, typeargs):
         raise err()
 
     default_attrs = {"__params__":tuple(typeargs), "__constructors__":(),
-             __typeclass_flag__:()}
+             __typeclass_slot__:()}
     cls = type(name, (ADT,), default_attrs)
 
     Hask(cls, lambda self:

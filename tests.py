@@ -21,6 +21,7 @@ from hask import F, const, flip, Func
 from hask import map as hmap
 from hask import filter as hfilter
 from hask import id as hid
+from hask import Ordering, LT, EQ, GT
 from hask import Maybe, Just, Nothing, in_maybe
 from hask import Either, Left, Right, in_either
 from hask import Typeclass
@@ -1152,21 +1153,21 @@ class TestList(unittest.TestCase):
                           list(List(range(9)) * test_f))
 
     def test_hmap(self):
-        test_f = lambda x: (x + 100) / 2
+        test_f = sig(H/ int >> int)(lambda x: (x + 100) / 2)
 
         # `map` == `hmap` for Lists
         self.assertEqual(map(test_f, range(20)),
-                          list(hmap(test_f, range(20))))
+                          list(hmap(test_f, L[range(20)])))
         self.assertEqual(map(test_f, range(20)),
-                          map(test_f, range(20)))
+                          map(test_f, L[range(20)]))
 
 
     def test_hfilter(self):
-        test_f = lambda x: x % 2 == 0
+        test_f = sig(H/ int >> bool)(lambda x: x % 2 == 0)
         self.assertEqual(filter(test_f, range(20)),
-                          list(hfilter(test_f, range(20))))
+                          list(hfilter(test_f, L[range(20)])))
         self.assertEqual(filter(test_f, range(20)),
-                          filter(test_f, range(20)))
+                          filter(test_f, L[range(20)]))
 
     def test_len(self):
         self.assertEqual(0, len(L[None]))
@@ -1192,11 +1193,29 @@ class TestPrelude(unittest.TestCase):
         from hask.Prelude import unlines
         from hask.Prelude import unwords
 
-        # maybe
+        # Maybe
+        from hask.Prelude import Maybe
+        from hask.Prelude import Just
+        from hask.Prelude import Nothing
+        from hask.Prelude import maybe
 
-        # either
+        # Either
+        from hask.Prelude import Either
+        from hask.Prelude import Left
+        from hask.Prelude import Right
+        from hask.Prelude import either
 
-        # list
+        # List
+
+        # Ordering
+        from hask.Prelude import Ordering
+        from hask.Prelude import LT
+        from hask.Prelude import EQ
+        from hask.Prelude import GT
+        from hask.Prelude import max
+        from hask.Prelude import min
+        from hask.Prelude import compare
+
 
     def test_until(self):
         from hask.Prelude import until
@@ -1268,7 +1287,7 @@ class TestDataString(unittest.TestCase):
         from hask.Data.String import unwords
 
         self.assertEqual(lines("a\nb \n\nc"), L[["a", "b ", "", "c"]])
-        #self.assertEqual(lines(""), L[[]])
+        self.assertEqual(lines(""), L[[]])
         self.assertEqual(unlines(L[["a", "b ", "", "c"]]), "a\nb \n\nc")
         self.assertEqual(unlines(L[[]]), "")
         self.assertEqual(words(" 1 2  4"), L[["", "1", "2", "", "4"]])
@@ -1295,6 +1314,36 @@ class TestDataTuple(unittest.TestCase):
 
         self.assertEqual(swap(swap((1, 2))), (1, 2))
         self.assertEqual(swap((1, "a")), ("a", 1))
+
+        @sig(H/ (str, str) >> str)
+        def uncurried_fn(tup):
+            return tup[0] + tup[1]
+
+        @sig(H/ list >> list >> list)
+        def curried_fn(x, y):
+            return x + y
+
+        self.assertEqual(uncurry(curried_fn, ([1, 2], [3, 4])), [1, 2, 3, 4])
+        self.assertEqual(curry(uncurried_fn, "a", "b"), "ab")
+        #self.assertEqual(uncurry(curry(uncurried_fn), ("a","b")), "ab")
+        #self.assertEqual(curry(uncurry(curried_fn), ["a"], ["b"]), ["a","b"])
+
+
+class TestDataOrd(unittest.TestCase):
+
+    def test_ord(self):
+        from hask.Data.Ord import max as hmax
+        from hask.Data.Ord import min as hmin
+        from hask.Data.Ord import compare as compare
+        from hask.Data.Ord import comparing as comparing
+
+        self.assertEqual(hmax(1, 2), 2)
+        self.assertEqual(hmin(1, 2), 1)
+        self.assertEqual(compare(1, 2), LT)
+
+        from hask.Data.Tuple import fst, snd
+        self.assertEqual(comparing(fst, (1, 2), (3, 0)), LT)
+        self.assertEqual(comparing(snd, (1, 2), (3, 0)), GT)
 
 
 class Test_README_Examples(unittest.TestCase):
@@ -1351,11 +1400,10 @@ class Test_README_Examples(unittest.TestCase):
 
             return n + 10
 
-        #self.assertTrue(my_fn_that_raises_errors("hello"),
-        #                 Left(AssertionError('not an int!',)))
-        self.assertTrue(
-                isinstance(my_fn_that_raises_errors(-10)[0], ValueError))
-        #                 Left(ValueError('Too low!',)))
+        self.assertTrue(isinstance(my_fn_that_raises_errors("hello")[0],
+                                   AssertionError))
+        self.assertTrue(isinstance(my_fn_that_raises_errors(-10)[0],
+                                   ValueError))
         self.assertEqual(my_fn_that_raises_errors(1), Right(11))
 
 

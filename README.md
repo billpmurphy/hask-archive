@@ -1,5 +1,20 @@
 [![Build Status](https://magnum.travis-ci.com/billpmurphy/pythaskell.svg?token=ReCFhAz7SQAeN6Fi4dBx&branch=master)](https://magnum.travis-ci.com/billpmurphy/pythaskell)
 
+
+Remaining TODOs:
+* Change typeclasses to be more like Haskell (things stored inside TC)
+* Fix TypedFunc so it actually typechecks each argument, and is curried; then
+  kill hof.py
+* Rewrite pattern matching, and rewrite some of builtins using it
+* Change type inference engine so that it is aware of typeclasses
+* Write rest of Data.List and Prelude, and document everything undocumented
+* Final refactor of everything
+* Write tests for everything
+* Write rest of README
+* ???
+* Profit
+
+
 # Hask
 
 Wish you could use all those elegant Haskell features in Python? All you have

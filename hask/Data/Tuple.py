@@ -31,7 +31,7 @@ def curry(tup_fn, x, y):
 
     curry converts an uncurried function to a curried function.
     """
-    return tup_fn((a, b))
+    return tup_fn((x, y))
 
 
 @sig( H/ (H/ "a" >> "b" >> "c") >> ("a", "b") >> "c")

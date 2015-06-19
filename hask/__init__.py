@@ -24,8 +24,6 @@ from hask.lang.typeclasses import Monad
 from hask.lang.typeclasses import Traversable
 from hask.lang.typeclasses import Foldable
 from hask.lang.typeclasses import Iterator
-from hask.lang.typeclasses import read
-from hask.lang.typeclasses import show
 from hask.lang.typeclasses import succ
 from hask.lang.typeclasses import pred
 from hask.lang.typeclasses import toEnum
@@ -57,6 +55,10 @@ from hask.lang.builtins import Either
 from hask.lang.builtins import Left
 from hask.lang.builtins import Right
 from hask.lang.builtins import in_either
+from hask.lang.builtins import Ordering
+from hask.lang.builtins import LT
+from hask.lang.builtins import EQ
+from hask.lang.builtins import GT
 
 ## REPL tools
 from hask.lang.builtins import _t
@@ -95,3 +97,5 @@ from hask.lang.caseof import caseof
 # Haskell base
 from Prelude import map
 from Prelude import filter
+from Prelude import read
+from Prelude import show
