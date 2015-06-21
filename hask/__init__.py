@@ -3,7 +3,7 @@ __version__ = "0.0.1"
 # Core language
 
 ## Standard Hask typeclasses and associated functions
-from hask.lang.type_system import in_typeclass
+from hask.lang.type_system import has_instance
 from hask.lang.type_system import Typeclass
 from hask.lang.type_system import Hask
 from hask.lang.typeclasses import Read

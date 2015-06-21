@@ -47,7 +47,7 @@ def is_builtin(cls):
     return cls in __python_builtins__
 
 
-def in_typeclass(cls, typeclass):
+def has_instance(cls, typeclass):
     """
     Test whether a class is a member of a particular typeclass.
 
@@ -104,7 +104,7 @@ class Typeclass(object):
         """
         # 1) Check dependencies
         for dep in dependencies:
-            if not in_typeclass(cls, dep):
+            if not has_instance(cls, dep):
                 msg = "%s is not a member of %s" % (cls.__name__, dep.__name__)
                 raise TypeError(msg)
 
@@ -184,7 +184,7 @@ def typeof(obj):
     Returns:
         An obj
     """
-    if in_typeclass(type(obj), Hask):
+    if has_instance(type(obj), Hask):
         return obj.type()
 
     elif isinstance(obj, tuple):

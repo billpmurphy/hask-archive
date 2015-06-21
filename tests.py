@@ -5,7 +5,7 @@ import unittest
 from hask import H
 from hask import sig
 from hask import t
-from hask import in_typeclass
+from hask import has_instance
 from hask import guard
 from hask import c
 from hask import otherwise
@@ -595,8 +595,8 @@ class TestBuiltins(unittest.TestCase):
         self.assertEqual(-1, pred(pred(pred(2))))
 
     def test_num(self):
-        self.assertTrue(in_typeclass(float, Num))
-        self.assertTrue(in_typeclass(float, Num))
+        self.assertTrue(has_instance(float, Num))
+        self.assertTrue(has_instance(float, Num))
 
 
 class TestSyntax(unittest.TestCase):
@@ -1019,18 +1019,18 @@ class TestHOF(unittest.TestCase):
 class TestMaybe(unittest.TestCase):
 
     def test_instances(self):
-        self.assertTrue(in_typeclass(Maybe, Hask))
-        self.assertTrue(in_typeclass(Maybe, Show))
-        self.assertTrue(in_typeclass(Maybe, Eq))
-        self.assertTrue(in_typeclass(Maybe, Functor))
-        self.assertTrue(in_typeclass(Maybe, Applicative))
-        self.assertTrue(in_typeclass(Maybe, Monad))
+        self.assertTrue(has_instance(Maybe, Hask))
+        self.assertTrue(has_instance(Maybe, Show))
+        self.assertTrue(has_instance(Maybe, Eq))
+        self.assertTrue(has_instance(Maybe, Functor))
+        self.assertTrue(has_instance(Maybe, Applicative))
+        self.assertTrue(has_instance(Maybe, Monad))
 
-        self.assertFalse(in_typeclass(Maybe, Typeclass))
-        self.assertFalse(in_typeclass(Maybe, Num))
-        self.assertFalse(in_typeclass(Maybe, Foldable))
-        self.assertFalse(in_typeclass(Maybe, Traversable))
-        self.assertFalse(in_typeclass(Maybe, Iterator))
+        self.assertFalse(has_instance(Maybe, Typeclass))
+        self.assertFalse(has_instance(Maybe, Num))
+        self.assertFalse(has_instance(Maybe, Foldable))
+        self.assertFalse(has_instance(Maybe, Traversable))
+        self.assertFalse(has_instance(Maybe, Iterator))
 
     def test_show(self):
         self.assertEqual("Just(3)", str(Just(3)))
@@ -1087,28 +1087,28 @@ class TestMaybe(unittest.TestCase):
 class TestEither(unittest.TestCase):
 
     def test_instances(self):
-        self.assertTrue(in_typeclass(Maybe, Show))
-        self.assertTrue(in_typeclass(Maybe, Eq))
-        self.assertTrue(in_typeclass(Maybe, Functor))
-        self.assertTrue(in_typeclass(Maybe, Applicative))
-        self.assertTrue(in_typeclass(Maybe, Monad))
+        self.assertTrue(has_instance(Maybe, Show))
+        self.assertTrue(has_instance(Maybe, Eq))
+        self.assertTrue(has_instance(Maybe, Functor))
+        self.assertTrue(has_instance(Maybe, Applicative))
+        self.assertTrue(has_instance(Maybe, Monad))
 
-        self.assertFalse(in_typeclass(Maybe, Typeclass))
-        self.assertFalse(in_typeclass(Maybe, Num))
-        self.assertFalse(in_typeclass(Maybe, Foldable))
-        self.assertFalse(in_typeclass(Maybe, Traversable))
-        self.assertFalse(in_typeclass(Maybe, Iterator))
+        self.assertFalse(has_instance(Maybe, Typeclass))
+        self.assertFalse(has_instance(Maybe, Num))
+        self.assertFalse(has_instance(Maybe, Foldable))
+        self.assertFalse(has_instance(Maybe, Traversable))
+        self.assertFalse(has_instance(Maybe, Iterator))
 
 
 class TestList(unittest.TestCase):
 
     def test_instances(self):
-        self.assertTrue(in_typeclass(List, Show))
-        self.assertTrue(in_typeclass(List, Eq))
-        self.assertTrue(in_typeclass(List, Functor))
-        self.assertTrue(in_typeclass(List, Applicative))
-        self.assertTrue(in_typeclass(List, Monad))
-        self.assertTrue(in_typeclass(List, Traversable))
+        self.assertTrue(has_instance(List, Show))
+        self.assertTrue(has_instance(List, Eq))
+        self.assertTrue(has_instance(List, Functor))
+        self.assertTrue(has_instance(List, Applicative))
+        self.assertTrue(has_instance(List, Monad))
+        self.assertTrue(has_instance(List, Traversable))
 
     def test_indexing(self):
         # add more corner cases

@@ -3,7 +3,7 @@ import sys
 
 from type_system import Typeclass
 from type_system import is_builtin
-from type_system import in_typeclass
+from type_system import has_instance
 from type_system import nt_to_tuple
 
 
@@ -179,7 +179,7 @@ class Enum(Typeclass):
     @staticmethod
     def toEnum(a):
         if is_builtin(type(a)):
-            if in_typeclass(type(a), Num):
+            if has_instance(type(a), Num):
                 return int(a)
             elif type(a) == str:
                 return ord(a)
@@ -188,7 +188,7 @@ class Enum(Typeclass):
     @staticmethod
     def fromEnum(a, _return=None):
         if is_builtin(type(a)):
-            if in_typeclass(_return, Num):
+            if has_instance(_return, Num):
                 return a
             elif _return == str:
                 return chr(a)
