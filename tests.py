@@ -43,7 +43,7 @@ from hask.lang.syntax import Syntax
 from hask.lang.type_system import build_sig_arg
 from hask.lang.type_system import build_sig
 from hask.lang.type_system import build_ADT
-from hask.lang.type_system import HM_typeof
+from hask.lang.type_system import typeof
 from hask.lang.type_system import make_data_const
 from hask.lang.type_system import make_type_const
 
@@ -364,47 +364,47 @@ class TestHindleyMilner(unittest.TestCase):
     def test_builtins(self):
         """Make sure builtin types typecheck correctly"""
 
-        self.unified(HM_typeof(1), TypeOperator(int, []))
+        self.unified(typeof(1), TypeOperator(int, []))
 
         self.unified(
-                HM_typeof(Nothing),
+                typeof(Nothing),
                 TypeOperator(Maybe, [TypeVariable()]))
 
         self.unified(
-                HM_typeof(Just(1)),
+                typeof(Just(1)),
                 TypeOperator(Maybe, [TypeOperator(int, [])]))
 
         self.unified(
-                HM_typeof(Just(Just(Nothing))),
+                typeof(Just(Just(Nothing))),
                 TypeOperator(Maybe,
                     [TypeOperator(Maybe,
                         [TypeOperator(Maybe, [TypeVariable()])])]))
 
         self.unified(
-                HM_typeof(Right("error")),
+                typeof(Right("error")),
                 TypeOperator(Either, [TypeVariable(),
                     TypeOperator(str, [])]))
 
         self.unified(
-                HM_typeof(Left(2.0)),
+                typeof(Left(2.0)),
                 TypeOperator(Either,
                     [TypeOperator(float, []), TypeVariable()]))
 
     def test_builtin_HKT(self):
-        self.unified(HM_typeof(1), build_sig_arg(t(int), {}))
-        self.unified(HM_typeof(Nothing), build_sig_arg(t(Maybe, "a"), {}))
-        self.unified(HM_typeof(Just(1)), build_sig_arg(t(Maybe, int), {}))
+        self.unified(typeof(1), build_sig_arg(t(int), {}))
+        self.unified(typeof(Nothing), build_sig_arg(t(Maybe, "a"), {}))
+        self.unified(typeof(Just(1)), build_sig_arg(t(Maybe, int), {}))
 
         self.unified(
-                HM_typeof(Just(Just(Nothing))),
+                typeof(Just(Just(Nothing))),
                 build_sig_arg(t(Maybe, t(Maybe, t(Maybe, "a"))), {}))
 
         self.unified(
-                HM_typeof(Right("error")),
+                typeof(Right("error")),
                 build_sig_arg(t(Either, "a", str), {}))
 
         self.unified(
-                HM_typeof(Left(2.0)),
+                typeof(Left(2.0)),
                 build_sig_arg(t(Either, int, "a"), {}))
 
 

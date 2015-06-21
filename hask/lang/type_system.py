@@ -174,7 +174,7 @@ class Hask(Typeclass):
 # Static typing and type signatures
 
 
-def HM_typeof(obj):
+def typeof(obj):
     """
     Returns the type of an object within the internal type system.
 
@@ -188,7 +188,7 @@ def HM_typeof(obj):
         return obj.type()
 
     elif isinstance(obj, tuple):
-        return Tuple(map(HM_typeof, obj))
+        return Tuple(map(typeof, obj))
 
     elif obj is None:
         return TypeOperator(None, [])
@@ -298,7 +298,7 @@ class TypedFunc(object):
         # the evironment contains the type of the function and the types
         # of the arguments
         env = {id(self):self.fn_type}
-        env.update({id(arg):HM_typeof(arg) for arg in args})
+        env.update({id(arg):typeof(arg) for arg in args})
 
         ap = Var(id(self))
         for arg in args:
@@ -306,7 +306,7 @@ class TypedFunc(object):
 
         result_type = analyze(ap, env)
         result = self.func.__call__(*args, **kwargs)
-        unify(result_type, HM_typeof(result))
+        unify(result_type, typeof(result))
 
         #if not isinstance(result_type, Function):
         #    return self.func()
@@ -412,7 +412,7 @@ def make_data_const(name, fields, type_constructor):
     # constructor with type params from the type constructor
     else:
         def _type(self):
-            args = [HM_typeof(self[fields.index(p)]) \
+            args = [typeof(self[fields.index(p)]) \
                     if p in fields else TypeVariable()
                     for p in type_constructor.__params__]
             return TypeOperator(type_constructor, args)

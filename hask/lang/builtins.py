@@ -5,7 +5,7 @@ from hindley_milner import TypeVariable
 from hindley_milner import ListType
 
 from type_system import Hask
-from type_system import HM_typeof
+from type_system import typeof
 from type_system import build_ADT
 from type_system import TypedFunc
 
@@ -238,7 +238,7 @@ class List(collections.Sequence):
     def type(self):
         if len(self) == 0:
             return ListType(TypeVariable())
-        return ListType(HM_typeof(self[0]))
+        return ListType(typeof(self[0]))
 
     def fmap(self, fn):
         return List(itertools.imap(fn, iter(self)))
@@ -358,7 +358,7 @@ def _t(obj):
     >>> _t(Just("hello world"))
     Maybe str
     """
-    print(str(HM_typeof(obj)))
+    print(str(typeof(obj)))
     return
 
 
