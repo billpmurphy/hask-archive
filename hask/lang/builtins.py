@@ -26,10 +26,9 @@ from typeclasses import Functor
 from typeclasses import Applicative
 from typeclasses import Monad
 from typeclasses import Traversable
-from typeclasses import Iterator
 from typeclasses import Foldable
 
-from hof import Func
+#from hof import Func
 
 
 #=============================================================================#
@@ -37,7 +36,7 @@ from hof import Func
 
 
 # functions are functors, fmap is just composition
-Functor(TypedFunc, TypedFunc.__mul__)
+Functor.make_instance(TypedFunc, fmap=TypedFunc.__mul__)
 
 
 
@@ -164,20 +163,22 @@ class List(collections.Sequence):
 
 
 ## Typeclass instances for list
-Hask(List, List.type)
-Read(List)
-Show(List, List.__repr__)
-Eq(List, List.__eq__)
-Functor(List, List.fmap)
-Applicative(List, List.pure)
-Monad(List, List.bind)
-Foldable(List, List.foldr)
-Traversable(List, List.__iter__, List.__getitem__, List.__len__)
-Iterator(List, List.__next__)
+Hask.make_instance(List, type=List.type)
+#Read.make_instance(List, read=eval)
+Show.make_instance(List, show=List.__str__)
+Eq.make_instance(List, eq=List.__eq__)
+Functor.make_instance(List, fmap=List.fmap)
+Applicative.make_instance(List, pure=List.pure)
+Monad.make_instance(List, bind=List.bind)
+Foldable.make_instance(List, foldr=List.foldr)
+Traversable.make_instance(List,
+        iter=List.__iter__,
+        getitem=List.__getitem__,
+        len=List.__len__)
 
 
 # TODO: deprecate this trash
-Functor(Func, Func.fmap)
+#Functor.make_instance(Func, fmap=Func.fmap)
 
 
 #=============================================================================#

@@ -23,7 +23,6 @@ from hask.lang.typeclasses import Applicative
 from hask.lang.typeclasses import Monad
 from hask.lang.typeclasses import Traversable
 from hask.lang.typeclasses import Foldable
-from hask.lang.typeclasses import Iterator
 from hask.lang.typeclasses import succ
 from hask.lang.typeclasses import pred
 from hask.lang.typeclasses import toEnum
@@ -32,7 +31,6 @@ from hask.lang.typeclasses import enumFrom
 from hask.lang.typeclasses import enumFromThen
 from hask.lang.typeclasses import enumFromTo
 from hask.lang.typeclasses import enumFromThenTo
-from hask.lang.typeclasses import fmap
 from hask.lang.typeclasses import foldr
 from hask.lang.typeclasses import length
 from hask.lang.typeclasses import mempty
@@ -59,6 +57,7 @@ from hask.Prelude import Ordering
 from hask.Prelude import LT
 from hask.Prelude import EQ
 from hask.Prelude import GT
+from hask.Prelude import fmap
 
 
 # Core language
@@ -101,5 +100,5 @@ from hask.lang.builtins import _q
 # Haskell base
 from Prelude import map
 from Prelude import filter
-from Prelude import read
+#from Prelude import read
 from Prelude import show

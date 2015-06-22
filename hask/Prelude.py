@@ -70,13 +70,6 @@ Eq(bool, bool.__eq__)
 Eq(list, list.__eq__)
 Eq(tuple, tuple.__eq__)
 
-
-@sig(H/ str >> "a")
-def read(string):
-    return Read.read(string)
-
-
-
 from Data.Ord import Ord
 from Data.Ord import max
 from Data.Ord import min
@@ -100,6 +93,8 @@ Enum(bool, toEnum=lambda a: int(a), fromEnum=lambda a: bool(a))
 
 
 from .lang.typeclasses import Functor
+from .lang.typeclasses import fmap
+
 from .lang.typeclasses import Applicative
 from .lang.typeclasses import Monad
 from .lang.typeclasses import Traversable

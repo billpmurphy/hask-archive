@@ -6,7 +6,7 @@ from type_system import Typeclass
 from type_system import TypedFunc
 from type_system import TypeSignature
 from type_system import TypeSignatureHKT
-from type_system import ADT
+from type_system import __ADT__
 from type_system import build_sig
 
 from type_system import build_ADT
@@ -223,7 +223,7 @@ class sig(Syntax):
 
 
 def t(type_constructor, *params):
-    if isinstance(type_constructor, ADT) and \
+    if isinstance(type_constructor, __ADT__) and \
        len(type_constructor.__params__) != len(params):
             raise TypeError("Incorrect number of type parameters to %s" % \
                             type_constructor.__name__)

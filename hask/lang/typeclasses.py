@@ -5,6 +5,7 @@ from type_system import Typeclass
 from type_system import is_builtin
 from type_system import has_instance
 from type_system import nt_to_tuple
+from type_system import build_instance
 
 
 #=============================================================================#
@@ -12,41 +13,29 @@ from type_system import nt_to_tuple
 
 
 class Read(Typeclass):
-
-    def __init__(self, cls, read=None):
-        read = classmethod(lambda s: eval(s) if read is None else read)
-        super(Read, self).__init__(cls, attrs={"read":read})
+    @classmethod
+    def make_instance(typeclass, cls, read):
+        build_instance(Read, cls, {"read":read})
         return
-
-    @staticmethod
-    def read(string, _return):
-        if _return is not None:
-            return _return.__class_.read(string)
-        return eval(string)
 
 
 class Show(Typeclass):
-
-    def __init__(self, cls, show):
-        super(Show, self).__init__(cls, attrs={"__str__":show})
+    @classmethod
+    def make_instance(typeclass, cls, show):
+        build_instance(Show, cls, {"show":show})
+        if not is_builtin(cls):
+            cls.__str__ = show
         return
 
-    @staticmethod
-    def show(a):
-        if type(a) == str:
-            return "'%s'" % a
-        return str(a)
-
-    @staticmethod
-    def derive_instance(type_constructor):
-        def __str__(self):
+    @classmethod
+    def derive_instance(typeclass, cls):
+        def show(self):
             if len(self.__class__._fields) == 0:
                 return self.__class__.__name__
-
             nt_tup = nt_to_tuple(self)
             tuple_str = "(%s)" % nt_tup[0] if len(nt_tup) == 1 else str(nt_tup)
             return "{0}{1}".format(self.__class__.__name__, tuple_str)
-        Show(type_constructor, show=__str__)
+        Show.make_instance(cls, show=show)
         return
 
 
@@ -63,19 +52,23 @@ class Eq(Typeclass):
         __ne__
 
     Minimal complete definition:
-        __eq__
+        eq
     """
-    def __init__(self, cls, eq, ne=None):
+    @classmethod
+    def make_instance(typeclass, cls, eq, ne=None):
         def default_not_eq(self, other):
-            return not self.__eq__(other)
+            return not eq(self, other)
 
-        __ne__ = default_not_eq if ne is None else ne
+        ne = default_not_eq if ne is None else ne
+        build_instance(Eq, cls, {"eq":eq, "ne":ne})
 
-        super(Eq, self).__init__(cls, attrs={"__eq__":eq, "__ne__":__ne__})
+        if not is_builtin(cls):
+            cls.__eq__ = eq
+            cls.__ne__ = ne
         return
 
-    @staticmethod
-    def derive_instance(type_constructor):
+    @classmethod
+    def derive_instance(typeclass, cls):
         def __eq__(self, other):
             return self.__class__ == other.__class__ and \
                 nt_to_tuple(self) == nt_to_tuple(other)
@@ -84,14 +77,14 @@ class Eq(Typeclass):
             return self.__class__ != other.__class__ or  \
                 nt_to_tuple(self) != nt_to_tuple(other)
 
-        Eq(type_constructor, eq=__eq__, ne=__ne__)
+        Eq.make_instance(cls, eq=__eq__, ne=__ne__)
         return
 
 
 
-class Ord(Typeclass):
-
-    def __init__(self, cls, lt, le=None, gt=None, ge=None):
+class Ord(Eq):
+    @classmethod
+    def make_instance(typeclass, cls, lt, le=None, gt=None, ge=None):
         __le__ = lambda s, o: s.__lt__(o) or s.__eq__(o)
         __gt__ = lambda s, o: not s.__lt__(o) and not s.__eq__(o)
         __ge__ = lambda s, o: not s.__lt__(o) or not s.__eq__(o)
@@ -100,17 +93,22 @@ class Ord(Typeclass):
         gt = __gt__ if gt is None else gt
         ge = __ge__ if ge is None else ge
 
-        attrs = {"__lt__":lt, "__le__":le, "__gt__":gt, "__ge__":ge}
-        super(Ord, self).__init__(cls, dependencies=[Eq], attrs=attrs)
+        attrs = {"lt":lt, "le":le, "gt":gt, "ge":ge}
+        build_instance(Ord, cls, attrs)
+        if not is_builtin(cls):
+            cls.__lt__ = lt
+            cls.__le__ = le
+            cls.__gt__ = gt
+            cls.__ge__ = ge
         return
 
-    @staticmethod
-    def derive_instance(type_constructor):
+    @classmethod
+    def derive_instance(typeclass, cls):
         def zip_cmp(self, other, fn):
             """
             Compare the data constructor and all of the fields of two ADTs.
             """
-            find_index = lambda x: type_constructor.__constructors__.index(x)
+            find_index = lambda x: cls.__constructors__.index(x)
 
             self_cls = self if nt_to_tuple(self) == () else self.__class__
             other_cls = other if nt_to_tuple(other) == () else other.__class__
@@ -125,7 +123,7 @@ class Ord(Typeclass):
         le = lambda s, o: zip_cmp(s, o, operator.le)
         gt = lambda s, o: zip_cmp(s, o, operator.gt)
         ge = lambda s, o: zip_cmp(s, o, operator.ge)
-        Ord(type_constructor, lt=lt, le=le, gt=gt, ge=ge)
+        Ord.make_instance(cls, lt=lt, le=le, gt=gt, ge=ge)
         return
 
 
@@ -230,7 +228,7 @@ class Enum(Typeclass):
         return Enum.enumFromThenTo(start, Enum.succ(start), end)
 
 
-class Num(Typeclass):
+class Num(Show, Eq):
 
     def __init__(self, cls, add, mul, abs, signum, fromInteger, negate, sub=None):
         def default_sub(a, b):
@@ -244,37 +242,37 @@ class Num(Typeclass):
         return
 
 
-class Fractional(Typeclass):
+class Fractional(Num):
 
     def __init__(self, cls):
         super(Fractional, self).__init__(cls, dependencies=[Num])
 
 
-class Floating(Typeclass):
+class Floating(Fractional):
 
     def __init__(self, cls):
         super(Floating, self).__init__(cls, dependencies=[Fractional])
 
 
-class Real(Typeclass):
+class Real(Num, Ord):
 
     def __init__(self, cls):
         super(Real, self).__init__(cls, dependencies=[Num, Ord])
 
 
-class Integral(Typeclass):
+class Integral(Real, Enum):
 
     def __init__(self, cls):
         super(Integral, self).__init__(cls, dependencies=[Real, Enum])
 
 
-class RealFrac(Typeclass):
+class RealFrac(Real, Fractional):
 
     def __init__(self, cls):
         super(RealFrac, self).__init__(cls, dependencies=[Real, Fractional])
 
 
-class RealFloat(Typeclass):
+class RealFloat(Floating, RealFrac):
 
     def __init__(self, cls):
         super(RealFloat, self).__init__(cls, dependencies=[Floating, RealFrac])
@@ -283,81 +281,42 @@ class RealFloat(Typeclass):
 
 class Functor(Typeclass):
 
-    def __init__(self, cls, fmap):
+    @classmethod
+    def make_instance(typeclass, cls, fmap):
         """
-        Transform a class into a member of Functor. The fmap function must be
-        supplied when making the class a member of Functor.
         """
-        def _fmap(self, fn):
-            return fmap(self, fn)
-
-        # `*` syntax for fmap
-        def mul(self, fn):
-            return self.fmap(fn)
-
-        super(Functor, self).__init__(cls, attrs={"fmap":_fmap, "__mul__":mul})
+        if not is_builtin(cls):
+            cls.__mul__ = fmap
+        build_instance(Functor, cls, {"fmap":fmap})
         return
 
-    @staticmethod
-    def fmap(fn, functor):
-        return functor.fmap(fn)
 
-
-class Applicative(Typeclass):
-
-    def __init__(self, cls, pure):
-        """
-        Transform a class into a member of Applicative. The pure function must be
-        supplied when making the class a member of Applicative.
-        """
-        @classmethod
-        def __pure__(cls, value):
-            return pure(cls, value)
-
-        super(Applicative, self).__init__(cls, dependencies=[Functor],
-                                          attrs={"pure":__pure__})
+class Applicative(Functor):
+    @classmethod
+    def make_instance(self, cls, pure):
+        build_instance(Applicative, cls, {"pure":pure})
         return
 
-    @staticmethod
-    def pure(value, app):
-        return app.__class__.pure(value)
 
-
-class Monad(Typeclass):
-
-    def __init__(self, cls, bind):
-        """
-        Transform a class into a member of Monad. The bind function must be
-        supplied when making the class a member of Monad.
-        """
-        # `>>` syntax for monadic bind
-        def rshift(self, fn):
-            return bind(self, fn)
-
-        attrs = {"bind":bind, "__rshift__":rshift}
-        super(Monad, self).__init__(cls, dependencies=[Applicative],
-                                    attrs=attrs)
+class Monad(Applicative):
+    @classmethod
+    def make_instance(typeclass, cls, bind):
+        build_instance(Monad, cls, {"bind":bind})
+        if not is_builtin(cls):
+            cls.__rshift__ = bind
         return
-
-    @staticmethod
-    def bind(m, fn):
-        return m.bind(fn)
 
 
 class Foldable(Typeclass):
-
-    def __init__(self, cls, foldr):
-        super(Foldable, self).__init__(cls, attrs={"foldr":foldr})
+    @classmethod
+    def make_instance(typeclass, cls, foldr):
+        build_instance(Foldable, cls, {"foldr":foldr})
         return
 
-    @staticmethod
-    def foldr(fn, a, lb):
-        return lb.foldr(fn, a)
 
-
-class Traversable(Typeclass):
-
-    def __init__(self, cls, __iter__, __getitem__=None, __len__=None):
+class Traversable(Foldable, Functor):
+    @classmethod
+    def make_instance(typeclass, cls, iter, getitem=None, len=None):
         def default_len(self):
             count = 0
             for _ in iter(self):
@@ -367,13 +326,11 @@ class Traversable(Typeclass):
         def default_getitem(self, i):
             return list(iter(self))[i]
 
-        __len__ = default_len if __len__ is None else __len__
-        __getitem__ = default_getitem if __getitem__ is None else __getitem__
+        len = default_len if len is None else len
+        getitem = default_getitem if getitem is None else getitem
 
-        deps = [Foldable, Functor]
-        attrs = {"__iter__":__iter__, "__getitem__":__getitem__,
-                 "__len__":__len__}
-        super(Traversable, self).__init__(cls, dependencies=deps, attrs=attrs)
+        attrs = {"iter":iter, "getitem":getitem, "len":len}
+        build_instance(Traversable, cls, attrs)
         return
 
     @staticmethod
@@ -383,37 +340,13 @@ class Traversable(Typeclass):
 
 class Monoid(Typeclass):
 
-    def __init__(self, cls, mempty, mappend):
+    @classmethod
+    def make_instance(typeclass, cls, mempty, mappend, mconcat=None):
         #TODO: mconcat
-
         attrs = {"mempty":mempty, "mappend":mappend}
-        super(Monoid, self).__init__(cls, attrs=attrs)
-
-    @staticmethod
-    def mempty(_return):
-        return _return.mempty
-
-    @staticmethod
-    def mappend(a, b):
-        return a.mappend(b)
-
-
-class Iterator(Typeclass):
-    """
-    Special typeclass for Python iterators, i.e. classes with a next or
-    __next__ attribute.
-
-    Minimal complete definition:
-        __next__
-    """
-    def __init__(self, cls, __next__):
-        def _next(self):
-            return __next__(self)
-
-        attrs = {"__next__": _next, "next":_next}
-        super(Iterator, self).__init__(cls, dependencies=[Traversable],
-                                       attrs=attrs)
+        build_instance(Monoid, cls, attrs)
         return
+
 
 
 #=============================================================================#
@@ -429,15 +362,12 @@ enumFromThen = Enum.enumFromThen
 enumFromTo = Enum.enumFromTo
 enumFromThenTo = Enum.enumFromThenTo
 
-# Functor
-fmap = Functor.fmap
-
 # Foldable
-foldr = Foldable.foldr
+foldr = lambda x, f: Foldable[x].foldr(x, f)
 
 # Traversable
 length = Traversable.length
 
 # Monoid
-mempty = Monoid.mempty
-mappend = Monoid.mappend
+mempty = lambda x: Monoid[x].mempty
+mappend = lambda x, y: Monoid[x].mappend(x, y)

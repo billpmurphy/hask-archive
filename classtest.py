@@ -27,6 +27,8 @@ def has_instance(cls, typeclass):
     Returns:
         True if cls is a member of typeclass, and False otherwise.
     """
+    if not issubclass(typeclass, Typeclass):
+        return False
     return cls in typeclass.__instances__
 
 
@@ -50,29 +52,29 @@ class Typeclass(object):
     __metaclass__ = TypeMeta
 
     @classmethod
-    def make_instance(cls, type_, *args):
+    def make_instance(typeclass, type_, *args):
         raise NotImplementedError("Typeclasses must implement `make`")
 
     @classmethod
-    def derive_instance(cls, type_):
+    def derive_instance(typeclass, type_):
         raise NotImplementedError("Typeclasses must implement `derive`")
 
 
-def build_instance(typeclass, _type, attrs):
-    # check dependencies
+def build_instance(typeclass, cls, attrs):
+    # 1) check dependencies
     for dep in typeclass.__dependencies__:
-        if _type not in dep.__instances__:
+        if cls not in dep.__instances__:
             raise TypeError("Missing dependency: %s" % dep.__name__)
 
-    # add type and its instance method to typeclass's instance dictionary
-    __methods__ = namedtuple("__%s__" % _type.__name__, attrs.keys())(**attrs)
-    typeclass.__instances__[_type] = __methods__
+    # 2) add type and its instance method to typeclass's instance dictionary
+    __methods__ = namedtuple("__%s__" % cls.__name__, attrs.keys())(**attrs)
+    typeclass.__instances__[cls] = __methods__
     return
 
 
 def resolve(obj):
     """
-    This should call HM_typeof and return the type constructor
+    This should call typeof and return the type constructor
     """
     return type(obj)
 

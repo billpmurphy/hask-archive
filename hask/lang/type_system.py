@@ -47,29 +47,6 @@ def is_builtin(cls):
     return cls in __python_builtins__
 
 
-def has_instance(cls, typeclass):
-    """
-    Test whether a class is a member of a particular typeclass.
-
-    Args:
-        cls: The class or type to test for membership
-        typeclass: The typeclass to check. Must be a subclass of Typeclass.
-
-    Returns:
-        True if cls is a member of typeclass, and False otherwise.
-    """
-    if not issubclass(typeclass, Typeclass):
-        return False
-    elif is_builtin(cls):
-        try:
-            return issubclass(cls, typeclass)
-        except TypeError:
-            return False
-    elif hasattr(cls, __typeclass_slot__):
-        return typeclass in getattr(cls, __typeclass_slot__)
-    return False
-
-
 def nt_to_tuple(nt):
     """
     Convert an instance of namedtuple (or an instance of a subclass of
@@ -86,88 +63,76 @@ def nt_to_tuple(nt):
     return tuple((getattr(nt, f) for f in nt.__class__._fields))
 
 
+def resolve(obj):
+    """
+    This should call typeof and return the type constructor
+    """
+    return typeof(obj).name
+
+
+class TypeMeta(type):
+    """
+    Metaclass for Typeclass type. Ensures that all typeclasses are instantiated
+    with a dictionary to map instances to their member functions, and a list of
+    dependencies.
+    """
+    def __init__(self, *args):
+        super(TypeMeta, self).__init__(*args)
+        self.__instances__ = {}
+        self.__dependencies__ = self.mro()[1:-2] # excl. self, Typeclass, object
+
+    def __getitem__(self, item):
+        return self.__instances__[resolve(item)]
+
+
 class Typeclass(object):
+    """Base class for typeclasses"""
+    __metaclass__ = TypeMeta
+
+    @classmethod
+    def make_instance(typeclass, type_, *args):
+        raise NotImplementedError("Typeclasses must implement `make`")
+
+    @classmethod
+    def derive_instance(typeclass, type_):
+        raise NotImplementedError("Typeclasses must implement `derive`")
+
+
+def build_instance(typeclass, cls, attrs):
+    # 1) check dependencies
+    for dep in typeclass.__dependencies__:
+        if cls not in dep.__instances__:
+            raise TypeError("Missing dependency: %s" % dep.__name__)
+
+    # 2) add type and its instance method to typeclass's instance dictionary
+    __methods__ = namedtuple("__%s__" % cls.__name__, attrs.keys())(**attrs)
+    typeclass.__instances__[cls] = __methods__
+    return
+
+
+def has_instance(cls, typeclass):
     """
-    Base metaclass for Typeclasses.
+    Test whether a class is a member of a particular typeclass.
+
+    Args:
+        cls: The class or type to test for membership
+        typeclass: The typeclass to check. Must be a subclass of Typeclass.
+
+    Returns:
+        True if cls is a member of typeclass, and False otherwise.
     """
-    __metaclass__ = abc.ABCMeta
-
-    def __init__(self, cls, dependencies=(), attrs=None):
-        """
-        Create an instance of a typeclass.
-
-        1) Check whether the instance type is a member of parent typeclasses of
-           the typeclass being instantiated
-        2) Modify the instance type, adding the appropriate attributes
-        3) Add a typeclass flag to the instance type, signifying that it is now
-           a member of the typeclass
-        """
-        # 1) Check dependencies
-        for dep in dependencies:
-            if not has_instance(cls, dep):
-                msg = "%s is not a member of %s" % (cls.__name__, dep.__name__)
-                raise TypeError(msg)
-
-        if is_builtin(cls):
-            # 2a) If the class is a builtin make it a subclass of the typeclass
-            self.__class__.register(cls)
-        else:
-            # 2b) Otherwise, add attributes to the class
-            if attrs is not None:
-                for attr_name, attr in attrs.iteritems():
-                    Typeclass.add_attr(cls, attr_name, attr)
-
-            # 3b) Add flag to the class
-            Typeclass.add_typeclass_flag(cls, self.__class__)
-        return
-
-    @staticmethod
-    def derive_instance(type_constructor):
-        """
-        Derive a typeclass instance for the given type constructor.
-
-        Derivable typeclasses should override this method and provide their own
-        implementation. Note that this method should be decorated with
-        @staticmethod.
-        """
-        raise TypeError("Cannot derive instance for type %s" %
-                        type_constructor.__name__)
-
-    @staticmethod
-    def add_attr(cls, attr_name, attr):
-        """
-        Modify an existing class, adding an attribute. If the class is a
-        Python builtin, do nothing.
-        """
-        if not is_builtin(cls):
-            setattr(cls, attr_name, attr)
-        return
-
-    @staticmethod
-    def add_typeclass_flag(cls, typeclass):
-        """
-        Add a typeclass membership flag to a class, signifying that the class
-        belongs to the specified typeclass.
-
-        If the class is a Python builtin (and therefore immutable), make it a
-        subclass of the specified typeclass.
-        """
-        if is_builtin(cls):
-            typeclass.register(cls)
-        elif hasattr(cls, __typeclass_slot__):
-            setattr(cls, __typeclass_slot__,
-                    getattr(cls, __typeclass_slot__) + (typeclass,))
-        else:
-            setattr(cls, __typeclass_slot__, (typeclass,))
-        return
+    if not issubclass(typeclass, Typeclass):
+        return False
+    return cls in typeclass.__instances__
 
 
 class Hask(Typeclass):
     """
     Typeclass for objects within hask.
     """
-    def __init__(self, cls, typefn):
-        super(Hask, self).__init__(cls, attrs={"type":typefn})
+    @classmethod
+    def make_instance(typeclass, cls, type):
+        build_instance(Hask, cls, {"type":type})
 
 
 #=============================================================================#
@@ -184,14 +149,14 @@ def typeof(obj):
     Returns:
         An obj
     """
-    if has_instance(type(obj), Hask):
-        return obj.type()
-
-    elif isinstance(obj, tuple):
+    if isinstance(obj, tuple):
         return Tuple(map(typeof, obj))
 
     elif obj is None:
         return TypeOperator(None, [])
+
+    elif isinstance(obj, __ADT__):
+        return Hask.__instances__[type(obj).__type_constructor__].type(obj)
 
     return TypeOperator(type(obj), [])
 
@@ -342,14 +307,14 @@ class TypedFunc(object):
         return TypedFunc(composed, newtype)
 
 
-Hask(TypedFunc, TypedFunc.type)
+Hask.make_instance(TypedFunc, type=lambda tf: tf.fn_type)
 
 
 #=============================================================================#
 # ADT creation
 
 
-class ADT(object):
+class __ADT__(object):
     """Base class for Hask algebraic data types."""
     pass
 
@@ -370,9 +335,9 @@ def make_type_const(name, typeargs):
 
     default_attrs = {"__params__":tuple(typeargs), "__constructors__":(),
              __typeclass_slot__:()}
-    cls = type(name, (ADT,), default_attrs)
+    cls = type(name, (__ADT__,), default_attrs)
 
-    Hask(cls, lambda self:
+    Hask.make_instance(cls, lambda self:
             TypeOperator(cls, [TypeVariable() for i in cls.__params__]))
     cls.__iter__ = lambda self: raise_fn(TypeError)
     cls.__contains__ = lambda self, other: raise_fn(TypeError)
@@ -402,6 +367,7 @@ def make_data_const(name, fields, type_constructor):
     # create the data constructor
     base = namedtuple(name, ["i%s" % i for i, _ in enumerate(fields)])
     cls = type(name, (type_constructor, base), {})
+    cls.__type_constructor__ = type_constructor
 
     # If the data constructor takes no arguments, create an instance of it
     # and return that instance rather than returning the class
