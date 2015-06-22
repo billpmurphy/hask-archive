@@ -1,10 +1,52 @@
-from ..lang.builtins import Either
-from ..lang.builtins import Left
-from ..lang.builtins import Right
+from ..lang.typeclasses import Show
 from ..lang.syntax import sig
 from ..lang.syntax import H
 from ..lang.syntax import t
+from ..lang.syntax import d
+from ..lang.syntax import data
+from ..lang.syntax import deriving
+from ..lang.syntax import instance
 from ..lang.syntax import L
+
+from Eq import Eq
+from Ord import Ord
+from Functor import Functor
+from ..Control.Applicative import Applicative
+from ..Control.Monad import Monad
+
+
+# data Either a b = Left b | Right a deriving(Show, Eq, Ord)
+Either, Left, Right =\
+        data.Either("a", "b") == d.Left("b") | d.Right("a") &\
+                                 deriving(Show, Eq, Ord)
+
+instance(Functor, Either).where(
+    fmap = lambda v, f: v if Left(v[0]) == v else Right(f(v[0]))
+)
+
+instance(Applicative, Either).where(
+    pure = Right
+)
+
+instance(Monad, Either).where(
+    bind = lambda v, f: v if Left(v[0]) == v else f(v[0])
+)
+
+
+def in_either(fn, *args, **kwargs):
+    """
+    Decorator for monadic error handling.
+    If the decorated function raises an exception, return the exception inside
+    Left. Otherwise, take the result and wrap it in Right.
+    """
+    def closure_in_either(*args, **kwargs):
+        try:
+            return Right(fn(*args, **kwargs))
+        except Exception as e:
+            return Left(e)
+    if len(args) > 0 or len(kwargs) > 0:
+        return _closure_in_either(*args, **kwargs)
+    return closure_in_either
 
 
 @sig(H/ (H/ "a" >> "c") >> (H/ "b" >> "c") >> t(Either, "a", "b") >> "c")

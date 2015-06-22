@@ -1,10 +1,51 @@
-from ..lang.builtins import Maybe
-from ..lang.builtins import Just
-from ..lang.builtins import Nothing
+from ..lang.typeclasses import Read, Show
 from ..lang.syntax import L
 from ..lang.syntax import H
 from ..lang.syntax import sig
 from ..lang.syntax import t
+from ..lang.syntax import data
+from ..lang.syntax import d
+from ..lang.syntax import deriving
+from ..lang.syntax import instance
+
+from Eq import Eq
+from Ord import Ord
+from Functor import Functor
+from ..Control.Applicative import Applicative
+from ..Control.Monad import Monad
+
+
+# data Maybe a = Nothing | Just a deriving(Show, Eq, Ord)
+Maybe, Nothing, Just =\
+        data.Maybe("a") == d.Nothing | d.Just("a") & deriving(Show, Eq, Ord)
+
+instance(Functor, Maybe).where(
+    fmap = lambda x, f: Nothing if x == Nothing else Just(f(x[0]))
+)
+
+instance(Applicative, Maybe).where(
+    pure = Just
+)
+
+instance(Monad, Maybe).where(
+    bind = lambda x, f: Nothing if x == Nothing else f(x[0])
+)
+
+
+def in_maybe(fn, *args, **kwargs):
+    """
+    Decorator for monadic error handling.
+    If the decorated function raises an exception, return Nothing. Otherwise,
+    take the result and wrap it in a Just.
+    """
+    def closure_in_maybe(*args, **kwargs):
+        try:
+            return Just(fn(*args, **kwargs))
+        except:
+            return Nothing
+    if len(args) > 0 or len(kwargs) > 0:
+        return _closure_in_maybe(*args, **kwargs)
+    return closure_in_maybe
 
 
 @sig(H/ "b" >> (H/ "a" >> "b") >> t(Maybe, "a") >> "b")
@@ -17,7 +58,7 @@ def maybe(default, f, maybe_a):
     Otherwise, it applies the function to the value inside the Just and returns
     the result.
     """
-    pass
+    return default if maybe_a == Nothing else f(maybe_a[0])
 
 
 @sig(H/ t(Maybe, "a") >> bool)

@@ -121,6 +121,25 @@ class Syntax(object):
 
 
 #=============================================================================#
+# Typeclass instance declaration
+
+
+class instance(Syntax):
+
+    def __init__(self, typeclass, cls):
+        if not issubclass(typeclass, Typeclass):
+            raise TypeError("%s is not a typeclass" % typeclass)
+        self.typeclass = typeclass
+        self.cls = cls
+        return
+
+    def where(self, **kwargs):
+        self.typeclass(self.cls, **kwargs)
+        #self.typeclass.make_instance(self.cls, **kwargs)
+        return
+
+
+#=============================================================================#
 # Type signatures
 
 

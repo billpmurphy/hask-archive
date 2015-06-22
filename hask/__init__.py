@@ -47,26 +47,24 @@ from hask.lang.hof import Func
 
 ## Builtin types (Python builtins + Hask builtins)
 from hask.lang.builtins import List
-from hask.lang.builtins import Maybe
-from hask.lang.builtins import Just
-from hask.lang.builtins import Nothing
-from hask.lang.builtins import in_maybe
-from hask.lang.builtins import Either
-from hask.lang.builtins import Left
-from hask.lang.builtins import Right
-from hask.lang.builtins import in_either
-from hask.lang.builtins import Ordering
-from hask.lang.builtins import LT
-from hask.lang.builtins import EQ
-from hask.lang.builtins import GT
-
-## REPL tools
-from hask.lang.builtins import _t
-from hask.lang.builtins import _i
-from hask.lang.builtins import _q
+from hask.Prelude import Maybe
+from hask.Prelude import Just
+from hask.Prelude import Nothing
+from hask.Prelude import in_maybe
+from hask.Prelude import Either
+from hask.Prelude import Left
+from hask.Prelude import Right
+from hask.Prelude import in_either
+from hask.Prelude import Ordering
+from hask.Prelude import LT
+from hask.Prelude import EQ
+from hask.Prelude import GT
 
 
-# Syntax
+# Core language
+
+## Typeclass instance declaration
+from hask.lang.syntax import instance
 
 ## Operator sections
 from hask.lang.syntax import __
@@ -92,6 +90,12 @@ from hask.lang.syntax import t
 
 ## Pattern matching
 from hask.lang.caseof import caseof
+
+## REPL tools
+from hask.lang.builtins import _t
+from hask.lang.builtins import _i
+from hask.lang.builtins import _q
+
 
 
 # Haskell base

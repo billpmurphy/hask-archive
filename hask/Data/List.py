@@ -5,11 +5,10 @@ from ..lang.syntax import sig
 from ..lang.syntax import t
 from ..lang.syntax import L
 
-from ..lang.typeclasses import Ord
-
-from ..lang.builtins import Maybe
-from ..lang.builtins import Just
-from ..lang.builtins import Nothing
+from Ord import Ord
+from Maybe import Maybe
+from Maybe import Just
+from Maybe import Nothing
 
 
 #=============================================================================#

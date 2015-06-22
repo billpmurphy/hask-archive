@@ -1,10 +1,17 @@
+from ..lang.typeclasses import Show, Bounded
+from ..lang.typeclasses import Ord
 from ..lang.syntax import sig
 from ..lang.syntax import H
-from ..lang.builtins import Ordering
-from ..lang.builtins import LT
-from ..lang.builtins import EQ
-from ..lang.builtins import GT
-from ..lang.typeclasses import Ord
+from ..lang.syntax import data
+from ..lang.syntax import d
+from ..lang.syntax import deriving
+
+from Eq import Eq
+
+
+# data Ordering = LT | EQ | GT deriving(Show, Eq, Ord, Bounded)
+Ordering, LT, EQ, GT =\
+        data.Ordering == d.LT | d.EQ | d.GT & deriving(Show, Eq, Ord, Bounded)
 
 
 #TODO: Down?

@@ -1,6 +1,8 @@
 from .lang.syntax import H
 from .lang.syntax import sig
 from .lang.syntax import L
+from .lang.syntax import instance
+
 
 #=============================================================================#
 # Standard types, classes, and related functions
@@ -10,11 +12,13 @@ from .lang.syntax import L
 from Data.Maybe import Maybe
 from Data.Maybe import Just
 from Data.Maybe import Nothing
+from Data.Maybe import in_maybe
 from Data.Maybe import maybe
 
 from Data.Either import Either
 from Data.Either import Left
 from Data.Either import Right
+from Data.Either import in_either
 from Data.Either import either
 
 from Data.Ord import Ordering
@@ -39,12 +43,6 @@ from Data.Tuple import uncurry
 
 from .lang.typeclasses import Read
 from .lang.typeclasses import Show
-from .lang.typeclasses import Eq
-
-
-@sig(H/ str >> "a")
-def read(string):
-    return Read.read(string)
 
 
 @sig(H/ "a" >> str)
@@ -52,9 +50,61 @@ def show(obj):
     return Show.show(obj)
 
 
+Show.derive_instance(str)
+Show.derive_instance(int)
+Show(long, long.__str__)
+Show(float, float.__str__)
+Show(complex, complex.__str__)
+Show(bool, bool.__str__)
+Show(list, list.__str__)
+Show(tuple, tuple.__str__)
+
+from Data.Eq import Eq
+
+Eq(str, str.__eq__)
+Eq(int, int.__eq__)
+Eq(long, long.__eq__)
+Eq(float, float.__eq__)
+Eq(complex, complex.__eq__)
+Eq(bool, bool.__eq__)
+Eq(list, list.__eq__)
+Eq(tuple, tuple.__eq__)
+
+
+@sig(H/ str >> "a")
+def read(string):
+    return Read.read(string)
+
+
+
+from Data.Ord import Ord
 from Data.Ord import max
 from Data.Ord import min
 from Data.Ord import compare
+
+Ord(str, str.__lt__, str.__le__, str.__gt__, str.__ge__)
+Ord(int, int.__lt__, int.__le__, int.__gt__, int.__ge__)
+Ord(long, long.__lt__, long.__le__, long.__gt__, long.__ge__)
+Ord(float, float.__lt__, float.__le__, float.__gt__, float.__ge__)
+Ord(complex, complex.__lt__, complex.__le__, complex.__gt__, complex.__ge__)
+Ord(bool, bool.__lt__, bool.__le__, bool.__gt__, bool.__ge__)
+Ord(list, list.__lt__, list.__le__, list.__gt__, list.__ge__)
+Ord(tuple, tuple.__lt__, tuple.__le__, tuple.__gt__, tuple.__ge__)
+
+
+from .lang.typeclasses import Enum
+
+Enum(int,  toEnum=lambda a: a,      fromEnum=lambda a: a)
+Enum(long, toEnum=lambda a: a,      fromEnum=lambda a: a)
+Enum(bool, toEnum=lambda a: int(a), fromEnum=lambda a: bool(a))
+
+
+from .lang.typeclasses import Functor
+from .lang.typeclasses import Applicative
+from .lang.typeclasses import Monad
+from .lang.typeclasses import Traversable
+from .lang.typeclasses import Iterator
+from .lang.typeclasses import Foldable
 
 
 #=============================================================================#
@@ -62,12 +112,84 @@ from Data.Ord import compare
 ### Numeric types
 
 
+from .lang.typeclasses import Num
+from .lang.typeclasses import Real
+from .lang.typeclasses import Integral
+from .lang.typeclasses import Floating
+from .lang.typeclasses import Fractional
+from .lang.typeclasses import RealFrac
+from .lang.typeclasses import RealFloat
+from .lang.typeclasses import Read
+
+def __signum(a):
+    """
+    Signum function for python builtin numeric types.
+    """
+    if a < 0:   return -1
+    elif a > 0: return 1
+    else:       return 0
+
+
+instance(Num, int).where(
+    add = int.__add__,
+    mul = int.__mul__,
+    abs = abs,
+    signum = __signum,
+    fromInteger = int,
+    negate = int.__neg__,
+    sub = int.__sub__
+)
+
+instance(Num, long).where(
+    add = long.__add__,
+    mul = long.__mul__,
+    abs = abs,
+    signum = __signum,
+    fromInteger = long,
+    negate = long.__neg__,
+    sub = long.__sub__
+)
+
+instance(Num, float).where(
+    add = float.__add__,
+    mul = float.__mul__,
+    abs = abs,
+    signum = __signum,
+    fromInteger = float,
+    negate = float.__neg__,
+    sub = float.__sub__
+)
+
+instance(Num, complex).where(
+    add = complex.__add__,
+    mul = complex.__mul__,
+    abs = abs,
+    signum = __signum,
+    fromInteger = complex,
+    negate = complex.__neg__,
+    sub = complex.__sub__
+)
+
+
+Real(int)
+Real(long)
+Real(float)
+
+Integral(int)
+Integral(long)
+
+Fractional(float)
+
+Floating(float)
+
+RealFrac(float)
+
+RealFloat(float)
+
+
 #=============================================================================#
 # Numeric type classes
 
-
-from .lang.typeclasses import Num
-from .lang.typeclasses import Integral
 
 
 #=============================================================================#

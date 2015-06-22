@@ -27,8 +27,8 @@ class Read(Typeclass):
 
 class Show(Typeclass):
 
-    def __init__(self, cls, __str__):
-        super(Show, self).__init__(cls, attrs={"__str__":__str__})
+    def __init__(self, cls, show):
+        super(Show, self).__init__(cls, attrs={"__str__":show})
         return
 
     @staticmethod
@@ -46,7 +46,7 @@ class Show(Typeclass):
             nt_tup = nt_to_tuple(self)
             tuple_str = "(%s)" % nt_tup[0] if len(nt_tup) == 1 else str(nt_tup)
             return "{0}{1}".format(self.__class__.__name__, tuple_str)
-        Show(type_constructor, __str__ = __str__)
+        Show(type_constructor, show=__str__)
         return
 
 
@@ -65,13 +65,13 @@ class Eq(Typeclass):
     Minimal complete definition:
         __eq__
     """
-    def __init__(self, cls, __eq__, __ne__=None):
+    def __init__(self, cls, eq, ne=None):
         def default_not_eq(self, other):
             return not self.__eq__(other)
 
-        __ne__ = default_not_eq if __ne__ is None else __ne__
+        __ne__ = default_not_eq if ne is None else ne
 
-        super(Eq, self).__init__(cls, attrs={"__eq__":__eq__, "__ne__":__ne__})
+        super(Eq, self).__init__(cls, attrs={"__eq__":eq, "__ne__":__ne__})
         return
 
     @staticmethod
@@ -84,24 +84,23 @@ class Eq(Typeclass):
             return self.__class__ != other.__class__ or  \
                 nt_to_tuple(self) != nt_to_tuple(other)
 
-        Eq(type_constructor, __eq__ = __eq__, __ne__ = __ne__)
+        Eq(type_constructor, eq=__eq__, ne=__ne__)
         return
 
 
 
 class Ord(Typeclass):
 
-    def __init__(self, cls, __lt__, __le__=None, __gt__=None, __ge__=None):
-        __le = lambda s, o: s.__lt__(o) or s.__eq__(o)
-        __gt = lambda s, o: not s.__lt__(o) and not s.__eq__(o)
-        __ge = lambda s, o: not s.__lt__(o) or not s.__eq__(o)
+    def __init__(self, cls, lt, le=None, gt=None, ge=None):
+        __le__ = lambda s, o: s.__lt__(o) or s.__eq__(o)
+        __gt__ = lambda s, o: not s.__lt__(o) and not s.__eq__(o)
+        __ge__ = lambda s, o: not s.__lt__(o) or not s.__eq__(o)
 
-        __le__ = __le if __le__ is None else __le__
-        __gt__ = __gt if __gt__ is None else __gt__
-        __ge__ = __ge if __ge__ is None else __ge__
+        le = __le__ if le is None else le
+        gt = __gt__ if gt is None else gt
+        ge = __ge__ if ge is None else ge
 
-        attrs = {"__lt__":__lt__, "__le__":__le__,
-                 "__gt__":__gt__, "__ge__":__ge__}
+        attrs = {"__lt__":lt, "__le__":le, "__gt__":gt, "__ge__":ge}
         super(Ord, self).__init__(cls, dependencies=[Eq], attrs=attrs)
         return
 
@@ -126,7 +125,7 @@ class Ord(Typeclass):
         le = lambda s, o: zip_cmp(s, o, operator.le)
         gt = lambda s, o: zip_cmp(s, o, operator.gt)
         ge = lambda s, o: zip_cmp(s, o, operator.ge)
-        Ord(type_constructor, __lt__=lt, __le__=le, __gt__=gt, __ge__=ge)
+        Ord(type_constructor, lt=lt, le=le, gt=gt, ge=ge)
         return
 
 
@@ -238,14 +237,8 @@ class Num(Typeclass):
             return a.__add__(b.__neg__())
 
         sub = default_sub if sub is None else sub
-
-        attrs = {"__add__":add,
-                 "__mul__":mul,
-                 "__abs__":abs,
-                 "signum":signum,
-                 "fromInteger":fromInteger,
-                 "__neg__":negate,
-                 "__sub__":sub}
+        attrs = {"__add__":add, "__mul__":mul, "__abs__":abs, "signum":signum,
+                 "fromInteger":fromInteger, "__neg__":negate, "__sub__":sub}
 
         super(Num, self).__init__(cls, dependencies=[Show, Eq], attrs=attrs)
         return
@@ -312,17 +305,17 @@ class Functor(Typeclass):
 
 class Applicative(Typeclass):
 
-    def __init__(self, cls, __pure__):
+    def __init__(self, cls, pure):
         """
         Transform a class into a member of Applicative. The pure function must be
         supplied when making the class a member of Applicative.
         """
         @classmethod
-        def pure(cls, value):
-            return __pure__(cls, value)
+        def __pure__(cls, value):
+            return pure(cls, value)
 
         super(Applicative, self).__init__(cls, dependencies=[Functor],
-                                          attrs={"pure":pure})
+                                          attrs={"pure":__pure__})
         return
 
     @staticmethod
@@ -332,17 +325,14 @@ class Applicative(Typeclass):
 
 class Monad(Typeclass):
 
-    def __init__(self, cls, __bind__):
+    def __init__(self, cls, bind):
         """
         Transform a class into a member of Monad. The bind function must be
         supplied when making the class a member of Monad.
         """
-        def bind(self, fn):
-            return __bind__(self, fn)
-
         # `>>` syntax for monadic bind
         def rshift(self, fn):
-            return self.bind(fn)
+            return bind(self, fn)
 
         attrs = {"bind":bind, "__rshift__":rshift}
         super(Monad, self).__init__(cls, dependencies=[Applicative],
