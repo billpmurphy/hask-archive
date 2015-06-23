@@ -33,7 +33,6 @@ from hask import Applicative
 from hask import Monad
 from hask import Traversable
 from hask import Foldable
-from hask import Iterator
 
 from hask import Prelude
 
@@ -57,7 +56,6 @@ from hask.lang.hindley_milner import Function
 from hask.lang.hindley_milner import Tuple
 from hask.lang.hindley_milner import analyze
 from hask.lang.hindley_milner import unify
-
 
 
 te = TypeError
@@ -1030,7 +1028,6 @@ class TestMaybe(unittest.TestCase):
         self.assertFalse(has_instance(Maybe, Num))
         self.assertFalse(has_instance(Maybe, Foldable))
         self.assertFalse(has_instance(Maybe, Traversable))
-        self.assertFalse(has_instance(Maybe, Iterator))
 
     def test_show(self):
         self.assertEqual("Just(3)", str(Just(3)))
@@ -1097,7 +1094,6 @@ class TestEither(unittest.TestCase):
         self.assertFalse(has_instance(Maybe, Num))
         self.assertFalse(has_instance(Maybe, Foldable))
         self.assertFalse(has_instance(Maybe, Traversable))
-        self.assertFalse(has_instance(Maybe, Iterator))
 
 
 class TestList(unittest.TestCase):
@@ -1108,7 +1104,8 @@ class TestList(unittest.TestCase):
         self.assertTrue(has_instance(List, Functor))
         self.assertTrue(has_instance(List, Applicative))
         self.assertTrue(has_instance(List, Monad))
-        self.assertTrue(has_instance(List, Traversable))
+        #self.assertTrue(has_instance(List, Foldable))
+        #self.assertTrue(has_instance(List, Traversable))
 
     def test_indexing(self):
         # add more corner cases

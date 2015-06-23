@@ -84,7 +84,7 @@ class TypeMeta(type):
         self.__dependencies__ = self.mro()[1:-2] # excl. self, Typeclass, object
 
     def __getitem__(self, item):
-        return self.__instances__[resolve(item)]
+        return self.__instances__[id(resolve(item))]
 
 
 class Typeclass(object):
@@ -93,22 +93,23 @@ class Typeclass(object):
 
     @classmethod
     def make_instance(typeclass, type_, *args):
-        raise NotImplementedError("Typeclasses must implement `make`")
+        raise NotImplementedError("Typeclasses must implement make_instance")
 
     @classmethod
     def derive_instance(typeclass, type_):
-        raise NotImplementedError("Typeclasses must implement `derive`")
+        raise NotImplementedError("Typeclasses must implement derive_instance")
 
 
 def build_instance(typeclass, cls, attrs):
     # 1) check dependencies
     for dep in typeclass.__dependencies__:
-        if cls not in dep.__instances__:
+        if id(cls) not in dep.__instances__:
             raise TypeError("Missing dependency: %s" % dep.__name__)
 
     # 2) add type and its instance method to typeclass's instance dictionary
-    __methods__ = namedtuple("__%s__" % cls.__name__, attrs.keys())(**attrs)
-    typeclass.__instances__[cls] = __methods__
+    #name = cls.__name__ if type(cls) == type else str(cls)
+    __methods__ = namedtuple("__%s__" % str(id(cls)), attrs.keys())(**attrs)
+    typeclass.__instances__[id(cls)] = __methods__
     return
 
 
@@ -125,7 +126,7 @@ def has_instance(cls, typeclass):
     """
     if not issubclass(typeclass, Typeclass):
         return False
-    return cls in typeclass.__instances__
+    return id(cls) in typeclass.__instances__
 
 
 class Hask(Typeclass):
@@ -135,6 +136,7 @@ class Hask(Typeclass):
     @classmethod
     def make_instance(typeclass, cls, type):
         build_instance(Hask, cls, {"type":type})
+        return
 
 
 #=============================================================================#
@@ -151,14 +153,18 @@ def typeof(obj):
     Returns:
         An obj
     """
-    if isinstance(obj, tuple):
+    if isinstance(obj, __ADT__):
+        return Hask.__instances__[id(type(obj))].type(obj)
+        #return Hask.__instances__[type(obj).__type_constructor__].type(obj)
+
+    elif has_instance(type(obj), Hask):
+        return Hask.__instances__[id(type(obj))].type(obj)
+
+    elif isinstance(obj, tuple):
         return Tuple(map(typeof, obj))
 
     elif obj is None:
         return TypeOperator(None, [])
-
-    elif isinstance(obj, __ADT__):
-        return Hask.__instances__[type(obj).__type_constructor__].type(obj)
 
     return TypeOperator(type(obj), [])
 
@@ -339,8 +345,10 @@ def make_type_const(name, typeargs):
              __typeclass_slot__:()}
     cls = type(name, (__ADT__,), default_attrs)
 
-    Hask.make_instance(cls, lambda self:
-            TypeOperator(cls, [TypeVariable() for i in cls.__params__]))
+    cls.__type__ = lambda self: \
+        TypeOperator(cls, [TypeVariable() for i in cls.__params__])
+    Hask.make_instance(cls, cls.__type__)
+
     cls.__iter__ = lambda self: raise_fn(TypeError)
     cls.__contains__ = lambda self, other: raise_fn(TypeError)
     cls.__add__ = lambda self, other: raise_fn(TypeError)
@@ -375,6 +383,7 @@ def make_data_const(name, fields, type_constructor):
     # and return that instance rather than returning the class
     # The type() method does not need to be modified in this case
     if len(fields) == 0:
+        Hask.make_instance(cls, type_constructor.__type__)
         cls = cls()
     # Otherwise, modify type() so that it matches up fields from the data
     # constructor with type params from the type constructor

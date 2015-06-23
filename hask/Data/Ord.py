@@ -1,10 +1,10 @@
-from ..lang.typeclasses import Show, Bounded
-from ..lang.typeclasses import Ord
-from ..lang.syntax import sig
-from ..lang.syntax import H
-from ..lang.syntax import data
-from ..lang.syntax import d
-from ..lang.syntax import deriving
+from ..lang import Show, Bounded
+from ..lang import Ord
+from ..lang import sig
+from ..lang import H
+from ..lang import data
+from ..lang import d
+from ..lang import deriving
 
 from Eq import Eq
 

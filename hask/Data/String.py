@@ -1,6 +1,6 @@
-from ..lang.syntax import H
-from ..lang.syntax import sig
-from ..lang.syntax import L
+from ..lang import H
+from ..lang import sig
+from ..lang import L
 
 
 @sig(H/ str >> [str])

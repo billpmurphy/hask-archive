@@ -1,10 +1,14 @@
-from ..lang.type_system import Typeclass
-from ..lang.type_system import is_builtin
-from ..lang.type_system import build_instance
-from ..lang.syntax import H
-from ..lang.syntax import sig
-from ..lang.syntax import t
+from ..lang import TypedFunc
+from ..lang import Typeclass
+from ..lang import is_builtin
+from ..lang import build_instance
+from ..lang import List
+from ..lang import H
+from ..lang import sig
+from ..lang import t
+from ..lang import instance
 
+from ..lang import Func
 
 class Functor(Typeclass):
     @classmethod
@@ -18,3 +22,16 @@ class Functor(Typeclass):
 @sig(H[(Functor, "f")]/ (H/ "a" >> "b") >> t("f", "a") >> t("f", "b"))
 def fmap(f, x):
     return Functor[x].fmap(f, x)
+
+
+instance(Functor, List).where(
+    fmap=List.fmap
+)
+
+instance(Functor, Func).where(
+    fmap = Func.fmap
+)
+
+instance(Functor, TypedFunc).where(
+    fmap = TypedFunc.__mul__
+)

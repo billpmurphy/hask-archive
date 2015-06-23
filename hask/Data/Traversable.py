@@ -1,4 +1,4 @@
-from ..lang.type_system import build_instance
+from ..lang import build_instance
 from Foldable import Foldable
 from Functor import Functor
 

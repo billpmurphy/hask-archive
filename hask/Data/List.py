@@ -1,9 +1,9 @@
 import itertools
 
-from ..lang.syntax import H
-from ..lang.syntax import sig
-from ..lang.syntax import t
-from ..lang.syntax import L
+from ..lang import H
+from ..lang import sig
+from ..lang import t
+from ..lang import L
 
 from Ord import Ord
 from Maybe import Maybe

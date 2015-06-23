@@ -13,6 +13,7 @@ from typeclasses import Show
 from typeclasses import Eq
 from typeclasses import Ord
 from typeclasses import Enum
+from typeclasses import enumFromThenTo
 from typeclasses import Bounded
 from typeclasses import Read
 
@@ -24,7 +25,6 @@ from typeclasses import Read
 
 
 # functions are functors, fmap is just composition
-#Functor.make_instance(TypedFunc, fmap=TypedFunc.__mul__)
 
 
 
@@ -134,7 +134,7 @@ class List(collections.Sequence):
         if i >= 0:
             while (i+1) > len(self.evaluated):
                 try:
-                    next(self)
+                    self.__next__()
                 except (StopIteration, IndexError):
                     raise IndexError("List index out of range: %s" % i)
         else:
@@ -143,7 +143,7 @@ class List(collections.Sequence):
 
         if is_slice:
             istart, istop, istep = ix.indices(len(self.evaluated))
-            indices = Enum.enumFromThenTo(istart, istart+istep, istop-istep)
+            indices = enumFromThenTo(istart, istart+istep, istop-istep)
             return [self.evaluated[idx] for idx in indices]
 
         return self.evaluated[ix]
@@ -152,21 +152,14 @@ class List(collections.Sequence):
 
 ## Typeclass instances for list
 Hask.make_instance(List, type=List.type)
-#Read.make_instance(List, read=eval)
 Show.make_instance(List, show=List.__str__)
 Eq.make_instance(List, eq=List.__eq__)
-#Functor.make_instance(List, fmap=List.fmap)
-#Applicative.make_instance(List, pure=List.pure)
-#Monad.make_instance(List, bind=List.bind)
+#Read.make_instance(List, read=eval)
 #Foldable.make_instance(List, foldr=List.foldr)
 #Traversable.make_instance(List,
 #        iter=List.__iter__,
 #        getitem=List.__getitem__,
 #        len=List.__len__)
-
-
-# TODO: deprecate this trash
-#Functor.make_instance(Func, fmap=Func.fmap)
 
 
 #=============================================================================#

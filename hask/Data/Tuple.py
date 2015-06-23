@@ -1,5 +1,5 @@
-from ..lang.syntax import H
-from ..lang.syntax import sig
+from ..lang import H
+from ..lang import sig
 
 
 @sig(H/ ("a", "b") >> "a")

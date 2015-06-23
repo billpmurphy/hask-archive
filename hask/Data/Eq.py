@@ -1,3 +1,3 @@
-from ..lang.typeclasses import Eq
+from ..lang import Eq
 
 

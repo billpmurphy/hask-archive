@@ -2,6 +2,10 @@ import operator
 
 from builtins import List
 from typeclasses import Enum
+from typeclasses import enumFrom
+from typeclasses import enumFromThen
+from typeclasses import enumFromTo
+from typeclasses import enumFromThenTo
 from type_system import Typeclass
 from type_system import TypedFunc
 from type_system import TypeSignature
@@ -680,19 +684,19 @@ class __list_comprehension__(Syntax):
         if isinstance(lst, tuple) and len(lst) < 5 and Ellipsis in lst:
             # L[x, ...]
             if len(lst) == 2 and lst[1] is Ellipsis:
-                return List(Enum.enumFrom(lst[0]))
+                return List(enumFrom(lst[0]))
 
             # L[x, y, ...]
             elif len(lst) == 3 and lst[2] is Ellipsis:
-                return List(Enum.enumFromThen(lst[0], lst[1]))
+                return List(enumFromThen(lst[0], lst[1]))
 
             # L[x, ..., y]
             elif len(lst) == 3 and lst[1] is Ellipsis:
-                return List(Enum.enumFromTo(lst[0], lst[2]))
+                return List(enumFromTo(lst[0], lst[2]))
 
             # L[x, y, ..., z]
             elif len(lst) == 4 and lst[2] is Ellipsis:
-                return List(Enum.enumFromThenTo(lst[0], lst[1], lst[3]))
+                return List(enumFromThenTo(lst[0], lst[1], lst[3]))
 
             self.raise_invalid()
         return List(lst)

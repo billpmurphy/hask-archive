@@ -1,12 +1,12 @@
-from ..lang.typeclasses import Read, Show
-from ..lang.syntax import L
-from ..lang.syntax import H
-from ..lang.syntax import sig
-from ..lang.syntax import t
-from ..lang.syntax import data
-from ..lang.syntax import d
-from ..lang.syntax import deriving
-from ..lang.syntax import instance
+from ..lang import Read, Show
+from ..lang import L
+from ..lang import H
+from ..lang import sig
+from ..lang import t
+from ..lang import data
+from ..lang import d
+from ..lang import deriving
+from ..lang import instance
 
 from Eq import Eq
 from Ord import Ord

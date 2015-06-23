@@ -1,7 +1,7 @@
-from ..lang.type_system import Typeclass
-from ..lang.type_system import build_instance
-from ..lang.syntax import H
-from ..lang.syntax import sig
+from ..lang import Typeclass
+from ..lang import build_instance
+from ..lang import H
+from ..lang import sig
 
 
 class Monoid(Typeclass):

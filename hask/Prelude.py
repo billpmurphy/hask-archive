@@ -1,8 +1,10 @@
-from .lang.type_system import build_instance
-from .lang.syntax import H
-from .lang.syntax import sig
-from .lang.syntax import L
-from .lang.syntax import instance
+import math
+
+from .lang import build_instance
+from .lang import H
+from .lang import sig
+from .lang import L
+from .lang import instance
 
 
 #=============================================================================#
@@ -67,6 +69,15 @@ for _type in (str, int, long, float, complex, bool, list, tuple):
 
 
 from .lang.typeclasses import Enum
+from .lang.typeclasses import fromEnum
+from .lang.typeclasses import toEnum
+from .lang.typeclasses import succ
+from .lang.typeclasses import pred
+from .lang.typeclasses import enumFromThen
+from .lang.typeclasses import enumFrom
+from .lang.typeclasses import enumFromThenTo
+from .lang.typeclasses import enumFromTo
+
 
 instance(Enum, int).where(
         toEnum=int,
@@ -83,6 +94,10 @@ instance(Enum, bool).where(
         fromEnum=bool
 )
 
+instance(Enum, str).where(
+        toEnum=ord,
+        fromEnum=chr
+)
 
 from .lang.typeclasses import Bounded
 from Data.Functor import Functor
@@ -97,6 +112,11 @@ from Data.Traversable import Traversable
 #=============================================================================#
 ## Numbers
 ### Numeric types
+
+
+
+#=============================================================================#
+# Numeric type classes
 
 
 class Num(Show, Eq):
@@ -170,12 +190,16 @@ class Fractional(Num):
         build_instance(Fractional, cls, {})
         return
 
+instance(Fractional, float).where()
+
 
 class Floating(Fractional):
     @classmethod
     def make_instance(typeclass, cls):
         build_instance(Floating, cls, {})
         return
+
+instance(Floating, float).where()
 
 
 class Real(Num, Ord):
@@ -185,11 +209,20 @@ class Real(Num, Ord):
         return
 
 
+instance(Real, int).where()
+instance(Real, long).where()
+instance(Real, float).where()
+
+
 class Integral(Real, Enum):
     @classmethod
     def make_instance(typeclass, cls):
         build_instance(Integral, cls, {})
         return
+
+
+instance(Integral, int).where()
+instance(Integral, long).where()
 
 
 class RealFrac(Real, Fractional):
@@ -199,29 +232,34 @@ class RealFrac(Real, Fractional):
         return
 
 
+instance(RealFrac, float).where()
+
+
 class RealFloat(Floating, RealFrac):
     @classmethod
-    def make_instance(typeclass, cls):
+    def make_instance(typeclass, cls, floatRadix, floatDigits, floatRange,
+            decodeFloat, encodeFloat, exponent, significant, scaleFloat, isNan,
+            isInfinite, isDenormalized, isNegativeZero, isIEEE, atan2):
         build_instance(RealFloat, cls, {})
         return
 
 
-instance(Real, int).where()
-instance(Real, long).where()
-instance(Real, float).where()
-
-instance(Integral, int).where()
-instance(Integral, long).where()
-
-instance(Fractional, float).where()
-instance(Floating, float).where()
-instance(RealFrac, float).where()
-instance(RealFloat, float).where()
-
-
-#=============================================================================#
-# Numeric type classes
-
+instance(RealFloat, float).where(
+    floatRadix=None,
+    floatDigits=None,
+    floatRange=None,
+    decodeFloat=None,
+    encodeFloat=None,
+    exponent=None,
+    significant=None,
+    scaleFloat=None,
+    isNan=None,
+    isInfinite=lambda x: x == float('inf') or x == -float('inf'),
+    isDenormalized=None,
+    isNegativeZero=None,
+    isIEEE=None,
+    atan2=math.atan2
+)
 
 
 #=============================================================================#
@@ -288,6 +326,20 @@ def lcm(x, y):
 from Data.Functor import Functor
 from Control.Applicative import Applicative
 from Control.Monad import Monad
+
+
+def mapM(fm, xs):
+    return sequence(map(fm, xs))
+
+def mapM_(fm, xs):
+    return sequence_(map(fm, xs))
+
+def sequence(xs):
+    return
+
+def sequence(xs):
+    return
+
 
 
 #=============================================================================#

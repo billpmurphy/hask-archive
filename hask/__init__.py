@@ -3,6 +3,7 @@ __version__ = "0.0.1"
 # Core language
 
 ## Standard Hask typeclasses and associated functions
+from hask.lang.type_system import typeof
 from hask.lang.type_system import has_instance
 from hask.lang.type_system import Typeclass
 from hask.lang.type_system import Hask
@@ -23,18 +24,16 @@ from hask.Prelude import Applicative
 from hask.Prelude import Monad
 from hask.Prelude import Traversable
 from hask.Prelude import Foldable
-from hask.lang.typeclasses import succ
-from hask.lang.typeclasses import pred
-from hask.lang.typeclasses import toEnum
-from hask.lang.typeclasses import fromEnum
-from hask.lang.typeclasses import enumFrom
-from hask.lang.typeclasses import enumFromThen
-from hask.lang.typeclasses import enumFromTo
-from hask.lang.typeclasses import enumFromThenTo
-from hask.lang.typeclasses import foldr
-from hask.lang.typeclasses import length
-from hask.lang.typeclasses import mempty
-from hask.lang.typeclasses import mappend
+from hask.Prelude import succ
+from hask.Prelude import pred
+from hask.Prelude import toEnum
+from hask.Prelude import fromEnum
+from hask.Prelude import enumFrom
+from hask.Prelude import enumFromThen
+from hask.Prelude import enumFromTo
+from hask.Prelude import enumFromThenTo
+#from hask.Prelude import foldr
+#from hask.Prelude import length
 
 # TODO: deprecate
 from hask.lang.hof import const

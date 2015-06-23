@@ -1,5 +1,6 @@
-from ..lang.type_system import Typeclass
-from ..lang.type_system import build_instance
+from ..lang import Typeclass
+from ..lang import build_instance
+from ..lang import List
 
 
 class Foldable(Typeclass):

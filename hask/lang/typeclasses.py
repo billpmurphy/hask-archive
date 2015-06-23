@@ -147,86 +147,65 @@ class Bounded(Typeclass):
         Bounded.make_instance(cls, minBound=minBound, maxBound=maxBound)
         return
 
-    @staticmethod
-    def maxBound(a):
-        if is_builtin(type(a)):
-            if type(a) == int:
-                return sys.maxint
-            elif type(a) == float:
-                return sys.float_info.max
-        return a.maxBound()
-
-    @staticmethod
-    def minBound(a):
-        if is_builtin(type(a)):
-            if type(a) == int:
-                return -sys.maxint - 1
-            elif type(a) == float:
-                return sys.float_info.min
-        return a.minBound()
-
 
 class Enum(Typeclass):
     @classmethod
     def make_instance(typeclass, cls, toEnum, fromEnum):
-        attrs = {"toEnum":toEnum, "fromEnum":fromEnum}
+        def succ(a):
+            return fromEnum(toEnum(a) + 1)
+
+        def pred(a):
+            return fromEnum(toEnum(a) - 1)
+
+        def enumFromThen(start, second):
+            pointer = toEnum(start)
+            step = toEnum(second) - pointer
+            while True:
+                yield fromEnum(pointer)
+                pointer += step
+            return
+
+        def enumFrom(start):
+            return enumFromThen(start, succ(start))
+
+        def enumFromThenTo(start, second, end):
+            pointer, stop = toEnum(start), toEnum(end)
+            step = toEnum(second) - pointer
+            while pointer <= stop:
+                yield fromEnum(pointer)
+                pointer += step
+            return
+
+        def enumFromTo(start, end):
+            return enumFromThenTo(start, succ(start), end)
+
+        attrs = {"toEnum":toEnum, "fromEnum":fromEnum, "succ":succ,
+                 "pred":pred, "enumFromThen":enumFromThen, "enumFrom":enumFrom,
+                 "enumFromThenTo":enumFromThenTo, "enumFromTo":enumFromTo}
         build_instance(Enum, cls, attrs)
         return
 
-    @staticmethod
-    def toEnum(a):
-        if is_builtin(type(a)):
-            if has_instance(type(a), Num):
-                return int(a)
-            elif type(a) == str:
-                return ord(a)
-        return a.toEnum()
 
-    @staticmethod
-    def fromEnum(a, _return=None):
-        if is_builtin(type(a)):
-            if has_instance(_return, Num):
-                return a
-            elif _return == str:
-                return chr(a)
-        elif _return is not None:
-            return _return.from_Enum(a)
-        return a.fromEnum()
+def toEnum(a):
+    return Enum[a].toEnum(a)
 
-    @staticmethod
-    def succ(a):
-        return Enum.fromEnum(Enum.toEnum(a) + 1, type(a))
+def fromEnum(a):
+    return Enum[a].fromEnum(a)
 
-    @staticmethod
-    def pred(a):
-        return Enum.fromEnum(Enum.toEnum(a) - 1, type(a))
+def succ(a):
+    return Enum[a].succ(a)
 
-    @staticmethod
-    def enumFromThen(start, second):
-        pointer = Enum.toEnum(start)
-        step = Enum.toEnum(second) - pointer
-        while True:
-            yield Enum.fromEnum(pointer, type(start))
-            pointer += step
-        return
+def pred(a):
+    return Enum[a].pred(a)
 
-    @staticmethod
-    def enumFrom(start):
-        return Enum.enumFromThen(start, Enum.succ(start))
+def enumFromThen(start, second):
+    return Enum[start].enumFromThen(start, second)
 
-    @staticmethod
-    def enumFromThenTo(start, second, end):
-        pointer, stop = Enum.toEnum(start), Enum.toEnum(end)
-        step = Enum.toEnum(second) - pointer
-        while pointer <= stop:
-            yield Enum.fromEnum(pointer, type(start))
-            pointer += step
-        return
+def enumFrom(start):
+    return Enum[start].enumFrom(start)
 
-    @staticmethod
-    def enumFromTo(start, end):
-        return Enum.enumFromThenTo(start, Enum.succ(start), end)
+def enumFromThenTo(start, second, end):
+    return Enum[start].enumFromThenTo(start, second, end)
 
-
-
-
+def enumFromTo(start, end):
+    return Enum[start].enumFromTo(start, end)
