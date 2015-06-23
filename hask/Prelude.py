@@ -1,3 +1,4 @@
+from .lang.type_system import build_instance
 from .lang.syntax import H
 from .lang.syntax import sig
 from .lang.syntax import L
@@ -50,56 +51,47 @@ def show(obj):
     return Show.show(obj)
 
 
-Show.derive_instance(str)
-Show.derive_instance(int)
-Show(long, long.__str__)
-Show(float, float.__str__)
-Show(complex, complex.__str__)
-Show(bool, bool.__str__)
-Show(list, list.__str__)
-Show(tuple, tuple.__str__)
-
 from Data.Eq import Eq
-
-Eq(str, str.__eq__)
-Eq(int, int.__eq__)
-Eq(long, long.__eq__)
-Eq(float, float.__eq__)
-Eq(complex, complex.__eq__)
-Eq(bool, bool.__eq__)
-Eq(list, list.__eq__)
-Eq(tuple, tuple.__eq__)
-
 from Data.Ord import Ord
 from Data.Ord import max
 from Data.Ord import min
 from Data.Ord import compare
 
-Ord(str, str.__lt__, str.__le__, str.__gt__, str.__ge__)
-Ord(int, int.__lt__, int.__le__, int.__gt__, int.__ge__)
-Ord(long, long.__lt__, long.__le__, long.__gt__, long.__ge__)
-Ord(float, float.__lt__, float.__le__, float.__gt__, float.__ge__)
-Ord(complex, complex.__lt__, complex.__le__, complex.__gt__, complex.__ge__)
-Ord(bool, bool.__lt__, bool.__le__, bool.__gt__, bool.__ge__)
-Ord(list, list.__lt__, list.__le__, list.__gt__, list.__ge__)
-Ord(tuple, tuple.__lt__, tuple.__le__, tuple.__gt__, tuple.__ge__)
+
+# builtin instances for Show
+for _type in (str, int, long, float, complex, bool, list, tuple):
+    instance(Show, _type).where(show=_type.__str__)
+    instance(Eq, _type).where(eq=_type.__eq__, ne=_type.__ne__)
+    instance(Ord, _type).where(
+            lt=_type.__lt__, le=_type.__le__, gt=_type.__gt__, ge=_type.__ge__)
 
 
 from .lang.typeclasses import Enum
 
-Enum(int,  toEnum=lambda a: a,      fromEnum=lambda a: a)
-Enum(long, toEnum=lambda a: a,      fromEnum=lambda a: a)
-Enum(bool, toEnum=lambda a: int(a), fromEnum=lambda a: bool(a))
+instance(Enum, int).where(
+        toEnum=int,
+        fromEnum=int
+)
+
+instance(Enum, long).where(
+        toEnum=int,
+        fromEnum=long
+)
+
+instance(Enum, bool).where(
+        toEnum=int,
+        fromEnum=bool
+)
 
 
-from .lang.typeclasses import Functor
-from .lang.typeclasses import fmap
+from .lang.typeclasses import Bounded
+from Data.Functor import Functor
+from Data.Functor import fmap
 
-from .lang.typeclasses import Applicative
-from .lang.typeclasses import Monad
-from .lang.typeclasses import Traversable
-from .lang.typeclasses import Iterator
-from .lang.typeclasses import Foldable
+from Control.Applicative import Applicative
+from Control.Monad import Monad
+from Data.Foldable import Foldable
+from Data.Traversable import Traversable
 
 
 #=============================================================================#
@@ -107,14 +99,20 @@ from .lang.typeclasses import Foldable
 ### Numeric types
 
 
-from .lang.typeclasses import Num
-from .lang.typeclasses import Real
-from .lang.typeclasses import Integral
-from .lang.typeclasses import Floating
-from .lang.typeclasses import Fractional
-from .lang.typeclasses import RealFrac
-from .lang.typeclasses import RealFloat
-from .lang.typeclasses import Read
+class Num(Show, Eq):
+    @classmethod
+    def make_instance(typeclass, cls, add, mul, abs, signum, fromInteger,
+            negate, sub=None):
+        def default_sub(a, b):
+            return a.__add__(b.__neg__())
+
+        sub = default_sub if sub is None else sub
+        attrs = {"add":add, "mul":mul, "abs":abs, "signum":signum,
+                 "fromInteger":fromInteger, "neg":negate, "sub":sub}
+
+        build_instance(Num, cls, attrs)
+        return
+
 
 def __signum(a):
     """
@@ -166,20 +164,59 @@ instance(Num, complex).where(
 )
 
 
-Real(int)
-Real(long)
-Real(float)
+class Fractional(Num):
+    @classmethod
+    def make_instance(typeclass, cls):
+        build_instance(Fractional, cls, {})
+        return
 
-Integral(int)
-Integral(long)
 
-Fractional(float)
+class Floating(Fractional):
+    @classmethod
+    def make_instance(typeclass, cls):
+        build_instance(Floating, cls, {})
+        return
 
-Floating(float)
 
-RealFrac(float)
+class Real(Num, Ord):
+    @classmethod
+    def make_instance(typeclass, cls):
+        build_instance(Real, cls, {})
+        return
 
-RealFloat(float)
+
+class Integral(Real, Enum):
+    @classmethod
+    def make_instance(typeclass, cls):
+        build_instance(Integral, cls, {})
+        return
+
+
+class RealFrac(Real, Fractional):
+    @classmethod
+    def make_instance(typeclass, cls):
+        build_instance(RealFrac, cls, {})
+        return
+
+
+class RealFloat(Floating, RealFrac):
+    @classmethod
+    def make_instance(typeclass, cls):
+        build_instance(RealFloat, cls, {})
+        return
+
+
+instance(Real, int).where()
+instance(Real, long).where()
+instance(Real, float).where()
+
+instance(Integral, int).where()
+instance(Integral, long).where()
+
+instance(Fractional, float).where()
+instance(Floating, float).where()
+instance(RealFrac, float).where()
+instance(RealFloat, float).where()
 
 
 #=============================================================================#
@@ -248,9 +285,9 @@ def lcm(x, y):
 # Monads and functors
 
 
-from .lang.typeclasses import Functor
-from .lang.typeclasses import Applicative
-from .lang.typeclasses import Monad
+from Data.Functor import Functor
+from Control.Applicative import Applicative
+from Control.Monad import Monad
 
 
 #=============================================================================#

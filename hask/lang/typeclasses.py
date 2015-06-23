@@ -128,23 +128,23 @@ class Ord(Eq):
 
 
 class Bounded(Typeclass):
-
-    def __init__(self, cls, minBound, maxBound):
+    @classmethod
+    def make_instance(typeclass, cls, minBound, maxBound):
         attrs = {"minBound":minBound, "maxBound":maxBound}
-        super(Bounded, self).__init__(cls, attrs=attrs)
+        build_instance(Bounded, cls, attrs)
         return
 
-    @staticmethod
-    def derive_instance(type_constructor):
+    @classmethod
+    def derive_instance(typeclass, cls):
         # All data constructors must be enums
-        for data_con in type_constructor.__constructors__:
-            if not isinstance(data_con, type_constructor):
+        for data_con in cls.__constructors__:
+            if not isinstance(data_con, cls):
                 raise TypeError("Cannot derive Bounded; %s is not an enum" %
                                  data_con.__name__)
 
-        maxBound = lambda s: type_constructor.__constructors__[0]
-        minBound = lambda s: type_constructor.__constructors__[-1]
-        Bounded(type_constructor, minBound=minBound, maxBound=maxBound)
+        maxBound = lambda s: cls.__constructors__[0]
+        minBound = lambda s: cls.__constructors__[-1]
+        Bounded.make_instance(cls, minBound=minBound, maxBound=maxBound)
         return
 
     @staticmethod
@@ -167,10 +167,10 @@ class Bounded(Typeclass):
 
 
 class Enum(Typeclass):
-
-    def __init__(self, cls, toEnum, fromEnum):
+    @classmethod
+    def make_instance(typeclass, cls, toEnum, fromEnum):
         attrs = {"toEnum":toEnum, "fromEnum":fromEnum}
-        super(Enum, self).__init__(cls, attrs=attrs)
+        build_instance(Enum, cls, attrs)
         return
 
     @staticmethod
@@ -228,146 +228,5 @@ class Enum(Typeclass):
         return Enum.enumFromThenTo(start, Enum.succ(start), end)
 
 
-class Num(Show, Eq):
-
-    def __init__(self, cls, add, mul, abs, signum, fromInteger, negate, sub=None):
-        def default_sub(a, b):
-            return a.__add__(b.__neg__())
-
-        sub = default_sub if sub is None else sub
-        attrs = {"__add__":add, "__mul__":mul, "__abs__":abs, "signum":signum,
-                 "fromInteger":fromInteger, "__neg__":negate, "__sub__":sub}
-
-        super(Num, self).__init__(cls, dependencies=[Show, Eq], attrs=attrs)
-        return
 
 
-class Fractional(Num):
-
-    def __init__(self, cls):
-        super(Fractional, self).__init__(cls, dependencies=[Num])
-
-
-class Floating(Fractional):
-
-    def __init__(self, cls):
-        super(Floating, self).__init__(cls, dependencies=[Fractional])
-
-
-class Real(Num, Ord):
-
-    def __init__(self, cls):
-        super(Real, self).__init__(cls, dependencies=[Num, Ord])
-
-
-class Integral(Real, Enum):
-
-    def __init__(self, cls):
-        super(Integral, self).__init__(cls, dependencies=[Real, Enum])
-
-
-class RealFrac(Real, Fractional):
-
-    def __init__(self, cls):
-        super(RealFrac, self).__init__(cls, dependencies=[Real, Fractional])
-
-
-class RealFloat(Floating, RealFrac):
-
-    def __init__(self, cls):
-        super(RealFloat, self).__init__(cls, dependencies=[Floating, RealFrac])
-        return
-
-
-class Functor(Typeclass):
-
-    @classmethod
-    def make_instance(typeclass, cls, fmap):
-        """
-        """
-        if not is_builtin(cls):
-            cls.__mul__ = fmap
-        build_instance(Functor, cls, {"fmap":fmap})
-        return
-
-
-class Applicative(Functor):
-    @classmethod
-    def make_instance(self, cls, pure):
-        build_instance(Applicative, cls, {"pure":pure})
-        return
-
-
-class Monad(Applicative):
-    @classmethod
-    def make_instance(typeclass, cls, bind):
-        build_instance(Monad, cls, {"bind":bind})
-        if not is_builtin(cls):
-            cls.__rshift__ = bind
-        return
-
-
-class Foldable(Typeclass):
-    @classmethod
-    def make_instance(typeclass, cls, foldr):
-        build_instance(Foldable, cls, {"foldr":foldr})
-        return
-
-
-class Traversable(Foldable, Functor):
-    @classmethod
-    def make_instance(typeclass, cls, iter, getitem=None, len=None):
-        def default_len(self):
-            count = 0
-            for _ in iter(self):
-                count += 1
-            return count
-
-        def default_getitem(self, i):
-            return list(iter(self))[i]
-
-        len = default_len if len is None else len
-        getitem = default_getitem if getitem is None else getitem
-
-        attrs = {"iter":iter, "getitem":getitem, "len":len}
-        build_instance(Traversable, cls, attrs)
-        return
-
-    @staticmethod
-    def length(a):
-        return len(a)
-
-
-class Monoid(Typeclass):
-
-    @classmethod
-    def make_instance(typeclass, cls, mempty, mappend, mconcat=None):
-        #TODO: mconcat
-        attrs = {"mempty":mempty, "mappend":mappend}
-        build_instance(Monoid, cls, attrs)
-        return
-
-
-
-#=============================================================================#
-## Exported typeclass functions
-
-# Enum
-succ = Enum.succ
-pred = Enum.pred
-toEnum = Enum.toEnum
-fromEnum = Enum.fromEnum
-enumFrom = Enum.enumFrom
-enumFromThen = Enum.enumFromThen
-enumFromTo = Enum.enumFromTo
-enumFromThenTo = Enum.enumFromThenTo
-
-# Foldable
-foldr = lambda x, f: Foldable[x].foldr(x, f)
-
-# Traversable
-length = Traversable.length
-
-# Monoid
-mempty = lambda x: Monoid[x].mempty
-mappend = lambda x, y: Monoid[x].mappend(x, y)

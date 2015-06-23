@@ -67,6 +67,8 @@ def resolve(obj):
     """
     This should call typeof and return the type constructor
     """
+    if isinstance(obj, __ADT__):
+        return type(obj)
     return typeof(obj).name
 
 
@@ -260,7 +262,7 @@ class TypedFunc(object):
         return self.fn_type
 
     def __call__(self, *args, **kwargs):
-        # the evironment contains the type of the function and the types
+        # the environment contains the type of the function and the types
         # of the arguments
         env = {id(self):self.fn_type}
         env.update({id(arg):typeof(arg) for arg in args})
@@ -382,7 +384,7 @@ def make_data_const(name, fields, type_constructor):
                     if p in fields else TypeVariable()
                     for p in type_constructor.__params__]
             return TypeOperator(type_constructor, args)
-        Hask(cls, _type)
+        Hask.make_instance(cls, _type)
 
     # TODO: make sure __init__ or __new__ is typechecked
 

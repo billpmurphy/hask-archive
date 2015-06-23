@@ -14,19 +14,7 @@ from typeclasses import Eq
 from typeclasses import Ord
 from typeclasses import Enum
 from typeclasses import Bounded
-from typeclasses import Num
-from typeclasses import Real
-from typeclasses import Integral
-from typeclasses import Floating
-from typeclasses import Fractional
-from typeclasses import RealFrac
-from typeclasses import RealFloat
 from typeclasses import Read
-from typeclasses import Functor
-from typeclasses import Applicative
-from typeclasses import Monad
-from typeclasses import Traversable
-from typeclasses import Foldable
 
 #from hof import Func
 
@@ -36,7 +24,7 @@ from typeclasses import Foldable
 
 
 # functions are functors, fmap is just composition
-Functor.make_instance(TypedFunc, fmap=TypedFunc.__mul__)
+#Functor.make_instance(TypedFunc, fmap=TypedFunc.__mul__)
 
 
 
@@ -167,14 +155,14 @@ Hask.make_instance(List, type=List.type)
 #Read.make_instance(List, read=eval)
 Show.make_instance(List, show=List.__str__)
 Eq.make_instance(List, eq=List.__eq__)
-Functor.make_instance(List, fmap=List.fmap)
-Applicative.make_instance(List, pure=List.pure)
-Monad.make_instance(List, bind=List.bind)
-Foldable.make_instance(List, foldr=List.foldr)
-Traversable.make_instance(List,
-        iter=List.__iter__,
-        getitem=List.__getitem__,
-        len=List.__len__)
+#Functor.make_instance(List, fmap=List.fmap)
+#Applicative.make_instance(List, pure=List.pure)
+#Monad.make_instance(List, bind=List.bind)
+#Foldable.make_instance(List, foldr=List.foldr)
+#Traversable.make_instance(List,
+#        iter=List.__iter__,
+#        getitem=List.__getitem__,
+#        len=List.__len__)
 
 
 # TODO: deprecate this trash

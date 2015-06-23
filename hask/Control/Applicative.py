@@ -1,2 +1,8 @@
+from ..lang.typeclasses import build_instance
 from ..Data.Functor import Functor
-from ..lang.typeclasses import Applicative
+
+class Applicative(Functor):
+    @classmethod
+    def make_instance(self, cls, pure):
+        build_instance(Applicative, cls, {"pure":pure})
+        return

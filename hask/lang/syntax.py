@@ -134,8 +134,7 @@ class instance(Syntax):
         return
 
     def where(self, **kwargs):
-        self.typeclass(self.cls, **kwargs)
-        #self.typeclass.make_instance(self.cls, **kwargs)
+        self.typeclass.make_instance(self.cls, **kwargs)
         return
 
 
