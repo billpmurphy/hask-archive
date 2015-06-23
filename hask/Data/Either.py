@@ -17,7 +17,7 @@ from ..Control.Monad import Monad
 
 # data Either a b = Left b | Right a deriving(Show, Eq, Ord)
 Either, Left, Right =\
-        data.Either("a", "b") == d.Left("b") | d.Right("a") &\
+        data.Either("a", "b") == d.Left("a") | d.Right("b") &\
                                  deriving(Show, Eq, Ord)
 
 instance(Functor, Either).where(

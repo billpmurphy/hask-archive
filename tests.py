@@ -399,11 +399,11 @@ class TestHindleyMilner(unittest.TestCase):
 
         self.unified(
                 typeof(Right("error")),
-                build_sig_arg(t(Either, "a", str), {}))
+                build_sig_arg(t(Either, str, "a"), {}))
 
         self.unified(
                 typeof(Left(2.0)),
-                build_sig_arg(t(Either, int, "a"), {}))
+                build_sig_arg(t(Either, "a", int), {}))
 
 
 class TestTypeSystem(unittest.TestCase):
@@ -423,6 +423,9 @@ class TestTypeSystem(unittest.TestCase):
         self.assertEqual(2, f(g(5)))
         with self.assertRaises(te): f(4.0)
         with self.assertRaises(te): f("4")
+        with self.assertRaises(te): f(1, 2)
+
+        self.assertEqual(2, (f * g)(5))
         self.assertEqual(2, f * g % 5)
 
 

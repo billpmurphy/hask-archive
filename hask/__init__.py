@@ -3,10 +3,10 @@ __version__ = "0.0.1"
 # Core language
 
 ## Standard Hask typeclasses and associated functions
-from hask.lang.type_system import typeof
-from hask.lang.type_system import has_instance
-from hask.lang.type_system import Typeclass
-from hask.lang.type_system import Hask
+from hask.lang import typeof
+from hask.lang import has_instance
+from hask.lang import Typeclass
+from hask.lang import Hask
 from hask.Prelude import Read
 from hask.Prelude import Show
 from hask.Prelude import Eq
@@ -43,7 +43,7 @@ from hask.lang.hof import F
 from hask.lang.hof import Func
 
 ## Builtin types (Python builtins + Hask builtins)
-from hask.lang.builtins import List
+from hask.lang import List
 from hask.Prelude import Maybe
 from hask.Prelude import Just
 from hask.Prelude import Nothing
@@ -62,37 +62,37 @@ from hask.Prelude import fmap
 # Core language
 
 ## Typeclass instance declaration
-from hask.lang.syntax import instance
+from hask.lang import instance
 
 ## Operator sections
-from hask.lang.syntax import __
+from hask.lang import __
 
 ## Guard expressions
-from hask.lang.syntax import guard
-from hask.lang.syntax import c
-from hask.lang.syntax import otherwise
-from hask.lang.syntax import NoGuardMatchException
+from hask.lang import guard
+from hask.lang import c
+from hask.lang import otherwise
+from hask.lang import NoGuardMatchException
 
 ## Lists/list comprehensions
-from hask.lang.syntax import L
+from hask.lang import L
 
 ## ADT creation
-from hask.lang.syntax import data
-from hask.lang.syntax import d
-from hask.lang.syntax import deriving
+from hask.lang import data
+from hask.lang import d
+from hask.lang import deriving
 
 ## Type signatures
-from hask.lang.syntax import sig
-from hask.lang.syntax import H
-from hask.lang.syntax import t
+from hask.lang import sig
+from hask.lang import H
+from hask.lang import t
 
 ## Pattern matching
 from hask.lang.caseof import caseof
 
 ## REPL tools
-from hask.lang.builtins import _t
-from hask.lang.builtins import _i
-from hask.lang.builtins import _q
+from hask.lang import _t
+from hask.lang import _i
+from hask.lang import _q
 
 
 

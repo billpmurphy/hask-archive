@@ -17,16 +17,6 @@ from typeclasses import enumFromThenTo
 from typeclasses import Bounded
 from typeclasses import Read
 
-#from hof import Func
-
-
-#=============================================================================#
-# TypedFunc
-
-
-# functions are functors, fmap is just composition
-
-
 
 #=============================================================================#
 # List

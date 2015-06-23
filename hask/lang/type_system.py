@@ -107,7 +107,7 @@ def build_instance(typeclass, cls, attrs):
             raise TypeError("Missing dependency: %s" % dep.__name__)
 
     # 2) add type and its instance method to typeclass's instance dictionary
-    #name = cls.__name__ if type(cls) == type else str(cls)
+    #name = cls.__name__ if hasattr(cls, __name__) else str(cls)
     __methods__ = namedtuple("__%s__" % str(id(cls)), attrs.keys())(**attrs)
     typeclass.__instances__[id(cls)] = __methods__
     return
@@ -199,7 +199,7 @@ def build_sig_arg(arg, var_dict):
 
     # subsignature, e.g. H/ (H/ int >> int) >> int >> int
     elif isinstance(arg, TypeSignature):
-        return build_sig(arg.args, var_dict)
+        return make_fn_type([build_sig_arg(i, var_dict) for i in arg.args])
 
     # HKT, e.g. t(Maybe "a") or t("m", "a", "b")
     elif isinstance(arg, TypeSignatureHKT):
@@ -253,7 +253,8 @@ def build_sig(args, var_dict=None):
     internal type system language.
     """
     var_dict = {} if var_dict is None else var_dict
-    return make_fn_type([build_sig_arg(i, var_dict) for i in args])
+    type_args = [build_sig_arg(i, var_dict) for i in args]
+    return make_fn_type(type_args)
 
 
 class TypedFunc(object):
@@ -263,9 +264,6 @@ class TypedFunc(object):
         self.func = fn
         self.fn_type = fn_type
         return
-
-    def type(self):
-        return self.fn_type
 
     def __call__(self, *args, **kwargs):
         # the environment contains the type of the function and the types
