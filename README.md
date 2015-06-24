@@ -45,10 +45,11 @@ language tools from Haskell, including:
 
 Features not yet implemented, but coming soon:
 
+* Better support for polymorphic return values/type defaulting
+* Better support for lazy evaluation (beyond just the `List` type)
 * More of the Haskell standard library (`Control.*` libraries)
+* Monadic, lazy I/O
 * QuickCheck (property-based testing)
-* Better support for polymorphic return types
-* Monadic I/O
 
 
 ## Installation
@@ -282,7 +283,7 @@ in your guard conditions.
 'Same combination as my luggage!'
 ```
 
-#### Monadic error handling (of existing Python functions)
+#### Monadic error handling (of Python functions)
 
 If you want to use `Maybe` and `Either` (or your own error-handling monad) to
 handle errors raised by Python functions defined outside Hask, you can use the
@@ -356,7 +357,6 @@ Right(11)
 All of your favorite functions from `Prelude`, `Data.List`, `Data.Maybe`,
 `Data.Either`, `Data.String`, and `Data.Tuple`, are implemented
 too. Some highlights:
-
 
 ```python
 ```
