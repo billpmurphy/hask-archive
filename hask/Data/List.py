@@ -68,7 +68,7 @@ def uncons(xs):
     return Just((xs[0], xs[1:])) if xs else Nothing
 
 
-@sig(H/ ["a"] >> bool )
+@sig(H/ ["a"] >> bool)
 def null(xs):
     """
     null :: [a] -> bool
@@ -78,7 +78,6 @@ def null(xs):
     return bool(xs)
 
 
-# TODO: use typeclass version?
 @sig(H/ ["a"] >> int )
 def length(xs):
     """

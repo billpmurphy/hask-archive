@@ -3,6 +3,9 @@ from ..lang import sig
 from ..lang import H
 from ..lang import t
 from ..lang import d
+from ..lang import caseof
+from ..lang import m
+from ..lang import p
 from ..lang import data
 from ..lang import deriving
 from ..lang import instance
@@ -18,11 +21,13 @@ from ..Control.Monad import Monad
 
 # data Either a b = Left b | Right a deriving(Show, Eq, Ord)
 Either, Left, Right =\
-        data.Either("a", "b") == d.Left("a") | d.Right("b") &\
-                                 deriving(Show, Eq, Ord)
+data.Either("a", "b") == d.Left("a") | d.Right("b") & deriving(Show, Eq, Ord)
+
 
 instance(Functor, Either).where(
-    fmap = lambda v, f: v if Left(v[0]) == v else Right(f(v[0]))
+    fmap = lambda v, f: ~(caseof(v)
+                            | m(Left(m.e))  >> Left(p.e)
+                            | m(Right(m.a)) >> Right(f(p.a)))
 )
 
 instance(Applicative, Either).where(
@@ -30,7 +35,9 @@ instance(Applicative, Either).where(
 )
 
 instance(Monad, Either).where(
-    bind = lambda v, f: v if Left(v[0]) == v else f(v[0])
+    bind = lambda v, f: ~(caseof(v)
+                            | m(Left(m.e))  >> Left(p.e)
+                            | m(Right(m.a)) >> f(p.a))
 )
 
 
@@ -48,7 +55,7 @@ def in_either(fn, *args, **kwargs):
     if len(args) > 0 or len(kwargs) > 0:
         return _closure_in_either(*args, **kwargs)
 
-    return typify(fn, hkt=lambda x: t(Either, "z", x))(closure_in_either)
+    return typify(fn, hkt=lambda x: t(Either, "aa", x))(closure_in_either)
 
 
 @sig(H/ (H/ "a" >> "c") >> (H/ "b" >> "c") >> t(Either, "a", "b") >> "c")

@@ -8,6 +8,7 @@ from ..lang import sig
 from ..lang import t
 from ..lang import instance
 
+
 class Functor(Typeclass):
     @classmethod
     def make_instance(typeclass, cls, fmap):
@@ -23,7 +24,7 @@ def fmap(f, x):
 
 
 instance(Functor, List).where(
-    fmap=List.fmap
+    fmap = List.fmap
 )
 
 instance(Functor, TypedFunc).where(

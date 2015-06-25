@@ -3,6 +3,7 @@ import unittest
 from hask import H
 from hask import sig
 from hask import t
+from hask import p, m, caseof, w, IncompletePatternError
 from hask import has_instance
 from hask import guard
 from hask import c
@@ -846,7 +847,74 @@ class TestSyntax(unittest.TestCase):
         self.assertEqual(11, len(L["a", ..., "k"]))
 
     def test_caseof(self):
-        pass
+        # literal matching
+        self.assertEqual(1,
+                ~(caseof("a")
+                    | m("a") >> 1))
+        self.assertEqual(1,
+                ~(caseof(2.0)
+                    | m(2.0) >> 1
+                    | m(2.0) >> 2))
+        self.assertEqual("x",
+                ~(caseof(Just("x"))
+                    | m(Nothing)   >> False
+                    | m(Just("x")) >> "x"))
+        self.assertEqual(1,
+                ~(caseof([1, 2])
+                    | m((1, 2)) >> 2
+                    | m([1, 2]) >> 1))
+        self.assertEqual(True,
+                ~(caseof(GT)
+                    | m(LT) >> False
+                    | m(EQ) >> False
+                    | m(GT) >> True))
+
+        with self.assertRaises(IncompletePatternError):
+            ~(caseof(1) | m(2) >> 2)
+
+        # matches with wildcard
+        self.assertEqual(1,
+                ~(caseof(1)
+                    | m(w) >> 1
+                    | m(1) >> 2))
+        self.assertEqual(True,
+                ~(caseof(GT)
+                    | m(LT) >> False
+                    | m(EQ) >> False
+                    | m(w) >> True))
+        self.assertEqual(False,
+                ~(caseof(GT)
+                    | m(LT) >> False
+                    | m(w)  >> False
+                    | m(GT) >> True))
+        self.assertEqual(2,
+                ~(caseof((1, 2, 3))
+                    | m((2, 1, 3)) >> 1
+                    | m((1, w, 3)) >> 2
+                    | m((1, 2, 3)) >> 3))
+
+        # variable bind
+        self.assertEqual(("b", "a"),
+                ~(caseof(("a", "b"))
+                    | m((m.x, m.y)) >> (p.y, p.x)
+                    | m(w)          >> None))
+        self.assertEqual(1,
+                ~(caseof(Just(1))
+                    | m(Just(m.x)) >> p.x
+                    | m(Nothing)   >> 0))
+        self.assertEqual(Just(0),
+                ~(caseof(Nothing)
+                    | m(Just(m.x)) >> Just(p.x + 1)
+                    | m(Nothing)   >> Just(0)))
+        self.assertEqual(1, ~(caseof(2) # somewhat questionable behavior
+                | m((m.a, m.a)) >> p.a
+                | m(2)          >> 1))
+
+        with self.assertRaises(se):
+            ~(caseof((1, 2))
+                | m((m.a, m.a)) >> p.a
+                | m(1)          >> 1)
+
 
 
 class TestMaybe(unittest.TestCase):

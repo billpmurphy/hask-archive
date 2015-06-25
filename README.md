@@ -4,7 +4,6 @@
 Remaining TODOs:
 * Fix TypedFunc so it actually typechecks each argument, and is curried; then
   kill hof.py
-* Rewrite pattern matching, and rewrite some of builtins using it
 * Change type inference engine so that it is aware of typeclasses
 * Write rest of Data.List and Prelude, and document everything undocumented
 * Final refactor of everything
@@ -44,6 +43,7 @@ language tools from Haskell, including:
 
 Features not yet implemented, but coming soon:
 
+* More (and better) documentation
 * Better support for polymorphic return values/type defaulting
 * Better support for lazy evaluation (beyond just the `List` type)
 * More of the Haskell standard library (`Control.*` libraries)
@@ -61,13 +61,14 @@ To run the tests: `python tests.py`.
 
 ## Introduction
 
-### Building 'Maybe'
+### Defining Abstract Data Types
 
 ```python
 from hask import data, d, deriving
 from hask import Read, Show, Eq, Ord
 
-data.Maybe("a") == d.Nothing | d.Just("a") & deriving(Read, Show, Eq, Ord)
+Maybe, Nothing, Just =\
+    data.Maybe("a") == d.Nothing | d.Just("a") & deriving(Read, Show, Eq, Ord)
 ```
 
 Let's break this down a bit. The syntax for defining a new type constructor is:
@@ -90,20 +91,20 @@ d.DC1("a", "b")
 d.DC1("a", "b")
 ```
 
-
 To automagically derive typeclass instances for the new ADT, just add `&
 deriving(...typeclasses...)` after the data constructor declarations.
 Currently, the only typeclasses that can be derived are `Eq`, `Show`, `Read`,
-and `Ord`.
+`Ord`, and `Bounded`.
 
 
 Putting it all together, here is the definition of `Either`:
 
 ```python
-data . Either("a", "b") == d.Left("a") | d.Right("b") & deriving(Read, Show, Eq)
+Either, Left, Right =\
+    data.Either("a", "b") == d.Left("a") | d.Right("b") & deriving(Read, Show, Eq)
 ```
 
-We can now use the data structures defined in a `data` statement to create instances of our new types. If our data structure takes no arguments, we can use it just like a variable.
+We can now use the data constructors defined in a `data` statement to create instances of our new types. If our data constructor takes no arguments, we can use it just like a variable.
 
 ```python
 >>> Just(10)
@@ -134,20 +135,30 @@ int
 
 >>> _t(Just("soylent green")
 Maybe str
+
+>>> _t(Right(("a", 1)))
+Either a (str, int)
 ```
+
+
+### Pattern matching
+
+Now that we have our `Maybe` type, let's take it for a spin. Suppose we want to implement a function `safeDiv`, which attempt to divide two values
+
+
+### Typeclasses and typeclass instances
+
 
 ```python
 >>> def maybe_fmap(maybe_value, fn):
->>>     result =  ~(caseof(maybe_value)
-...         | Nothing         >> Nothing
-...         | Just(m.x) >> Just(fn(p.x))
-...     )
-...     return result
+>>>     return ~(caseof(maybe_value)
+...         | m(Nothing)   >> Nothing
+...         | m(Just(m.x)) >> Just(fn(p.x)))
 
 ```
 
 ```python
->>> instance(Functor, maybe).where(
+>>> instance(Functor, Maybe).where(
 ...     fmap = maybe_fmap
 ...  )
 ```
@@ -158,7 +169,7 @@ Just(20)
 ```
 
 We can now make `Maybe` an instance of `Functor`. This allows us to call `fmap`
-and map any function `a -> b` into a `Maybe` value.
+and map any function of type `a -> b` into a value of type `Maybe a`.
 
 ```python
 >>> Functor(Maybe, maybe_fmap)
@@ -172,7 +183,8 @@ Just(50.0)
 ```
 
 Lots of nested calls to `fmap` get unwieldy very fast. Fortunately, any
-instance of `Functor` can be used with the infix `fmap` operator, `*`. This is equivalent to `<*>` in Haskell. Rewriting our example from above:
+instance of `Functor` can be used with the infix `fmap` operator, `*`. This is
+equivalent to `<*>` in Haskell. Rewriting our example from above:
 
 ```python
 >>> Just(25) * times2 * toFloat
@@ -184,9 +196,8 @@ Nothing
 
 Now that we have made `Maybe` an instance of `Functor`, we can make it an
 instance of `Applicative` and then an instance of `Monad` by defining the
-appropriate methods. To implement `Applicative`, we just need to provide
-`pure`, which wraps a value in our type. To implement `Monad`, we need to
-provide `bind`.
+appropriate function implementations. To implement `Applicative`, we just need
+to provide `pure`. To implement `Monad`, we need to provide `bind`.
 
 ```python
 >>> from hask import Applicative, Monad
@@ -195,20 +206,18 @@ provide `bind`.
 ...     pure = Just
 ... )
 
->>> def maybe_bind(maybe_value, fn):
-...     return ~(caseof(maybe_value)
-...         | Nothing   >> Nothing
-...         | Just(m.x) >> fn(p.x))
-...
-
 >>> instance(Monad, Maybe).where(
-...     bind = maybe_bind
+...     bind = lambda x, f: ~(caseof(x)
+...                             | m(Just(m.a)) >> f(p.a)
+...                             | m(Nothing)   >> Nothing)
 ... )
 ```
 
 Of course, `bind` also has an infix form, which is `>>` in Hask.
 
 ```python
+>>> f = (lambda x: x + 10)
+>>>
 >>> h = (lambda _: Nothing) ** (H/ "a" >> Maybe "a")
 
 >>> Just(3) >> f >> g
@@ -222,6 +231,11 @@ Nothing
 ```
 
 ### Other fun stuff
+
+
+#### List type
+
+
 
 #### Operator sections
 
@@ -242,8 +256,8 @@ Just(3)
 Double sections are also supported:
 
 ```python
->>> (__-__)(3, 2)
-1
+>>> (__+__)('Hello ', 'world')
+'Hello world'
 
 >>> (__**__)(2)(10)
 1024
@@ -261,6 +275,7 @@ switch statement, you can use guards. The syntax for guards is as follows:
     | otherwise   >> <return value 3>
 )
 ```
+
 As in Haskell, `otherwise` will always evaluate to `True` and can be used as a
 catch-all in guard statements. If no match is found (and an `otherwise` clause
 is not present), a `NoGuardMatchException` will be raised.
@@ -402,7 +417,8 @@ All of your favorite functions from `Prelude`, `Data.List`, `Data.Maybe`,
 ## Contribute
 
 Contributions are always welcome! Feel free to submit a pull request, open an
-issue, or email me.
+issue, or email me. In the spirit of this project, wild experimentation is
+encouraged.
 
 
 ## Why did you make this?

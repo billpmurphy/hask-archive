@@ -87,7 +87,11 @@ from hask.lang import H
 from hask.lang import t
 
 ## Pattern matching
-from hask.lang.caseof import caseof
+from hask.lang import caseof
+from hask.lang import p
+from hask.lang import m
+from hask.lang import w
+from hask.lang import IncompletePatternError
 
 ## REPL tools
 from hask.lang import _t

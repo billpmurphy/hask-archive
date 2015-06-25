@@ -1,5 +1,4 @@
 import operator
-import sys
 
 from type_system import Typeclass
 from type_system import is_builtin

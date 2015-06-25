@@ -5,6 +5,9 @@ from ..lang import sig
 from ..lang import t
 from ..lang import data
 from ..lang import d
+from ..lang import caseof
+from ..lang import m
+from ..lang import p
 from ..lang import deriving
 from ..lang import instance
 from ..lang import typify
@@ -21,7 +24,9 @@ Maybe, Nothing, Just =\
         data.Maybe("a") == d.Nothing | d.Just("a") & deriving(Show, Eq, Ord)
 
 instance(Functor, Maybe).where(
-    fmap = lambda x, f: Nothing if x == Nothing else Just(f(x[0]))
+    fmap = lambda x, f: ~(caseof(x)
+                            | m(Just(m.a)) >> Just(f(p.a))
+                            | m(Nothing)   >> Nothing)
 )
 
 instance(Applicative, Maybe).where(
@@ -29,7 +34,9 @@ instance(Applicative, Maybe).where(
 )
 
 instance(Monad, Maybe).where(
-    bind = lambda x, f: Nothing if x == Nothing else f(x[0])
+    bind = lambda x, f: ~(caseof(x)
+                            | m(Just(m.a)) >> f(p.a)
+                            | m(Nothing)   >> Nothing)
 )
 
 

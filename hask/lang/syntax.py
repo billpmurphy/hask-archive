@@ -15,6 +15,7 @@ from type_system import __ADT__
 from type_system import build_ADT
 from type_system import build_sig
 from type_system import PatternMatchBind
+from type_system import Wildcard
 from type_system import pattern_match
 
 from hindley_milner import TypeVariable
@@ -238,6 +239,7 @@ class __var_access__(Syntax):
 
 m = __var_bind__("Error in pattern match")
 p = __var_access__("Error in pattern match")
+w = Wildcard()
 
 
 class __match_line__(Syntax):
