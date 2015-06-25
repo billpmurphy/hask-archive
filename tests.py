@@ -8,7 +8,6 @@ from hask import guard
 from hask import c
 from hask import otherwise
 from hask import NoGuardMatchException
-from hask import caseof
 from hask import __
 from hask import data
 from hask import d
@@ -847,7 +846,7 @@ class TestSyntax(unittest.TestCase):
         self.assertEqual(11, len(L["a", ..., "k"]))
 
     def test_caseof(self):
-        self.assertTrue(~(caseof(1) / 1 % True))
+        pass
 
 
 class TestMaybe(unittest.TestCase):

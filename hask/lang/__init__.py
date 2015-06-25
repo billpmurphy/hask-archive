@@ -14,6 +14,11 @@ from type_system import Typeclass
 from type_system import Hask
 from type_system import TypedFunc
 
+from syntax import caseof
+from syntax import m
+from syntax import p
+from syntax import IncompletePatternError
+
 from syntax import data
 from syntax import d
 from syntax import deriving
