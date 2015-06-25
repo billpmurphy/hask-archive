@@ -48,18 +48,10 @@ class caseof(syntax.Syntax):
 
     Matching values:
     ~(caseof(a)
-        / (1, 2)    % a
-        / (2, 2)    % a
-        / (3, str)  % 2
-        / __         % "Not found")
-
-    Matching types:
-    ~(caseof(a)
-        / str   % a
-        / float % str(round(1, 0))
-        / __    % str(a))
-
-    Partial matching with both types and values:
+        | (1, 2)    >> a
+        | (2, 2)    >> a
+        | (3, p.a)  >> 2
+        |  p        >> "Not found")
     """
     def __init__(self, value):
         self._value = value
@@ -78,8 +70,6 @@ class caseof(syntax.Syntax):
         if isinstance(pattern, CaseExprLocalBind):
             caseof._caseof_bound_vars[pattern.key] = value
             return True
-        elif isinstance(pattern, type):
-            return isinstance(value, pattern)
         elif pattern is __:
             return True
         elif type(value) == type(pattern):

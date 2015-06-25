@@ -6,20 +6,39 @@ from typeclasses import enumFrom
 from typeclasses import enumFromThen
 from typeclasses import enumFromTo
 from typeclasses import enumFromThenTo
+from type_system import Hask
 from type_system import Typeclass
 from type_system import TypedFunc
 from type_system import TypeSignature
 from type_system import TypeSignatureHKT
 from type_system import __ADT__
-from type_system import build_sig
-
 from type_system import build_ADT
+from type_system import build_sig
+from type_system import PatternMatchBind
+from type_system import pattern_match
 
-from hindley_milner import *
+from hindley_milner import TypeVariable
 
 
 #=============================================================================#
 # Base class for syntactic constructs
+
+
+basic_attrs = set(("len", "getitem", "setitem", "delitem", "iter", "reversed",
+    "contains", "missing", "delattr", "call", "enter", "exit", "eq", "ne",
+    "gt", "lt", "ge", "le", "pos", "neg", "abs", "invert", "round", "floor",
+    "ceil", "trunc", "add", "sub", "mul", "div", "truediv", "floordiv", "mod",
+    "divmod", "pow", "lshift", "rshift", "or", "and", "xor", "radd", "rsub",
+    "rmul", "rdiv", "rtruediv", "rfloordiv", "rmod", "rdivmod", "rpow",
+    "rlshift", "rrshift", "ror", "rand", "rxor", "isub", "imul", "ifloordiv",
+    "idiv", "imod", "idivmod", "irpow", "ilshift", "irshift", "ior", "iand",
+    "ixor", "nonzero"))
+
+
+def wipe_attrs(cls, fn):
+    for attr in ("__%s__" % b for b in basic_attrs):
+        setattr(cls, attr, fn)
+    return
 
 
 class Syntax(object):
@@ -47,81 +66,8 @@ class Syntax(object):
 
     __syntaxerr__ = lambda s, *a: s.raise_invalid()
 
-    __len__ = __syntaxerr__
-    __getitem__ = __syntaxerr__
-    __setitem__ = __syntaxerr__
-    __delitem__ = __syntaxerr__
-    __iter__ = __syntaxerr__
-    __reversed__ = __syntaxerr__
-    __contains__ = __syntaxerr__
-    __missing__ = __syntaxerr__
 
-    __delattr__ = __syntaxerr__
-    __call__ = __syntaxerr__
-    __enter__ = __syntaxerr__
-    __exit__ = __syntaxerr__
-
-    __eq__ = __syntaxerr__
-    __ne__ = __syntaxerr__
-    __gt__ = __syntaxerr__
-    __lt__ = __syntaxerr__
-    __ge__ = __syntaxerr__
-    __le__ = __syntaxerr__
-    __pos__ = __syntaxerr__
-    __neg__ = __syntaxerr__
-    __abs__ = __syntaxerr__
-    __invert__ = __syntaxerr__
-    __round__ = __syntaxerr__
-    __floor__ = __syntaxerr__
-    __ceil__ = __syntaxerr__
-    __trunc__ = __syntaxerr__
-
-    __add__ = __syntaxerr__
-    __sub__ = __syntaxerr__
-    __mul__ = __syntaxerr__
-    __div__ = __syntaxerr__
-    __truediv__ = __syntaxerr__
-    __floordiv__ = __syntaxerr__
-    __mod__ = __syntaxerr__
-    __divmod__ = __syntaxerr__
-    __pow__ = __syntaxerr__
-    __lshift__ = __syntaxerr__
-    __rshift__ = __syntaxerr__
-    __or__ = __syntaxerr__
-    __and__ = __syntaxerr__
-    __xor__ = __syntaxerr__
-
-    __radd__ = __syntaxerr__
-    __rsub__ = __syntaxerr__
-    __rmul__ = __syntaxerr__
-    __rdiv__ = __syntaxerr__
-    __rtruediv__ = __syntaxerr__
-    __rfloordiv__ = __syntaxerr__
-    __rmod__ = __syntaxerr__
-    __rdivmod__ = __syntaxerr__
-    __rpow__ = __syntaxerr__
-    __rlshift__ = __syntaxerr__
-    __rrshift__ = __syntaxerr__
-    __ror__ = __syntaxerr__
-    __rand__ = __syntaxerr__
-    __rxor__ = __syntaxerr__
-
-    __iadd__ = __syntaxerr__
-    __isub__ = __syntaxerr__
-    __imul__ = __syntaxerr__
-    __ifloordiv__ = __syntaxerr__
-    __idiv__ = __syntaxerr__
-    __imod__ = __syntaxerr__
-    __idivmod__ = __syntaxerr__
-    __irpow__ = __syntaxerr__
-    __ilshift__ = __syntaxerr__
-    __irshift__ = __syntaxerr__
-    __ior__ = __syntaxerr__
-    __iand__ = __syntaxerr__
-    __ixor__ = __syntaxerr__
-
-    __bool__ = __syntaxerr__
-    __nonzero__ = __syntaxerr__
+wipe_attrs(Syntax, Syntax.__syntaxerr__)
 
 
 #=============================================================================#
@@ -178,6 +124,9 @@ class __signature__(Syntax):
         arg = arg.sig if isinstance(arg, __signature__) else arg
         return __signature__(self.sig.args + (arg,), self.sig.constraints)
 
+    def __rpow__(self, fn):
+        return sig(self)(fn)
+
 
 H = __constraints__()
 
@@ -233,6 +182,116 @@ def t(type_constructor, *params):
     return TypeSignatureHKT(type_constructor, params)
 
 
+def typify(fn, hkt=None):
+    args = [chr(i) for i in range(97, 98 + fn.func_code.co_argcount)]
+    if hkt is not None:
+        args[-1] = hkt(args[-1])
+    return sig(__signature__(args, []))
+
+
+#=============================================================================#
+# Undefined values
+
+
+class __undefined__(object):
+    """
+    A weird object with no concrete type. Used to create `undefined` and in
+    pattern matching
+    """
+    __make_undefined__ = lambda s, *a: undefined
+
+
+wipe_attrs(__undefined__, __undefined__.__make_undefined__)
+Hask.make_instance(__undefined__, lambda __: TypeVariable())
+
+undefined = __undefined__()
+
+
+
+#=============================================================================#
+# Pattern matching
+
+
+class IncompletePatternError(Exception):
+    pass
+
+
+class MatchVars(object):
+    __cache__ = {}
+    __value__ = undefined
+
+
+class __var_bind__(Syntax):
+    def __getattr__(self, name):
+        return PatternMatchBind(name)
+
+    def __call__(self, pattern):
+        is_match, env = pattern_match(MatchVars.__value__, pattern)
+        MatchVars.__cache__ = env
+        return __match_test__(is_match)
+
+
+class __var_access__(Syntax):
+    def __getattr__(self, name):
+        return MatchVars.__cache__.get(name, undefined)
+
+
+m = __var_bind__("Error in pattern match")
+p = __var_access__("Error in pattern match")
+
+
+class __match_line__(Syntax):
+    """
+    Represents one line of a caseof
+    """
+    def __init__(self, is_match, return_value):
+        self.is_match = is_match
+        self.return_value = return_value
+        return
+
+
+class __match_test__(Syntax):
+    """
+    represents the pattern part of one caseof line
+    """
+    def __init__(self, is_match):
+        self.is_match = is_match
+        return
+    def __rshift__(self, value):
+        MatchVars.__cache__ = {}
+        return __match_line__(self.is_match, value)
+
+
+class __unmatched_case__(Syntax):
+    def __or__(self, line):
+        if line.is_match:
+            return __matched_case__(line.return_value)
+        return self
+    def __invert__(self):
+        MatchVars.__cache__ = {}
+        MatchVars.__value__ = undefined
+        raise IncompletePatternError()
+
+
+class __matched_case__(Syntax):
+    def __init__(self, return_value):
+        self.value = return_value
+        return
+    def __or__(self, line):
+        return self
+    def __invert__(self):
+        MatchVars.__cache__ = {}
+        MatchVars.__value__ = undefined
+        return self.value
+
+
+class caseof(__unmatched_case__):
+    """
+    """
+    def __init__(self, value):
+        MatchVars.__value__ = value
+        return
+
 #=============================================================================#
 # ADT creation syntax ("data" expressions)
 
@@ -244,7 +303,7 @@ class __data__(Syntax):
     Examples:
 
     Maybe, Nothing, Just =\
-    data.Maybe("a") == d.Nothing | d.Just("a") deriving(Read, Show, Eq, Ord)
+    data.Maybe("a") == d.Nothing | d.Just("a") & deriving(Read, Show, Eq, Ord)
     """
     def __init__(self):
         super(__data__, self).__init__("Syntax error in `data`")
@@ -295,6 +354,7 @@ class __new_tcon_enum__(__new_tcon__):
         if len(typeargs) < 1:
             msg = "Missing type args in statement: `data.%s()`" % self.name
             self.raise_invalid(msg)
+
         # make sure all type params are strings
         if not all((type(arg) == str for arg in typeargs)):
             self.raise_invalid("Type parameters must be strings")
@@ -537,10 +597,11 @@ class __guard_test__(Syntax):
 
 class __guard_conditional__(Syntax):
     """
-    Object that represents one line of a guard expression, consisting of a
-    condition (a test function wrapped in c and a value to be returned if that
-    condition is satisfied).
-
+    Object that represents one line of a guard expression, consisting of:
+        1) a condition (a test function wrapped in c and a value to be returned
+           if that condition is satisfied).
+        2) a return value, which will be returned if the condition evaluates
+           to True
     See help(guard) for more details.
     """
     def __init__(self, fn, return_value):
@@ -571,6 +632,8 @@ class __unmatched_guard__(__guard_base__):
     See help(guard) for more details.
     """
     def __or__(self, cond):
+        # Consume the next line of the guard expression
+
         if isinstance(cond, __guard_test__):
             self.raise_invalid("Guard expression is missing return value")
 
@@ -588,7 +651,7 @@ class __unmatched_guard__(__guard_base__):
         return __unmatched_guard__(self.value)
 
     def __invert__(self):
-        raise NoGuardMatchException("No match found in guard")
+        raise NoGuardMatchException("No match found in guard(%s)" % self.value)
 
 
 class __matched_guard__(__guard_base__):
@@ -599,6 +662,7 @@ class __matched_guard__(__guard_base__):
     See help(guard) for more details.
     """
     def __or__(self, cond):
+        # Consume the next line of the guard expression
         # Since a condition has already been satisfied, we can ignore the rest
         # of the lines in the guard expression
         if isinstance(cond, __guard_conditional__):
@@ -703,5 +767,3 @@ class __list_comprehension__(Syntax):
 
 
 L = __list_comprehension__("Invalid list comprehension")
-
-

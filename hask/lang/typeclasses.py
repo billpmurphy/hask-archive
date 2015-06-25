@@ -24,6 +24,7 @@ class Show(Typeclass):
     def make_instance(typeclass, cls, show):
         build_instance(Show, cls, {"show":show})
         if not is_builtin(cls):
+            cls.__repr__ = show
             cls.__str__ = show
         return
 
@@ -87,7 +88,7 @@ class Ord(Eq):
     def make_instance(typeclass, cls, lt, le=None, gt=None, ge=None):
         __le__ = lambda s, o: s.__lt__(o) or s.__eq__(o)
         __gt__ = lambda s, o: not s.__lt__(o) and not s.__eq__(o)
-        __ge__ = lambda s, o: not s.__lt__(o) or not s.__eq__(o)
+        __ge__ = lambda s, o: not s.__lt__(o) or s.__eq__(o)
 
         le = __le__ if le is None else le
         gt = __gt__ if gt is None else gt

@@ -7,6 +7,7 @@ from ..lang import data
 from ..lang import deriving
 from ..lang import instance
 from ..lang import L
+from ..lang import typify
 
 from Eq import Eq
 from Ord import Ord
@@ -46,7 +47,8 @@ def in_either(fn, *args, **kwargs):
             return Left(e)
     if len(args) > 0 or len(kwargs) > 0:
         return _closure_in_either(*args, **kwargs)
-    return closure_in_either
+
+    return typify(fn, hkt=lambda x: t(Either, "z", x))(closure_in_either)
 
 
 @sig(H/ (H/ "a" >> "c") >> (H/ "b" >> "c") >> t(Either, "a", "b") >> "c")

@@ -1,5 +1,3 @@
-import functools
-
 import unittest
 
 from hask import H
@@ -45,6 +43,9 @@ from hask.lang.type_system import build_ADT
 from hask.lang.type_system import typeof
 from hask.lang.type_system import make_data_const
 from hask.lang.type_system import make_type_const
+from hask.lang.type_system import pattern_match
+from hask.lang.type_system import Wildcard
+from hask.lang.type_system import PatternMatchBind
 
 from hask.lang.hindley_milner import Var
 from hask.lang.hindley_milner import App
@@ -428,6 +429,53 @@ class TestTypeSystem(unittest.TestCase):
         self.assertEqual(2, (f * g)(5))
         self.assertEqual(2, f * g % 5)
 
+    def test_match(self):
+        match_only = lambda v, p: pattern_match(v, p)[0]
+        pb = PatternMatchBind
+        w = Wildcard()
+
+        # literal matches
+        self.assertTrue(match_only(1, 1))
+        self.assertTrue(match_only((1, "a"), (1, "a")))
+        self.assertTrue(match_only(Nothing, Nothing))
+        self.assertTrue(match_only(Just(1), Just(1)))
+        self.assertFalse(match_only(2, 1))
+        self.assertFalse(match_only(("a", 1), (1, "a")))
+        self.assertFalse(match_only(("a", "b"), ["a", "b"]))
+        self.assertFalse(match_only(Nothing, Just(Nothing)))
+        self.assertFalse(match_only(Just(2), Just(1)))
+        self.assertFalse(match_only(Right(2), Just(2)))
+        self.assertFalse(match_only(Right(2), Left(2)))
+
+        # matches with wildcard
+        self.assertTrue(match_only(1, w))
+        self.assertTrue(match_only(Nothing, w))
+        self.assertTrue(match_only(Just("whatever"), Just(w)))
+        self.assertTrue(match_only(Right(Just(5)), Right(Just(w))))
+        self.assertTrue(match_only(("a", "b", "c"), ("a", w, "c")))
+        self.assertFalse(match_only(("a", "b", "c"), ("1", w, "c")))
+        self.assertFalse(match_only(("a", "b", "d"), ("a", w, "c")))
+
+        # matches with variable binding
+        self.assertEqual((True, {"a":1}), pattern_match(1, pb("a")))
+        self.assertEqual((True, {"a":1, "b":2}),
+                pattern_match((1, 2), (pb("a"), pb("b"))))
+        self.assertEqual((True, {"a":8}),
+                pattern_match(Just(8), Just(pb("a"))))
+        self.assertEqual((True, {"a":"a"}),
+                pattern_match(Right(Just("a")), Right(Just(pb("a")))))
+        self.assertEqual((False, {"a":1}),
+                pattern_match((2, 1), (3, pb("a"))))
+
+        with self.assertRaises(se):
+            pattern_match((1, 2), (pb("c"), pb("a")), {"c":1})
+        with self.assertRaises(se):
+            pattern_match((1, 2), (pb("c"), pb("a")), {"a":1})
+
+        # putting it all together
+        self.assertEqual((True, {"a":1, "b":2}),
+                pattern_match((1, "a", 2), (pb("a"), w, pb("b"))))
+
 
 class TestADTInternals_Enum(unittest.TestCase):
 
@@ -535,7 +583,16 @@ class TestADTInternals_Builtin(unittest.TestCase):
         Ord.derive_instance(self.Type_Const)
 
         self.assertTrue(self.M1(1) < self.M1(2))
+        self.assertTrue(self.M1(1) <= self.M1(2))
+        self.assertTrue(self.M1(2) <= self.M1(2))
+        self.assertFalse(self.M1(3) < self.M1(2))
+        self.assertFalse(self.M1(3) <= self.M1(2))
+
+        self.assertTrue(self.M1(2) > self.M1(1))
+        self.assertTrue(self.M1(2) >= self.M1(1))
+        self.assertTrue(self.M1(2) >= self.M1(2))
         self.assertFalse(self.M1(1) > self.M1(2))
+        self.assertFalse(self.M1(1) >= self.M1(2))
 
     def test_derive_bounded_data(self):
         with self.assertRaises(te):
@@ -1154,21 +1211,23 @@ class Test_README_Examples(unittest.TestCase):
                 'Same combination as my luggage!')
 
     def test_decorators(self):
-        def a_problematic_function(cheese):
+        def eat_cheese(cheese):
             if cheese <= 0:
                 raise ValueError("Out of cheese error")
             return cheese - 1
 
-        maybe_problematic = in_maybe(a_problematic_function)
-        self.assertEqual(maybe_problematic(1), Just(0))
-        self.assertEqual(maybe_problematic(0), Nothing)
+        maybe_eat = in_maybe(eat_cheese)
+        self.assertEqual(maybe_eat(1), Just(0))
+        self.assertEqual(maybe_eat(0), Nothing)
+        self.assertEqual(Just(7), maybe_eat(10) >> maybe_eat >> maybe_eat)
+        self.assertEqual(Nothing, maybe_eat(1) >> maybe_eat >> maybe_eat)
 
-        either_problematic = in_either(a_problematic_function)
-        self.assertEqual(either_problematic(10), Right(9))
-        self.assertTrue(isinstance(either_problematic(0)[0], ValueError))
+        either_eat = in_either(eat_cheese)
+        self.assertEqual(either_eat(10), Right(9))
+        self.assertTrue(isinstance(either_eat(0)[0], ValueError))
 
         @in_either
-        def my_fn_that_raises_errors(n):
+        def picky_add_10(n):
             assert type(n) == int, "not an int!"
 
             if n < 0:
@@ -1176,11 +1235,9 @@ class Test_README_Examples(unittest.TestCase):
 
             return n + 10
 
-        self.assertTrue(isinstance(my_fn_that_raises_errors("hello")[0],
-                                   AssertionError))
-        self.assertTrue(isinstance(my_fn_that_raises_errors(-10)[0],
-                                   ValueError))
-        self.assertEqual(my_fn_that_raises_errors(1), Right(11))
+        self.assertTrue(isinstance(picky_add_10("hello")[0], AssertionError))
+        self.assertTrue(isinstance(picky_add_10(-10)[0], ValueError))
+        self.assertEqual(picky_add_10(1), Right(11))
 
 
 if __name__ == '__main__':

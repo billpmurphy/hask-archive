@@ -2,15 +2,14 @@
 
 
 Remaining TODOs:
-* Change typeclasses to be more like Haskell (things stored inside TC)
 * Fix TypedFunc so it actually typechecks each argument, and is curried; then
   kill hof.py
 * Rewrite pattern matching, and rewrite some of builtins using it
 * Change type inference engine so that it is aware of typeclasses
 * Write rest of Data.List and Prelude, and document everything undocumented
 * Final refactor of everything
-* Write tests for everything
 * Write rest of README
+* Write tests for everything
 * ???
 * Profit
 
@@ -68,13 +67,12 @@ To run the tests: `python tests.py`.
 from hask import data, d, deriving
 from hask import Read, Show, Eq, Ord
 
-data . Maybe("a") == d.Nothing | d.Just("a") & deriving(Read, Show, Eq, Ord)
+data.Maybe("a") == d.Nothing | d.Just("a") & deriving(Read, Show, Eq, Ord)
 ```
 
 Let's break this down a bit. The syntax for defining a new type constructor is:
 
 ```python
-data . Typename("typearg1", "typearg2")
 ```
 
 This defines a new algebraic datatype with type parameters.
@@ -99,7 +97,7 @@ Currently, the only typeclasses that can be derived are `Eq`, `Show`, `Read`,
 and `Ord`.
 
 
-Putting it all together, here is an sample implementation of `Either`:
+Putting it all together, here is the definition of `Either`:
 
 ```python
 data . Either("a", "b") == d.Left("a") | d.Right("b") & deriving(Read, Show, Eq)
@@ -142,63 +140,76 @@ Maybe str
 >>> def maybe_fmap(maybe_value, fn):
 >>>     result =  ~(caseof(maybe_value)
 ...         | Nothing         >> Nothing
-...         | m(Just, p("x")) >> Just(fn(p("x")))
+...         | Just(m.x) >> Just(fn(p.x))
 ...     )
 ...     return result
 
->>> maybe_fmap(Just(10), lambda x: x * 2)
-Just(20)
-
->>> maybe_fmap(Nothing, lambda x: x * 2)
-Nothing
 ```
 
-We can now make `Maybe` an instance of `Functor`. This will modify the class
-`Maybe`, adding a method called `fmap` that will be set equal to our
-`maybe_fmap` function.
+```python
+>>> instance(Functor, maybe).where(
+...     fmap = maybe_fmap
+...  )
+```
+
+```python
+>>> maybe_fmap(Just(10), lambda x: x * 2)
+Just(20)
+```
+
+We can now make `Maybe` an instance of `Functor`. This allows us to call `fmap`
+and map any function `a -> b` into a `Maybe` value.
 
 ```python
 >>> Functor(Maybe, maybe_fmap)
 
->>> Just(10).fmap(float)
+>>> toFloat = float ** (H/ int >> float))
+>>> fmap(Just(10), toFloat)
 Just(10.0)
 
->>> Just(10).fmap(float).fmap(lambda x: x / 2)
-Just(5.0)
+>>> fmap(fmap(Just(25), times2), toFloat)
+Just(50.0)
 ```
 
-Any instance of `Functor` can be used with the infix `fmap` operator, `*`:
+Lots of nested calls to `fmap` get unwieldy very fast. Fortunately, any
+instance of `Functor` can be used with the infix `fmap` operator, `*`. This is equivalent to `<*>` in Haskell. Rewriting our example from above:
 
 ```python
->>> Just("hello") * (lambda x: x.upper()) * (lambda x: x + "!")
-Just('HELLO!')
+>>> Just(25) * times2 * toFloat
+Just(50.0)
+
+>>> Nothing * times2 * toFloat
+Nothing
 ```
 
-If we have an instance of `Functor`, we can make it an instance of
-`Applicative` and then an instance of `Monad` by defining the appropriate
-methods. To implement `Applicative`, we just need to provide `pure`, which
-wraps a value in our type. To implement `Monad`, we need to provide `bind`.
+Now that we have made `Maybe` an instance of `Functor`, we can make it an
+instance of `Applicative` and then an instance of `Monad` by defining the
+appropriate methods. To implement `Applicative`, we just need to provide
+`pure`, which wraps a value in our type. To implement `Monad`, we need to
+provide `bind`.
 
 ```python
 >>> from hask import Applicative, Monad
 
->>> Applicative(Maybe, lambda x: Just(x))
+>>> instance(Applicative, Maybe).where(
+...     pure = Just
+... )
 
 >>> def maybe_bind(maybe_value, fn):
 ...     return ~(caseof(maybe_value)
-...         | Nothing         >> Nothing
-...         | m(Just, p("x")) >> fn(p("x")))
+...         | Nothing   >> Nothing
+...         | Just(m.x) >> fn(p.x))
 ...
 
->>> Monad(Maybe, maybe_bind)
+>>> instance(Monad, Maybe).where(
+...     bind = maybe_bind
+... )
 ```
 
 Of course, `bind` also has an infix form, which is `>>` in Hask.
 
 ```python
->>> f = lambda x: Nothing if x > 5 else Just(x + 5)
->>> g = lambda x: Nothing if x < 1 else Just(2 * x)
->>> h = lambda x: Nothing if x > 0 else Just(10)
+>>> h = (lambda _: Nothing) ** (H/ "a" >> Maybe "a")
 
 >>> Just(3) >> f >> g
 Just(16)
@@ -214,8 +225,8 @@ Nothing
 
 #### Operator sections
 
-Hask also supports operator sections (e.g. `(1+)` from Haskell), which create
-`Func` objects for ease of composition.
+Hask also supports operator sections (e.g. `(1+)` in Haskell). Sections are
+just `TypedFunc` objects, so they are automagically curried and typechecked.
 
 ```python
 >>> from hask import __
@@ -223,14 +234,19 @@ Hask also supports operator sections (e.g. `(1+)` from Haskell), which create
 >>> f = (__ - 20) * (2 ** __) * (__ + 3)
 >>> f(10)
 8172
+
+>>> Just(20) * (__+10) * (90/__)
+Just(3)
 ```
 
-Sections are just `TypedFunc` objects, so they are automagically curried and
-typechecked. Double sections are also supported:
+Double sections are also supported:
 
 ```python
->>> (__+__)(1, 2)
-3
+>>> (__-__)(3, 2)
+1
+
+>>> (__**__)(2)(10)
+1024
 ```
 
 #### Guards
@@ -245,9 +261,11 @@ switch statement, you can use guards. The syntax for guards is as follows:
     | otherwise   >> <return value 3>
 )
 ```
-If no match is found (and an `otherwise` clause is not present), a
-`NoGuardMatchException` will be raised. Guards will also play nicely with
-sections:
+As in Haskell, `otherwise` will always evaluate to `True` and can be used as a
+catch-all in guard statements. If no match is found (and an `otherwise` clause
+is not present), a `NoGuardMatchException` will be raised.
+
+Guards will also play nicely with sections:
 
 ```python
 >>> from hask import guard, c, otherwise
@@ -263,8 +281,8 @@ sections:
 'Porridge is just right!'
 ```
 
-If you need a more complex conditional, you can always use lambdas or functions
-in your guard conditions.
+If you need a more complex conditional, you can always use lambdas, regular
+Python functions, or any other callable in your guard condition.
 
 ```python
 >>> def examine_password_security(password):
@@ -285,54 +303,74 @@ in your guard conditions.
 
 #### Monadic error handling (of Python functions)
 
-If you want to use `Maybe` and `Either` (or your own error-handling monad) to
-handle errors raised by Python functions defined outside Hask, you can use the
-decorators `in_maybe` and `in_either` to create functions that call the
-original function and return the result inside the `Maybe` or `Either` monads.
-
-```python
-def a_problematic_function(cheese):
-    if cheese <= 0:
-        raise ValueError("Out of cheese error")
-    return cheese - 1
-```
+If you want to use `Maybe` and `Either` to handle errors raised by Python
+functions defined outside Hask, you can use the decorators `in_maybe` and
+`in_either` to create functions that call the original function and return the
+result inside the `Maybe` or `Either` monads.
 
 If a function wrapped in `in_maybe` raises an exception, the wrapped function
 will return `Nothing`. Otherwise, the result will be returned wrapped in a
 `Just`.
 
 ```python
-maybe_problematic = in_maybe(a_problematic_function)
+def eat_cheese(cheese):
+    if cheese <= 0:
+        raise ValueError("Out of cheese error")
+    return cheese - 1
 
+maybe_eat = in_maybe(eat_cheese)
 
->>> maybe_problematic(1)
+>>> maybe_eat(1)
 Just(0)
 
->>> maybe_problematic(0)
+>>> maybe_eat(0)
 Nothing
 ```
 
-If a function wrapped in `in_either` raises an exception, the wrapped function
-will return the exception wrapped in `Left`. Otherwise, the result will be
-returned wrapped in `Right`.
+Note that this is equivalent to lifting the original function into the Maybe
+monad. That is, we have changed its type from `function` to `a -> Maybe b`. This
+makes it easier to implement the convineient monad error handling commonly seen
+in Haskell with your existing Python functions.
+
+Continuing with our silly example, we can try to eat three pieces of cheese,
+returning `Nothing` if the attempt was unsuccessful:
 
 ```python
-either_problematic = in_either(a_problematic_function)
+>>> cheese = 10
 
+>>> cheese_left = maybe_eat(cheese) >> maybe_eat >> maybe_eat
+>>> cheese_left
+Just(7)
 
->>> either_problematic(10)
+>>> cheese = 1
+
+>>> cheese_left = maybe_eat(cheese) >> maybe_eat >> maybe_eat
+>>> cheese_left
+Nothing
+```
+
+Similarly, if a function wrapped in `in_either` raises an exception, the
+wrapped function will return the exception wrapped in `Left`. Otherwise, the
+result will be returned wrapped in `Right`.
+
+```python
+either_eat = in_either(eat_cheese)
+
+>>> either_eat(10)
 Right(9)
 
->>> either_problematic(0)
+>>> either_eat(0)
 Left(ValueError('Out of cheese error',))
 ```
 
+Chained cheese-eating in the `Either` monad is left as an exercise for
+the reader.
 
 You can also use `in_maybe` or `in_either` as decorators:
 
 ```python
 @in_either
-def my_fn_that_raises_errors(n):
+def picky_add_10(n):
     assert type(n) == int, "not an int!"
 
     if n < 0:
@@ -341,13 +379,13 @@ def my_fn_that_raises_errors(n):
     return n + 10
 
 
->>> my_fn_that_raises_errors("hello")
+>>> picky_add_10("hello")
 Left(AssertionError('not an int!',))
 
->>> my_fn_that_raises_errors(-10)
+>>> picky_add_10(-10)
 Left(ValueError('Too low!',))
 
->>> my_fn_that_raises_errors(1)
+>>> picky_add_10(1)
 Right(11)
 ```
 
@@ -355,8 +393,7 @@ Right(11)
 #### Standard libraries
 
 All of your favorite functions from `Prelude`, `Data.List`, `Data.Maybe`,
-`Data.Either`, `Data.String`, and `Data.Tuple`, are implemented
-too. Some highlights:
+`Data.Either`, `Data.Monoid`, and more are implemented too. Some highlights:
 
 ```python
 ```

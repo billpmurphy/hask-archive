@@ -7,6 +7,7 @@ from ..lang import data
 from ..lang import d
 from ..lang import deriving
 from ..lang import instance
+from ..lang import typify
 
 from Eq import Eq
 from Ord import Ord
@@ -35,6 +36,7 @@ instance(Monad, Maybe).where(
 def in_maybe(fn, *args, **kwargs):
     """
     Decorator for monadic error handling.
+
     If the decorated function raises an exception, return Nothing. Otherwise,
     take the result and wrap it in a Just.
     """
@@ -43,9 +45,11 @@ def in_maybe(fn, *args, **kwargs):
             return Just(fn(*args, **kwargs))
         except:
             return Nothing
+
     if len(args) > 0 or len(kwargs) > 0:
         return _closure_in_maybe(*args, **kwargs)
-    return closure_in_maybe
+
+    return typify(fn, hkt=lambda x: t(Maybe, x))(closure_in_maybe)
 
 
 @sig(H/ "b" >> (H/ "a" >> "b") >> t(Maybe, "a") >> "b")

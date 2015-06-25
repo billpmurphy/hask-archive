@@ -379,7 +379,6 @@ def make_data_const(name, fields, type_constructor):
 
     # If the data constructor takes no arguments, create an instance of it
     # and return that instance rather than returning the class
-    # The type() method does not need to be modified in this case
     if len(fields) == 0:
         Hask.make_instance(cls, type_constructor.__type__)
         cls = cls()
@@ -394,7 +393,6 @@ def make_data_const(name, fields, type_constructor):
         Hask.make_instance(cls, _type)
 
     # TODO: make sure __init__ or __new__ is typechecked
-
     type_constructor.__constructors__ += (cls,)
     return cls
 
@@ -402,11 +400,11 @@ def make_data_const(name, fields, type_constructor):
 def build_ADT(typename, typeargs, data_constructors, to_derive):
     """
     """
-    # create the new type constructor and data constructors
+    # 1) Create the new type constructor and data constructors
     newtype = make_type_const(typename, typeargs)
     dcons = [make_data_const(d[0], d[1], newtype) for d in data_constructors]
 
-    # derive typeclass instances for the new type constructors
+    # 2) Derive typeclass instances for the new type constructors
     for tclass in to_derive:
         tclass.derive_instance(newtype)
     return tuple([newtype,] + dcons)
@@ -414,3 +412,50 @@ def build_ADT(typename, typeargs, data_constructors, to_derive):
 
 #=============================================================================#
 # Pattern matching
+
+
+class PatternMatchBind(namedtuple("__pattern__", ["name"])):
+    pass
+
+
+class Wildcard(object):
+    pass
+
+
+def pattern_match(value, pattern, env=None):
+    """
+    Pattern match a value and a pattern.
+    """
+    env = {} if env is None else env
+
+    if isinstance(pattern, Wildcard):
+        return True, env
+
+    elif isinstance(pattern, PatternMatchBind):
+        if pattern.name in env:
+            msg = "Conflicting definitions for `%s`" % pattern.name
+            raise SyntaxError(msg)
+        env[pattern.name] = value
+        return True, env
+
+    elif type(value) == type(pattern):
+        if isinstance(value, __ADT__):
+            matches = []
+            for v, p in zip(nt_to_tuple(value), nt_to_tuple(pattern)):
+                match_status, newenv = pattern_match(v, p, env)
+                env.update(newenv)
+                matches.append(match_status)
+            return all(matches), env
+
+        elif hasattr(value, "__iter__"):
+            matches = []
+            for v, p in zip(value, pattern):
+                match_status, newenv = pattern_match(v, p, env)
+                env.update(newenv)
+                matches.append(match_status)
+            return all(matches), env
+
+        elif value == pattern:
+            return True, env
+
+    return False, env
