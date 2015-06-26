@@ -5,6 +5,7 @@ from ..lang import sig
 from ..lang import t
 from ..lang import L
 
+from Eq import Eq
 from Ord import Ord
 from Maybe import Maybe
 from Maybe import Just
@@ -179,22 +180,48 @@ def permutations(xs):
 # Reducing lists (folds)
 
 
+@sig(H/ (H/ "a" >> "b" >> "a") >> "a" >> ["b"] >> "a")
 def foldl(f, b, xs):
+    """
+    foldl :: (a -> b -> a) -> a -> [b] -> a
+    """
     pass
 
+
+@sig(H/ (H/ "a" >> "b" >> "a") >> "a" >> ["b"] >> "a")
 def foldl_(f, b, xs):
+    """
+    foldl' :: (a -> b -> a) -> a -> [b] -> a
+    """
     pass
 
+
+@sig(H/ (H/ "a" >> "a" >> "a") >> ["a"] >> "a")
 def foldl1(f, b, xs):
     pass
 
+
+@sig(H/ (H/ "a" >> "a" >> "a") >> ["a"] >> "a")
 def foldl1_(f, b, xs):
+    """
+    foldl1' :: (a -> a -> a) -> [a] -> a
+    """
     pass
 
+
+@sig(H/ (H/ "a" >> "b" >> "b") >> "b" >> ["a"] >> "b")
 def foldr(f, b, xs):
+    """
+    foldr :: (a -> b -> b) -> b -> [a] -> b
+    """
     pass
 
+
+@sig(H/ (H/ "a" >> "a" >> "a") >> ["a"] >> "a")
 def foldr1(f, b, xs):
+    """
+    foldr1 :: (a -> a -> a) -> [a] -> a
+    """
     pass
 
 
@@ -210,29 +237,57 @@ def concat(xss):
     return L[(x for xs in xss for x in xs)]
 
 
+@sig(H/ (H/ "a" >> ["b"]) >> ["a"] >> ["b"])
 def concatMap(f, xs):
-    pass
+    """
+    concatMap :: (a -> [b]) -> [a] -> [b]
+    """
+    return bind(xs, f)
 
+
+@sig(H/ [bool] >> bool)
 def and_(xs):
-    pass
+    """
+    and :: [Bool] -> Bool
+    """
+    return all(xs)
 
+
+@sig(H/ [bool] >> bool)
 def or_(xs):
-    pass
+    """
+    or :: [Bool] -> Bool
+    """
+    return any(xs)
 
+
+@sig(H/ (H/ "a" >> bool) >> ["a"] >> bool)
 def any_(xs):
-    pass
+    """
+    any :: (a -> Bool) -> [a] -> Bool
+    """
+    return any((p(x) for x in xs))
 
-def all_(xs):
-    pass
+
+@sig(H/ (H/ "a" >> bool) >> ["a"] >> bool)
+def all_(p, xs):
+    """
+    all :: (a -> Bool) -> [a] -> Bool
+    """
+    return all((p(x) for x in xs))
+
 
 #def sum(xs):
 #    pass
 
+
 def product(xs):
     pass
 
+
 def maximum(xs):
     pass
+
 
 def minimum(xs):
     pass
@@ -329,11 +384,14 @@ def unfoldr(f, x):
 #=============================================================================#
 ## Predicates
 
+
 def isPrefixOf(xs, ys):
     pass
 
+
 def isSuffixOf(xs, ys):
     pass
+
 
 def isSubsequenceOf(xs, ys):
     pass
@@ -346,24 +404,33 @@ def isSubsequenceOf(xs, ys):
 ## Searching by equality
 
 
-def elem(a, list_a):
+@sig(H[(Eq, "a")]/ "a" >> ["a"] >> bool)
+def elem(x, xs):
     """
+    elem :: Eq a => a -> [a] -> Bool
+
     elem is the list membership predicate, elem(x, xs). For the result to be
     False, the list must be finite; True, however, results from an element
     equal to x found at a finite index of a finite or infinite list.
     """
-    return a in list_a
+    return x in xs
 
 
-def notElem(a, list_a):
+@sig(H[(Eq, "a")]/ "a" >> ["a"] >> bool)
+def notElem(x, xs):
     """
+    notElem :: Eq a => a -> [a] -> Bool
+
     notElem is the negation of elem.
     """
-    return not elem(a, list_a)
+    return not elem(x, xs)
 
 
+@sig(H[(Eq, "a")]/ "a" >> [("a", "b")] >> t(Maybe, "b"))
 def lookup(a, assoc_list):
     """
+    lookup :: Eq a => a -> [(a, b)] -> Maybe b
+
     """
     for key, value in assoc_list:
         if key == a:
@@ -375,24 +442,30 @@ def lookup(a, assoc_list):
 ## Searching with a predicate
 
 
-def find(f, xs):
+@sig(H/ (H/ "a" >> bool) >> ["a"] >> t(Maybe, "a"))
+def find(p, xs):
     """
+    find :: (a -> Bool) -> [a] -> Maybe a
+
     The find function takes a predicate and a structure and returns the
     leftmost element of the structure matching the predicate, or Nothing if
     there is no such element.
     """
     for x in xs:
-        if f(x):
+        if p(x):
             return Just(x)
     return Nothing
 
 
+@sig(H/ (H/ "a" >> bool) >> ["a"] >> (["a"], ["a"]))
 def partition(f, xs):
     """
+    partition :: (a -> Bool) -> [a] -> ([a], [a])
+
     The partition function takes a predicate a list and returns the pair of
     lists of elements which do and do not satisfy the predicate.
     """
-    return (x for x in xs if f(x)), (y for y in xs if not f(y))
+    return L[(x for x in xs if f(x))], L[(y for y in xs if not f(y))]
 
 
 #=============================================================================#

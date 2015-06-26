@@ -41,7 +41,7 @@ instance(Monad, Either).where(
 )
 
 
-def in_either(fn, *args, **kwargs):
+def in_either(fn):
     """
     Decorator for monadic error handling.
     If the decorated function raises an exception, return the exception inside
@@ -52,9 +52,6 @@ def in_either(fn, *args, **kwargs):
             return Right(fn(*args, **kwargs))
         except Exception as e:
             return Left(e)
-    if len(args) > 0 or len(kwargs) > 0:
-        return _closure_in_either(*args, **kwargs)
-
     return typify(fn, hkt=lambda x: t(Either, "aa", x))(closure_in_either)
 
 
@@ -66,7 +63,9 @@ def either(f_a, f_b, either_a_b):
     Case analysis for the Either type. If the value is Left(a), apply the first
     function to a; if it is Right(b), apply the second function to b.
     """
-    pass
+    return ~(caseof(either_a_b)
+                | m(Left(m.a))  >> f_a(p.a)
+                | m(Right(m.b)) >> f_b(p.b))
 
 
 @sig(H/ [t(Either, "a", "b")] >> ["a"])
@@ -77,7 +76,7 @@ def lefts(xs):
     Extracts from a List of Either all the Left elements. All the Left elements
     are extracted in order.
     """
-    pass
+    return L[(x[0] for x in xs if isLeft(x))]
 
 
 @sig(H/ [t(Either, "a", "b")] >> ["b"])
@@ -88,7 +87,7 @@ def rights(xs):
     Extracts from a list of Either all the Right elements. All the Right
     elements are extracted in order.
     """
-    pass
+    return L[(x[0] for x in xs if isRight(x))]
 
 
 @sig(H/ t(Either, "a", "b") >> bool)
@@ -98,7 +97,9 @@ def isLeft(x):
 
     Return True if the given value is a Left-value, False otherwise.
     """
-    pass
+    return ~(caseof(x)
+                | m(Right(m.x)) >> False
+                | m(Left(m.x))  >> True)
 
 
 @sig(H/ t(Either, "a", "b") >> bool)
@@ -108,7 +109,7 @@ def isRight(x):
 
     Return True if the given value is a Right-value, False otherwise.
     """
-    pass
+    return not isLeft(x)
 
 
 @sig(H/ [t(Either, "a", "b")] >> (["a"], ["b"]))
@@ -120,4 +121,4 @@ def partitionEithers(xs):
     extracted, in order, to the first component of the output. Similarly the
     Right elements are extracted to the second component of the output.
     """
-    pass
+    return (lefts(xs), rights(xs))

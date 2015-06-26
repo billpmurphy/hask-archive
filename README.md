@@ -43,9 +43,11 @@ language tools from Haskell, including:
 
 Features not yet implemented, but coming soon:
 
+* Python 3 compatibility
 * More (and better) documentation
 * Better support for polymorphic return values/type defaulting
 * Better support for lazy evaluation (beyond just the `List` type)
+* Improved pattern matching, including pattern matching on Lists
 * More of the Haskell standard library (`Control.*` libraries)
 * Monadic, lazy I/O
 * QuickCheck (property-based testing)
@@ -233,10 +235,6 @@ Nothing
 ### Other fun stuff
 
 
-#### List type
-
-
-
 #### Operator sections
 
 Hask also supports operator sections (e.g. `(1+)` in Haskell). Sections are
@@ -402,6 +400,23 @@ Left(ValueError('Too low!',))
 
 >>> picky_add_10(1)
 Right(11)
+```
+
+####
+
+```python
+As in Haskell, there are four basic type of list comprehensions:
+# list from 1 to infinity, counting by ones
+>>> L[1, ...]
+
+# list from 1 to infinity, counting by twos
+>>> L[1, 3, ...]
+
+# list from 1 to 20 (inclusive), counting by ones
+>>> L[1, ..., 20]
+
+# list from 1 to 20 (inclusive), counting by fours
+>>> L[1, 5, ..., 20]
 ```
 
 

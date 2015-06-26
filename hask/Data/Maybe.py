@@ -40,7 +40,7 @@ instance(Monad, Maybe).where(
 )
 
 
-def in_maybe(fn, *args, **kwargs):
+def in_maybe(fn):
     """
     Decorator for monadic error handling.
 
@@ -52,10 +52,6 @@ def in_maybe(fn, *args, **kwargs):
             return Just(fn(*args, **kwargs))
         except:
             return Nothing
-
-    if len(args) > 0 or len(kwargs) > 0:
-        return _closure_in_maybe(*args, **kwargs)
-
     return typify(fn, hkt=lambda x: t(Maybe, x))(closure_in_maybe)
 
 
@@ -79,7 +75,9 @@ def isJust(a):
 
 @sig(H/ t(Maybe, "a")  >> bool)
 def isNothing(a):
-    return a == Nothing
+    return ~(caseof(a)
+                | m(Nothing)   >> True
+                | m(Just(m.x)) >> False)
 
 
 @sig(H/ t(Maybe, "a") >> "a")

@@ -976,27 +976,46 @@ class TestMaybe(unittest.TestCase):
         #        (lambda x: Just(x * 10)) >>
         #        (lambda x: Just(x * 10)) >>
         #        (lambda x: Just(x * 10)))
-        #self.assertEqual(Nothing, Nothing >>
-        #        F(lambda x: Just(x * 10)) >>
-        #        F(lambda x: Just(x * 10)))
-        #self.assertEqual(Nothing, Just(1) >>
-        #        F(lambda x: Nothing) >>
-        #        F(lambda x: Just(x * 10)))
 
 
 class TestEither(unittest.TestCase):
 
     def test_instances(self):
-        self.assertTrue(has_instance(Maybe, Show))
-        self.assertTrue(has_instance(Maybe, Eq))
-        self.assertTrue(has_instance(Maybe, Functor))
-        self.assertTrue(has_instance(Maybe, Applicative))
-        self.assertTrue(has_instance(Maybe, Monad))
+        self.assertTrue(has_instance(Either, Show))
+        self.assertTrue(has_instance(Either, Eq))
+        self.assertTrue(has_instance(Either, Functor))
+        self.assertTrue(has_instance(Either, Applicative))
+        self.assertTrue(has_instance(Either, Monad))
 
-        self.assertFalse(has_instance(Maybe, Typeclass))
-        self.assertFalse(has_instance(Maybe, Num))
-        self.assertFalse(has_instance(Maybe, Foldable))
-        self.assertFalse(has_instance(Maybe, Traversable))
+        self.assertFalse(has_instance(Either, Typeclass))
+        self.assertFalse(has_instance(Either, Num))
+        self.assertFalse(has_instance(Either, Foldable))
+        self.assertFalse(has_instance(Either, Traversable))
+
+    def test_functions(self):
+        from hask.Data.Either import either
+        from hask.Data.Either import isRight
+        from hask.Data.Either import isLeft
+        from hask.Data.Either import lefts
+        from hask.Data.Either import rights
+        from hask.Data.Either import partitionEithers
+
+        f = (lambda x: x + " world") ** (H/ str >> str)
+        g = (lambda x: x * 10) ** (H/ int >> int)
+
+        #self.assertEqual(20, either(f, g, Right(2)))
+        #self.assertEqual("hello world", either(f, g, Left("hello ")))
+        self.assertTrue(isLeft(Left(1)))
+        self.assertTrue(isRight(Right("a")))
+        self.assertFalse(isLeft(Right("a")))
+        self.assertFalse(isRight(Left(1)))
+
+        self.assertEqual(L[1, 3],
+                rights(L[Right(1), Left(2), Right(3), Left(4)]))
+        self.assertEqual(L[2, 4],
+                lefts(L[Right(1), Left(2), Right(3), Left(4)]))
+        self.assertEqual((L[2, 4], L[1, 3]),
+                partitionEithers(L[Right(1), Left(2), Right(3), Left(4)]))
 
 
 class TestList(unittest.TestCase):
