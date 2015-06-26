@@ -61,9 +61,12 @@ Features not yet implemented, but coming soon:
 To run the tests: `python tests.py`.
 
 
-## Introduction
+## Features
 
-### Defining Abstract Data Types
+Hask is a grab-bag of features that add up to
+
+
+### Abstract Data Types
 
 ```python
 from hask import data, d, deriving
@@ -147,6 +150,21 @@ Either a (str, int)
 
 Now that we have our `Maybe` type, let's take it for a spin. Suppose we want to implement a function `safeDiv`, which attempt to divide two values
 
+
+```python
+def fib(x):
+    return ~(caseof(x)
+                | m(0)   >> 1
+                | m(1)   >> 1
+                | m(m.n) >> fib(p.n - 1) + fib(p.n - 2)
+            )
+
+>>> fib(1)
+1
+
+>>> fib(6)
+8
+```
 
 ### Typeclasses and typeclass instances
 
@@ -232,7 +250,15 @@ Nothing
 Nothing
 ```
 
-### Other fun stuff
+
+#### Defining your own typeclasses
+
+Defining your own typeclasses is pretty easy. For example, let's look at the definition of i.
+
+If you want to use infix operators, Hask makes this pretty easy.
+
+```python
+```
 
 
 #### Operator sections

@@ -194,18 +194,21 @@ def typify(fn, hkt=None):
 # Undefined values
 
 
-class __undefined__(object):
+class Undefined(object):
     """
-    A weird object with no concrete type. Used to create `undefined` and in
+    A class with no concrete type definition. Used to create `undefined` and in
     pattern matching
     """
-    __make_undefined__ = lambda s, *a: undefined
+    make_undefined = lambda s, *a: undefined
 
 
-wipe_attrs(__undefined__, __undefined__.__make_undefined__)
+class __undefined__(Undefined):
+    pass
+
+wipe_attrs(__undefined__, __undefined__.make_undefined__)
 Hask.make_instance(__undefined__, lambda __: TypeVariable())
 
-undefined = __undefined__()
+undefined = Undefined()
 
 
 

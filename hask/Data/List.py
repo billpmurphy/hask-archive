@@ -1,4 +1,5 @@
 import itertools
+import functools
 
 from ..lang import H
 from ..lang import sig
@@ -97,12 +98,12 @@ def length(xs):
 
 @sig(H/ (H/ "a" >> "b") >> ["a"] >> ["b"])
 def map(fn, iterable):
-    return L[(itertools.imap(fn, iterable))]
+    return L[itertools.imap(fn, iterable)]
 
 
 @sig(H/ (H/ "a" >> bool) >> ["a"] >> ["a"])
 def filter(fn, iterable):
-    return L[(itertools.ifilter(fn, iterable))]
+    return L[itertools.ifilter(fn, iterable)]
 
 
 @sig(H/ ["a"] >> ["a"] )
@@ -116,14 +117,19 @@ def reverse(xs):
 
 
 @sig(H/ "a" >> ["a"] >> ["a"] )
-def intersperse(a, xs):
+def intersperse(x, xs):
     """
     intersperse :: a -> [a] -> [a]
 
     The intersperse function takes an element and a list and `intersperses'
     that element between the elements of the list.
     """
-    pass
+    def __intersperse(x, xs):
+        for y in init(xs):
+            yield y
+            yield x
+        yield last(xs)
+    return L[__intersperse(x, xs)]
 
 
 @sig(H/ ["a"] >> [["a"]] >> ["a"] )
@@ -277,32 +283,55 @@ def all_(p, xs):
     return all((p(x) for x in xs))
 
 
-#def sum(xs):
-#    pass
+def sum(xs):
+    pass
 
 
 def product(xs):
-    pass
+    return functools.reduce(operator.mul, xs)
 
 
 def maximum(xs):
-    pass
+    return max(xs)
 
 
 def minimum(xs):
-    pass
+    return min(xs)
 
 
 #=============================================================================#
 # Building lists
-
-
-#=============================================================================#
 ## Scans
+
+
+def scanl(f, z, xs):
+    pass
+
+
+def scanl_(f, z, xs):
+    pass
+
+
+def scanl(f, xs):
+    pass
+
+
+def scanr(f, z, xs):
+    pass
+
+def scanr(f, xs):
+    pass
 
 
 #=============================================================================#
 ## Accumulating maps
+
+
+def mapAccumL(f, a, tb):
+    pass
+
+def mapAccumR(f, a, tb):
+    pass
 
 
 #=============================================================================#
@@ -375,9 +404,45 @@ def unfoldr(f, x):
 
 #=============================================================================#
 # Sublists
+## Extracting sublists
 
-#=============================================================================#
-## Exctracting sublists
+
+def take(n, xs):
+    pass
+
+
+def drop(n, xs):
+    pass
+
+def splitAt(n, xs):
+    pass
+
+def takeWhile(p, xs):
+    pass
+
+def dropWhile(p, xs):
+    pass
+
+def dropWhileEnd(p, xs):
+    pass
+
+def span(p, xs):
+    pass
+
+def break_(p, xs):
+    pass
+
+def stripPrefix(xs, ys):
+    pass
+
+def group(xs):
+    pass
+
+def inits(xs):
+    pass
+
+def tails(xs):
+    pass
 
 
 
@@ -399,8 +464,6 @@ def isSubsequenceOf(xs, ys):
 
 #=============================================================================#
 # Searching lists
-
-#=============================================================================#
 ## Searching by equality
 
 
@@ -472,15 +535,70 @@ def partition(f, xs):
 # Indexing lists
 
 
+def elemIndex(x, xs):
+    pass
+
+
 #=============================================================================#
 # Zipping and unzipping lists
+
+def zip(xs, ys):
+    pass
+
+def zip3(a, b, c):
+    pass
+
+def zip4(a, b, c, d):
+    pass
+
+def zip5(a, b, c, d, e):
+    pass
+
+def zip6(a, b, c, d, e, f):
+    pass
+
+def zip7(a, b, c, d, e, f, g):
+    pass
+
+def zipWith(fn, xs, ys):
+    pass
+
+def zipWith3(fn, a, b, c):
+    pass
+
+def zipWith4(fn, a, b, c, d):
+    pass
+
+def zipWith5(fn, a, b, c, d, e):
+    pass
+
+def zipWith6(fn, a, b, c, d, e, f):
+    pass
+
+def zipWith7(fn, a, b, c, d, e, f):
+    pass
+
+def unzip(xs):
+    pass
+
+def unzip3(xs):
+    pass
+
+def unzip4(xs):
+    pass
+
+def unzip5(xs):
+    pass
+
+def unzip6(xs):
+    pass
+
+def unzip7(xs):
+    pass
 
 
 #=============================================================================#
 # Special lists
-
-
-#=============================================================================#
 ## Functions on strings
 
 from String import lines
@@ -546,13 +664,7 @@ def insert(x, xs):
 
 #=============================================================================#
 # Generalized functions
-
-
-#=============================================================================#
 ## The "By" operations
-
-
-#=============================================================================#
 ### User-supplied equality (replacing an Eq context)
 
 
@@ -596,4 +708,19 @@ def maximumBy(f, xs):
 
 
 def minimumBy(f, xs):
+    pass
+
+
+## The "generic" operators
+
+def genericLength(xs):
+    pass
+
+def genericTake(n, xs):
+    pass
+
+def genericDrop(n, xs):
+    pass
+
+def genericSplitAt(n, xs):
     pass

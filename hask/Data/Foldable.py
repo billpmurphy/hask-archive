@@ -8,3 +8,7 @@ class Foldable(Typeclass):
     def make_instance(typeclass, cls, foldr):
         build_instance(Foldable, cls, {"foldr":foldr})
         return
+
+
+def foldr(f, z, t):
+    pass

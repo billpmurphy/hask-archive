@@ -1094,6 +1094,13 @@ class TestList(unittest.TestCase):
         self.assertEqual(3, len(L[1, 2, 3]))
 
 
+class TestDataList(unittest.TestCase):
+
+    def test_infinite_lists(self):
+        plus_one = (lambda x: x + 1) ** (H/ int >> int)
+        #self.assertEquals(iterate(plus_one, 0)[:10], L[range(10)])
+
+
 class TestPrelude(unittest.TestCase):
 
     def test_imports(self):
@@ -1140,15 +1147,6 @@ class TestPrelude(unittest.TestCase):
         from hask.Prelude import until
 
         self.assertEquals(1, until((__>0), (__+1), -20))
-
-    def test_iterate(self):
-        from hask.Prelude import iterate
-
-        @sig(H/ int >> int)
-        def plus_one(x):
-            return x + 1
-
-        #self.assertEquals(iterate(plus_one, 0)[:10], list(range(10)))
 
     def test_error(self):
         from hask.Prelude import error
@@ -1267,6 +1265,25 @@ class TestDataOrd(unittest.TestCase):
 
 class Test_README_Examples(unittest.TestCase):
     """Make sure the README examples are all working"""
+    def setUp(self):
+        self.count = 0
+
+    def test_match(self):
+
+        @sig(H/ int >> int)
+        def fib(x):
+            self.count += 1
+            print self.count, x
+            return ~(caseof(x)
+                        | m(0)   >> 1
+                        | m(1)   >> 1
+                        | m(m.n) >> fib(p.n - 1)#fib(p.n - 1) + fib(p.n - 2)
+                    )
+
+        #self.assertEqual(1, fib(0))
+        #self.assertEqual(1, fib(1))
+        self.assertEqual(8, fib(6))
+
 
     def test_sections(self):
         pass

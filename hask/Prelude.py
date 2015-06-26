@@ -1,4 +1,5 @@
 import math
+import fractions
 
 from .lang import build_instance
 from .lang import H
@@ -110,19 +111,16 @@ from Data.Traversable import Traversable
 
 
 #=============================================================================#
-## Numbers
-### Numeric types
-
-
-
-#=============================================================================#
-# Numeric type classes
+# Numbers
+### Numeric type classes
 
 
 class Num(Show, Eq):
     @classmethod
     def make_instance(typeclass, cls, add, mul, abs, signum, fromInteger,
             negate, sub=None):
+
+        @sig(H[(Num, "a")]/ "a" >> "a" >> "a")
         def default_sub(a, b):
             return a.__add__(b.__neg__())
 
@@ -134,20 +132,45 @@ class Num(Show, Eq):
         return
 
 
-def __signum(a):
+@sig(H[(Num, "a")]/ "a" >> "a")
+def negate(a):
     """
-    Signum function for python builtin numeric types.
+    signum :: Num a => a -> a
+
+    Unary negation.
     """
-    if a < 0:   return -1
-    elif a > 0: return 1
-    else:       return 0
+    return Num[a].negate(a)
+
+
+@sig(H[(Num, "a")]/ "a" >> "a")
+def signum(a):
+    """
+    signum :: Num a => a -> a
+
+    Sign of a number. The functions abs and signum should satisfy the law:
+    abs x * signum x == x
+    For real numbers, the signum is either -1 (negative), 0 (zero) or 1
+    (positive).
+    """
+    return Num[a].signum(a)
+
+
+@sig(H[(Num, "a")]/ "a" >> "a")
+def abs(a):
+    """
+    abs :: Num a => a -> a
+
+    Absolute value.
+    """
+    return Num[a].abs(a)
+
 
 
 instance(Num, int).where(
     add = int.__add__,
     mul = int.__mul__,
     abs = abs,
-    signum = __signum,
+    signum = lambda x: -1 if x < 0 else (1 if x > 0 else 0),
     fromInteger = int,
     negate = int.__neg__,
     sub = int.__sub__
@@ -157,7 +180,7 @@ instance(Num, long).where(
     add = long.__add__,
     mul = long.__mul__,
     abs = abs,
-    signum = __signum,
+    signum = lambda x: -1 if x < 0 else (1 if x > 0 else 0),
     fromInteger = long,
     negate = long.__neg__,
     sub = long.__sub__
@@ -167,7 +190,7 @@ instance(Num, float).where(
     add = float.__add__,
     mul = float.__mul__,
     abs = abs,
-    signum = __signum,
+    signum = lambda x: -1 if x < 0 else (1 if x > 0 else 0),
     fromInteger = float,
     negate = float.__neg__,
     sub = float.__sub__
@@ -177,7 +200,7 @@ instance(Num, complex).where(
     add = complex.__add__,
     mul = complex.__mul__,
     abs = abs,
-    signum = __signum,
+    signum = lambda x: -1 if x < 0 else (1 if x > 0 else 0),
     fromInteger = complex,
     negate = complex.__neg__,
     sub = complex.__sub__
@@ -216,13 +239,23 @@ instance(Real, float).where()
 
 class Integral(Real, Enum):
     @classmethod
-    def make_instance(typeclass, cls):
-        build_instance(Integral, cls, {})
+    def make_instance(typeclass, cls, quotRem, toInteger, quot=None, rem=None,
+            div=None, mod=None, divMod=None):
+        attrs = {"quotRem":quotRem, "toInteger":toInteger, "quot":quot,
+                 "rem":rem, "div":div, "mod":mod, "divMod":divMod}
+        build_instance(Integral, cls, attrs)
         return
 
 
-instance(Integral, int).where()
-instance(Integral, long).where()
+instance(Integral, int).where(
+    quotRem = lambda x, y: (x / y, x % y),
+    toInteger = int
+)
+
+instance(Integral, long).where(
+    quotRem = lambda x, y: (x / y, x % y),
+    toInteger = int
+)
 
 
 class RealFrac(Real, Fractional):
@@ -306,7 +339,7 @@ def gcd(x, y):
     2, gcd(0,4) = 4. gcd(0,0) = 0. (That is, the common divisor that is
     "greatest" in the divisibility preordering.)
     """
-    pass
+    return fractions.gcd(x, y)
 
 
 @sig(H[(Integral, "a")]/ "a" >> "a" >> "a")
@@ -316,7 +349,7 @@ def lcm(x, y):
 
     lcm(x,y) is the smallest positive integer that both x and y divide.
     """
-    pass
+    return div(x * y, gcd(a, b))
 
 
 #=============================================================================#
@@ -337,7 +370,7 @@ def mapM_(fm, xs):
 def sequence(xs):
     return
 
-def sequence(xs):
+def sequence_(xs):
     return
 
 
@@ -410,6 +443,9 @@ def error(msg):
     raise Exception(msg)
 
 
+from .lang import undefined
+
+
 #=============================================================================#
 # List operations
 
@@ -427,12 +463,23 @@ from Data.List import reverse
 ## Special folds
 
 
+from Data.List import and_
+from Data.List import or_
+from Data.List import any_
+from Data.List import all_
+from Data.List import concat
+from Data.List import concatMap
+
+
 #=============================================================================#
 ## Building lists
-
-
-#=============================================================================#
 ### Scans
+
+
+from Data.List import and_
+from Data.List import and_
+from Data.List import and_
+from Data.List import and_
 
 
 #=============================================================================#
@@ -449,12 +496,33 @@ from Data.List import cycle
 ## Sublists
 
 
+from Data.List import take
+from Data.List import drop
+from Data.List import splitAt
+from Data.List import takeWhile
+from Data.List import dropWhile
+from Data.List import span
+from Data.List import break_
+
+
 #=============================================================================#
 ## Searching lists
 
 
+from Data.List import notElem
+from Data.List import lookup
+
+
 #=============================================================================#
 ## Zipping and unzipping lists
+
+
+from Data.List import lookup
+from Data.List import lookup
+from Data.List import lookup
+from Data.List import lookup
+from Data.List import lookup
+from Data.List import lookup
 
 
 #=============================================================================#

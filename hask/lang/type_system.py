@@ -273,6 +273,10 @@ class TypedFunc(object):
 
         ap = Var(id(self))
         for arg in args:
+
+            if arg is undefined:
+                return undefined
+
             ap = App(ap, Var(id(arg)))
 
         result_type = analyze(ap, env)
