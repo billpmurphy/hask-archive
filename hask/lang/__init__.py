@@ -46,5 +46,3 @@ from builtins import List
 from builtins import _t
 from builtins import _q
 from builtins import _i
-
-from hof import Func

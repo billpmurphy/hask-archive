@@ -15,9 +15,6 @@ Remaining TODOs:
 
 # Hask
 
-Wish you could use all those elegant Haskell features in Python? All you have
-to do is `import hask`.
-
 Hask is a pure-Python, zero-dependencies library that mimics most of the core
 language tools from Haskell, including:
 
@@ -44,13 +41,11 @@ language tools from Haskell, including:
 Features not yet implemented, but coming soon:
 
 * Python 3 compatibility
-* More (and better) documentation
 * Better support for polymorphic return values/type defaulting
-* Better support for lazy evaluation (beyond just the `List` type)
+* Better support for lazy evaluation (beyond just the `List` type and pattern matching)
 * Improved pattern matching, including pattern matching on Lists
-* More of the Haskell standard library (`Control.*` libraries)
+* More of the Haskell standard library (`Control.*` libraries, QuickCheck, and more)
 * Monadic, lazy I/O
-* QuickCheck (property-based testing)
 
 
 ## Installation
@@ -61,12 +56,28 @@ Features not yet implemented, but coming soon:
 To run the tests: `python tests.py`.
 
 
+## Why did you make this?
+
+It was an experiment! My goal was to cram as much of Haskell into Python as
+possible while still being 100% compatible with the rest of the language, and
+then stepping back to see if any useful ideas came out of the wreckage.
+
+Contributions, forks, and extensions to this experiment are always welcome!
+Feel free to submit a pull request, open an issue, or email me. In the spirit
+of this project, taking things to weird extremes is encouraged.
+
+
 ## Features
 
-Hask is a grab-bag of features that add up to
-
+Hask is a grab-bag of features that add up to one big pseudo-Haskell functional
+programming library. The rest of this README lays out the basics.
 
 ### Abstract Data Types
+
+Hask makes it easy to define Haskell-like algebraic datatypes, which are
+immutable objects with a fixed number of fields.
+
+Here is the definition for `Maybe`:
 
 ```python
 from hask import data, d, deriving
@@ -79,6 +90,7 @@ Maybe, Nothing, Just =\
 Let's break this down a bit. The syntax for defining a new type constructor is:
 
 ```python
+data.TypeName("type param", "type param 2" ... "type param n")
 ```
 
 This defines a new algebraic datatype with type parameters.
@@ -86,21 +98,18 @@ This defines a new algebraic datatype with type parameters.
 To define data constructors for this type, use `d.` The name of the data
 constructor goes first, followed by its fields. Multiple data constructors
 should be separted by `|`. If your data constructor has no fields, you can omit
-`d`. There is no limit to the number of data constructors you can define, and
-there is no limit to the number of fields that each data constructor can have.
-
+the parens. For example:
 
 ```python
-d.DC1("a", "b")
-
-d.DC1("a", "b")
+data.SomeType("a", "b") == d.Foo(int, int, str)
+                         | d.Bar
+                         | d.Baz("a", "b")
 ```
 
 To automagically derive typeclass instances for the new ADT, just add `&
 deriving(...typeclasses...)` after the data constructor declarations.
 Currently, the only typeclasses that can be derived are `Eq`, `Show`, `Read`,
 `Ord`, and `Bounded`.
-
 
 Putting it all together, here is the definition of `Either`:
 
@@ -117,7 +126,6 @@ Just(10)
 
 >>> Nothing
 Nothing
-
 
 >>> Just(Just(10))
 Just(Just(10))
@@ -148,9 +156,6 @@ Either a (str, int)
 
 ### Pattern matching
 
-Now that we have our `Maybe` type, let's take it for a spin. Suppose we want to implement a function `safeDiv`, which attempt to divide two values
-
-
 ```python
 def fib(x):
     return ~(caseof(x)
@@ -163,29 +168,24 @@ def fib(x):
 1
 
 >>> fib(6)
-8
+13
 ```
+
+
+For convinience, you can also use numeric indexing on ADT fields.
+
 
 ### Typeclasses and typeclass instances
 
-
 ```python
->>> def maybe_fmap(maybe_value, fn):
->>>     return ~(caseof(maybe_value)
-...         | m(Nothing)   >> Nothing
-...         | m(Just(m.x)) >> Just(fn(p.x)))
+def maybe_fmap(maybe_value, fn):
+    return ~(caseof(maybe_value)
+        | m(Nothing)   >> Nothing
+        | m(Just(m.x)) >> Just(fn(p.x)))
 
-```
-
-```python
->>> instance(Functor, Maybe).where(
-...     fmap = maybe_fmap
-...  )
-```
-
-```python
->>> maybe_fmap(Just(10), lambda x: x * 2)
-Just(20)
+instance(Functor, Maybe).where(
+    fmap = maybe_fmap
+)
 ```
 
 We can now make `Maybe` an instance of `Functor`. This allows us to call `fmap`
@@ -253,12 +253,13 @@ Nothing
 
 #### Defining your own typeclasses
 
-Defining your own typeclasses is pretty easy. For example, let's look at the definition of i.
+Defining your own typeclasses is pretty easy. For example, let's look at the definition of `Monad`.
 
-If you want to use infix operators, Hask makes this pretty easy.
 
-```python
-```
+There are a few things to note here:
+
+1) Monad is a subclass of Applicative
+2) In order to get the desired infix `>>` behavior,
 
 
 #### Operator sections
@@ -324,15 +325,15 @@ If you need a more complex conditional, you can always use lambdas, regular
 Python functions, or any other callable in your guard condition.
 
 ```python
->>> def examine_password_security(password):
-...     analysis = ~(guard(password)
-...         | c(lambda x: len(x) > 20) >> "Wow, that's one secure password"
-...         | c(lambda x: len(x) < 5)  >> "You made Bruce Schneier cry"
-...         | c(__ == "12345")         >> "Same combination as my luggage!"
-...         | otherwise                >> "Hope it's not `password`"
-...     )
-...     return analysis
-...
+def examine_password_security(password):
+    analysis = ~(guard(password)
+        | c(lambda x: len(x) > 20) >> "Wow, that's one secure password"
+        | c(lambda x: len(x) < 5)  >> "You made Bruce Schneier cry"
+        | c(__ == "12345")         >> "Same combination as my luggage!"
+        | otherwise                >> "Hope it's not `password`"
+    )
+    return analysis
+
 
 >>> nuclear_launch_code = "12345"
 
@@ -388,9 +389,12 @@ Just(7)
 Nothing
 ```
 
-Similarly, if a function wrapped in `in_either` raises an exception, the
-wrapped function will return the exception wrapped in `Left`. Otherwise, the
-result will be returned wrapped in `Right`.
+Notice that we have taken a regular Python function that throws Exceptions, and
+are now handling it in a type-safe, monadic way.
+
+The `in_either` function works just like `in_maybe`. If an Exception is thrown,
+the wrapped function will return the exception wrapped in `Left`. Otherwise,
+the result will be returned wrapped in `Right`.
 
 ```python
 either_eat = in_either(eat_cheese)
@@ -428,21 +432,25 @@ Left(ValueError('Too low!',))
 Right(11)
 ```
 
-####
+#### The List type and List comprehensions
+
+As in Haskell, there are four basic type of list comprehensions:
 
 ```python
-As in Haskell, there are four basic type of list comprehensions:
 # list from 1 to infinity, counting by ones
 >>> L[1, ...]
+L[1, 2, 3, 4, 5, 6, 7, 8, 9 ...
 
 # list from 1 to infinity, counting by twos
 >>> L[1, 3, ...]
 
-# list from 1 to 20 (inclusive), counting by ones
+
+# list from 1 to 10 (inclusive), counting by ones
 >>> L[1, ..., 20]
 
 # list from 1 to 20 (inclusive), counting by fours
 >>> L[1, 5, ..., 20]
+[1, 5, 9, 13, 17]
 ```
 
 
@@ -455,13 +463,3 @@ All of your favorite functions from `Prelude`, `Data.List`, `Data.Maybe`,
 ```
 
 
-## Contribute
-
-Contributions are always welcome! Feel free to submit a pull request, open an
-issue, or email me. In the spirit of this project, wild experimentation is
-encouraged.
-
-
-## Why did you make this?
-
-It was fun!

@@ -1,5 +1,6 @@
 import abc
 import types
+import functools
 from collections import namedtuple
 
 import hof
@@ -143,6 +144,17 @@ class Hask(Typeclass):
 # Static typing and type signatures
 
 
+class Undefined(object):
+    """
+    A class with no concrete type definition. Used to create `undefined` and to
+    enable psuedo-laziness in pattern matching.
+    """
+    make_undefined = lambda self, *a: self.__class__.__init__(self)
+
+    def __type__(self):
+        return TypeVariable()
+
+
 def typeof(obj):
     """
     Returns the type of an object within the internal type system.
@@ -169,18 +181,23 @@ def typeof(obj):
     return TypeOperator(type(obj), [])
 
 
-class TypeSignatureHKT(object):
-
-    def __init__(self, tcon, params):
-        self.tcon = tcon
-        self.params = params
-
-
 class TypeSignature(object):
-
+    """
+    Internal representation of a type signature.
+    """
     def __init__(self, args, constraints):
         self.args = args
         self.constraints = constraints
+
+
+class TypeSignatureHKT(object):
+    """
+    Internal representation of a higher-kinded type within a type signature,
+    consisting of the type constructor and its arguments.
+    """
+    def __init__(self, tcon, params):
+        self.tcon = tcon
+        self.params = params
 
 
 class TypeSignatureError(Exception):
@@ -247,49 +264,44 @@ def make_fn_type(params):
     return Function(params[0], make_fn_type(params[1:]))
 
 
-def build_sig(args, var_dict=None):
+def build_sig(type_signature, var_dict=None):
     """
     Parse a list of items (representing a type signature) and convert it to the
     internal type system language.
     """
+    args = type_signature.args
     var_dict = {} if var_dict is None else var_dict
-    type_args = [build_sig_arg(i, var_dict) for i in args]
-    return make_fn_type(type_args)
+    return [build_sig_arg(i, var_dict) for i in args]
 
 
 class TypedFunc(object):
 
-    def __init__(self, fn, fn_type):
+    def __init__(self, fn, fn_args, fn_type):
         self.__doc__ = fn.__doc__
         self.func = fn
+        self.fn_args = fn_args
         self.fn_type = fn_type
         return
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args):
         # the environment contains the type of the function and the types
         # of the arguments
         env = {id(self):self.fn_type}
         env.update({id(arg):typeof(arg) for arg in args})
-
         ap = Var(id(self))
+
         for arg in args:
-
-            if arg is undefined:
-                return undefined
-
+            if isinstance(arg, Undefined):
+                return arg
             ap = App(ap, Var(id(arg)))
-
         result_type = analyze(ap, env)
-        result = self.func.__call__(*args, **kwargs)
-        unify(result_type, typeof(result))
 
-        #if not isinstance(result_type, Function):
-        #    return self.func()
-        #return TypedFunc(self.func, result_type)
-
-        if hof.F(result) is result:
+        if len(self.fn_args) - 1 == len(args):
+            result = self.func(*args)
+            unify(result_type, typeof(result))
             return result
-        return hof.F(result)
+        return TypedFunc(functools.partial(self.func, *args),
+                         self.fn_args[len(args):], result_type)
 
     def __mod__(self, arg):
         """
@@ -313,8 +325,8 @@ class TypedFunc(object):
         env = {id(self):self.fn_type, id(fn):fn.fn_type}
         ap = Lam("arg", App(Var(id(self)), App(Var(id(fn)), Var("arg"))))
         newtype = analyze(ap, env)
-
-        return TypedFunc(composed, newtype)
+        newargs = [fn.fn_args[0]] + self.fn_args[1:]
+        return TypedFunc(composed, fn_args=newargs, fn_type=newtype)
 
 
 Hask.make_instance(TypedFunc, type=lambda tf: tf.fn_type)

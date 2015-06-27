@@ -6,6 +6,7 @@ from Applicative import Applicative
 
 
 class Monad(Applicative):
+
     @classmethod
     def make_instance(typeclass, cls, bind):
         build_instance(Monad, cls, {"bind":bind})

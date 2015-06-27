@@ -14,9 +14,11 @@ from type_system import TypeSignatureHKT
 from type_system import __ADT__
 from type_system import build_ADT
 from type_system import build_sig
+from type_system import make_fn_type
 from type_system import PatternMatchBind
 from type_system import Wildcard
 from type_system import pattern_match
+from type_system import Undefined
 
 from hindley_milner import TypeVariable
 
@@ -168,11 +170,13 @@ class sig(Syntax):
         elif len(signature.sig.args) < 2:
             self.raise_invalid("Not enough type arguments in signature")
 
-        self.fn_type = build_sig(signature.sig.args)
+        self.sig = signature.sig
         return
 
     def __call__(self, fn):
-        return TypedFunc(fn, self.fn_type)
+        fn_args = build_sig(self.sig)
+        fn_type = make_fn_type(fn_args)
+        return TypedFunc(fn, fn_args, fn_type)
 
 
 def t(type_constructor, *params):
@@ -193,23 +197,13 @@ def typify(fn, hkt=None):
 #=============================================================================#
 # Undefined values
 
-
-class Undefined(object):
-    """
-    A class with no concrete type definition. Used to create `undefined` and in
-    pattern matching
-    """
-    make_undefined = lambda s, *a: undefined
-
-
 class __undefined__(Undefined):
     pass
 
-wipe_attrs(__undefined__, __undefined__.make_undefined__)
-Hask.make_instance(__undefined__, lambda __: TypeVariable())
+wipe_attrs(__undefined__, lambda *a: __undefined__())
+Hask.make_instance(__undefined__, Undefined.__type__)
 
-undefined = Undefined()
-
+undefined = __undefined__()
 
 
 #=============================================================================#
@@ -231,12 +225,18 @@ class __var_bind__(Syntax):
 
     def __call__(self, pattern):
         is_match, env = pattern_match(MatchVars.__value__, pattern)
-        MatchVars.__cache__ = env
+        if is_match and not isinstance(MatchVars.__value__, Undefined):
+            #print "pattern = ", pattern, "updating the cache"
+            MatchVars.__cache__ = env
+            MatchVars.__value__ = undefined
+        #else:
+            #print "pattern = ", pattern, "NOT updating the cache"
         return __match_test__(is_match)
 
 
 class __var_access__(Syntax):
     def __getattr__(self, name):
+        #print name, MatchVars.__cache__.get(name, "not here b")
         return MatchVars.__cache__.get(name, undefined)
 
 
@@ -294,6 +294,8 @@ class caseof(__unmatched_case__):
     """
     """
     def __init__(self, value):
+        if isinstance(value, Undefined):
+            return
         MatchVars.__value__ = value
         return
 
@@ -772,3 +774,4 @@ class __list_comprehension__(Syntax):
 
 
 L = __list_comprehension__("Invalid list comprehension")
+
