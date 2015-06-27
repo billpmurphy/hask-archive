@@ -115,96 +115,10 @@ from Data.Traversable import Traversable
 ### Numeric type classes
 
 
-class Num(Show, Eq):
-    @classmethod
-    def make_instance(typeclass, cls, add, mul, abs, signum, fromInteger,
-            negate, sub=None):
-
-        @sig(H[(Num, "a")]/ "a" >> "a" >> "a")
-        def default_sub(a, b):
-            return a.__add__(b.__neg__())
-
-        sub = default_sub if sub is None else sub
-        attrs = {"add":add, "mul":mul, "abs":abs, "signum":signum,
-                 "fromInteger":fromInteger, "neg":negate, "sub":sub}
-
-        build_instance(Num, cls, attrs)
-        return
-
-
-@sig(H[(Num, "a")]/ "a" >> "a")
-def negate(a):
-    """
-    signum :: Num a => a -> a
-
-    Unary negation.
-    """
-    return Num[a].negate(a)
-
-
-@sig(H[(Num, "a")]/ "a" >> "a")
-def signum(a):
-    """
-    signum :: Num a => a -> a
-
-    Sign of a number. The functions abs and signum should satisfy the law:
-    abs x * signum x == x
-    For real numbers, the signum is either -1 (negative), 0 (zero) or 1
-    (positive).
-    """
-    return Num[a].signum(a)
-
-
-@sig(H[(Num, "a")]/ "a" >> "a")
-def abs(a):
-    """
-    abs :: Num a => a -> a
-
-    Absolute value.
-    """
-    return Num[a].abs(a)
-
-
-
-instance(Num, int).where(
-    add = int.__add__,
-    mul = int.__mul__,
-    abs = abs,
-    signum = lambda x: -1 if x < 0 else (1 if x > 0 else 0),
-    fromInteger = int,
-    negate = int.__neg__,
-    sub = int.__sub__
-)
-
-instance(Num, long).where(
-    add = long.__add__,
-    mul = long.__mul__,
-    abs = abs,
-    signum = lambda x: -1 if x < 0 else (1 if x > 0 else 0),
-    fromInteger = long,
-    negate = long.__neg__,
-    sub = long.__sub__
-)
-
-instance(Num, float).where(
-    add = float.__add__,
-    mul = float.__mul__,
-    abs = abs,
-    signum = lambda x: -1 if x < 0 else (1 if x > 0 else 0),
-    fromInteger = float,
-    negate = float.__neg__,
-    sub = float.__sub__
-)
-
-instance(Num, complex).where(
-    add = complex.__add__,
-    mul = complex.__mul__,
-    abs = abs,
-    signum = lambda x: -1 if x < 0 else (1 if x > 0 else 0),
-    fromInteger = complex,
-    negate = complex.__neg__,
-    sub = complex.__sub__
-)
+from Data.Num import Num
+from Data.Num import abs
+from Data.Num import negate
+from Data.Num import signum
 
 
 class Fractional(Num):
@@ -450,13 +364,19 @@ from .lang import undefined
 # List operations
 
 
-from Data.List import map
-from Data.List import filter
+from Data.List import map_
+from Data.List import filter_
 from Data.List import head
 from Data.List import last
 from Data.List import tail
 from Data.List import init
+from Data.List import null
 from Data.List import reverse
+from Data.List import length
+from Data.List import foldl
+from Data.List import foldl1
+from Data.List import foldr
+from Data.List import foldr1
 
 
 #=============================================================================#
@@ -467,8 +387,12 @@ from Data.List import and_
 from Data.List import or_
 from Data.List import any_
 from Data.List import all_
+from Data.List import sum_
+from Data.List import product
 from Data.List import concat
 from Data.List import concatMap
+from Data.List import maximum
+from Data.List import minimum
 
 
 #=============================================================================#
@@ -476,10 +400,10 @@ from Data.List import concatMap
 ### Scans
 
 
-from Data.List import and_
-from Data.List import and_
-from Data.List import and_
-from Data.List import and_
+from Data.List import scanl
+from Data.List import scanl1
+from Data.List import scanr
+from Data.List import scanr1
 
 
 #=============================================================================#
@@ -509,6 +433,7 @@ from Data.List import break_
 ## Searching lists
 
 
+from Data.List import elem
 from Data.List import notElem
 from Data.List import lookup
 
@@ -517,12 +442,12 @@ from Data.List import lookup
 ## Zipping and unzipping lists
 
 
-from Data.List import lookup
-from Data.List import lookup
-from Data.List import lookup
-from Data.List import lookup
-from Data.List import lookup
-from Data.List import lookup
+from Data.List import zip_
+from Data.List import zip3
+from Data.List import zipWith
+from Data.List import zipWith3
+from Data.List import unzip
+from Data.List import unzip3
 
 
 #=============================================================================#

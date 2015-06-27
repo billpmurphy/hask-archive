@@ -129,12 +129,18 @@ def has_instance(cls, typeclass):
 class Hask(object):
     """
     Base class for objects within hask.
+
+    ADTs, TypedFunc, List, Undefined, and other hask-related types are all
+    subclasses of Hask.
+
+    All subclasses must define __type__, which returns a representation of the
+    object in the internal type system language.
     """
     def __type__(self):
         raise TypeError()
 
 
-class Undefined(object):
+class Undefined(Hask):
     """
     A class with no concrete type definition. Used to create `undefined` and to
     enable psuedo-laziness in pattern matching.
@@ -309,12 +315,13 @@ class TypedFunc(Hask):
         if not isinstance(fn, TypedFunc):
             raise TypeError("Cannot compose non-TypedFunc with TypedFunc")
 
-        composed = lambda x: self.func(fn.func(x))
-
         env = {id(self):self.fn_type, id(fn):fn.fn_type}
         ap = Lam("arg", App(Var(id(self)), App(Var(id(fn)), Var("arg"))))
         newtype = analyze(ap, env)
+
+        composed = lambda x: self.func(fn.func(x))
         newargs = [fn.fn_args[0]] + self.fn_args[1:]
+
         return TypedFunc(composed, fn_args=newargs, fn_type=newtype)
 
 

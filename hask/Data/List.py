@@ -8,10 +8,10 @@ from ..lang import L
 
 from Eq import Eq
 from Ord import Ord
+from Num import Num
 from Maybe import Maybe
 from Maybe import Just
 from Maybe import Nothing
-
 
 #=============================================================================#
 # Basic functions
@@ -97,12 +97,12 @@ def length(xs):
 
 
 @sig(H/ (H/ "a" >> "b") >> ["a"] >> ["b"])
-def map(fn, iterable):
+def map_(fn, iterable):
     return L[itertools.imap(fn, iterable)]
 
 
 @sig(H/ (H/ "a" >> bool) >> ["a"] >> ["a"])
-def filter(fn, iterable):
+def filter_(fn, iterable):
     return L[itertools.ifilter(fn, iterable)]
 
 
@@ -153,7 +153,7 @@ def transpose(xs):
 
     The transpose function transposes the rows and columns of its argument.
     """
-    pass
+    return L[[L[x] for x in zip(*xs)]]
 
 
 @sig(H/ ["a"] >> [["a"]] )
@@ -179,7 +179,7 @@ def permutations(xs):
 
     permutations(L["a","b","c"]) == L["abc","bac","cba","bca","cab","acb"]
     """
-    pass
+    return L[itertools.permutations(xs)]
 
 
 #=============================================================================#
@@ -283,18 +283,22 @@ def all_(p, xs):
     return all((p(x) for x in xs))
 
 
-def sum(xs):
-    pass
+@sig(H[(Num, "a")]/ ["a"] >> "a")
+def sum_(xs):
+    return functools.reduce(operator.add, xs)
 
 
+@sig(H[(Num, "a")]/ ["a"] >> "a")
 def product(xs):
     return functools.reduce(operator.mul, xs)
 
 
+@sig(H[(Ord, "a")]/ ["a"] >> "a")
 def maximum(xs):
     return max(xs)
 
 
+@sig(H[(Ord, "a")]/ ["a"] >> "a")
 def minimum(xs):
     return min(xs)
 
@@ -312,14 +316,14 @@ def scanl_(f, z, xs):
     pass
 
 
-def scanl(f, xs):
+def scanl1(f, xs):
     pass
 
 
 def scanr(f, z, xs):
     pass
 
-def scanr(f, xs):
+def scanr1(f, xs):
     pass
 
 
@@ -542,7 +546,7 @@ def elemIndex(x, xs):
 #=============================================================================#
 # Zipping and unzipping lists
 
-def zip(xs, ys):
+def zip_(xs, ys):
     pass
 
 def zip3(a, b, c):
@@ -611,7 +615,7 @@ from String import unwords
 ## "Set" operations
 
 def nub(xs):
-    pass
+    return
 
 
 def delete(a, xs):

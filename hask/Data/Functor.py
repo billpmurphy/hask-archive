@@ -12,6 +12,7 @@ from ..lang import instance
 class Functor(Typeclass):
     @classmethod
     def make_instance(typeclass, cls, fmap):
+        #fmap = fmap ** (H/ (H/ "a" >> "b") >> t("f", "a") >> t("f", "b"))
         if not is_builtin(cls):
             cls.__mul__ = fmap
         build_instance(Functor, cls, {"fmap":fmap})

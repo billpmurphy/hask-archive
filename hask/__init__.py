@@ -92,9 +92,8 @@ from hask.lang import _i
 from hask.lang import _q
 
 
-
 # Haskell base
-from Prelude import map
-from Prelude import filter
+#from Prelude import map
+#from Prelude import filter
 #from Prelude import read
-from Prelude import show
+#from Prelude import show

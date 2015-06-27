@@ -143,7 +143,7 @@ class List(collections.Sequence, Hask):
 ## Typeclass instances for list
 Show.make_instance(List, show=List.__str__)
 Eq.make_instance(List, eq=List.__eq__)
-#Read.make_instance(List, read=eval)
+Read.make_instance(List, read=eval)
 #Foldable.make_instance(List, foldr=List.foldr)
 #Traversable.make_instance(List,
 #        iter=List.__iter__,
@@ -190,8 +190,7 @@ def _t(obj):
     >>> _t(Just("hello world"))
     Maybe str
     """
-    print(str(typeof(obj)))
-    return
+    return str(typeof(obj))
 
 
 def _i(obj):

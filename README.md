@@ -47,6 +47,7 @@ Features not yet implemented, but coming soon:
 * More of the Haskell standard library (`Control.*` libraries, QuickCheck, and more)
 * Monadic, lazy I/O
 
+**Note that all of this is still in pre-alpha, and some things may be buggy!**
 
 ## Installation
 
@@ -153,8 +154,14 @@ Maybe str
 Either a (str, int)
 ```
 
+### Typed functions
+
 
 ### Pattern matching
+
+You can also use pattern matching as you would in Haskell, to con
+
+Here is a function that uses pattern matching to compute the fibonacci sequence:
 
 ```python
 def fib(x):
@@ -409,28 +416,8 @@ Left(ValueError('Out of cheese error',))
 Chained cheese-eating in the `Either` monad is left as an exercise for
 the reader.
 
-You can also use `in_maybe` or `in_either` as decorators:
+You can also use `in_maybe` or `in_either` as decorators.
 
-```python
-@in_either
-def picky_add_10(n):
-    assert type(n) == int, "not an int!"
-
-    if n < 0:
-        raise ValueError("Too low!")
-
-    return n + 10
-
-
->>> picky_add_10("hello")
-Left(AssertionError('not an int!',))
-
->>> picky_add_10(-10)
-Left(ValueError('Too low!',))
-
->>> picky_add_10(1)
-Right(11)
-```
 
 #### The List type and List comprehensions
 

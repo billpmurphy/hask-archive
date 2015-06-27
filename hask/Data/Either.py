@@ -56,16 +56,16 @@ def in_either(fn):
 
 
 @sig(H/ (H/ "a" >> "c") >> (H/ "b" >> "c") >> t(Either, "a", "b") >> "c")
-def either(f_a, f_b, either_a_b):
+def either(fa, fb, e):
     """
     either :: (a -> c) -> (b -> c) -> Either a b -> c
 
     Case analysis for the Either type. If the value is Left(a), apply the first
     function to a; if it is Right(b), apply the second function to b.
     """
-    return ~(caseof(either_a_b)
-                | m(Left(m.a))  >> f_a(p.a)
-                | m(Right(m.b)) >> f_b(p.b))
+    return ~(caseof(e)
+                | m(Left(m.a))  >> fa(p.a)
+                | m(Right(m.b)) >> fb(p.b))
 
 
 @sig(H/ [t(Either, "a", "b")] >> ["a"])

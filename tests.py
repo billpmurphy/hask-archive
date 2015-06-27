@@ -960,7 +960,8 @@ class TestMaybe(unittest.TestCase):
 
     def test_fmap(self):
         # add more
-        self.assertEqual(Just(3), Just(2) * (lambda x: x + 1))
+        plus1 = (lambda x: x + 1) ** (H/ int >> int)
+        self.assertEqual(Just(3), Just(2) * plus1)
         self.assertEqual(Just("1"), Just(1) * str)
 
     def test_bind(self):
@@ -997,10 +998,10 @@ class TestEither(unittest.TestCase):
         from hask.Data.Either import partitionEithers
 
         f = (lambda x: x + " world") ** (H/ str >> str)
-        g = (lambda x: x * 10) ** (H/ int >> int)
+        g = (lambda x: str(x * 10)) ** (H/ int >> str)
 
-        #self.assertEqual(20, either(f, g, Right(2)))
-        #self.assertEqual("hello world", either(f, g, Left("hello ")))
+        self.assertEqual('20', either(f, g, Right(2)))
+        self.assertEqual("hello world", either(f, g, Left("hello")))
         self.assertTrue(isLeft(Left(1)))
         self.assertTrue(isRight(Right("a")))
         self.assertFalse(isLeft(Right("a")))
@@ -1026,7 +1027,7 @@ class TestList(unittest.TestCase):
         #self.assertTrue(has_instance(List, Traversable))
 
     def test_indexing(self):
-        # add more corner cases
+        # TODO: add more corner cases
 
         ie = IndexError
         self.assertEqual(3, L[range(10)][3])
@@ -1068,9 +1069,9 @@ class TestList(unittest.TestCase):
         #                  list(List(range(9)) * test_f))
 
     def test_hmap(self):
-        from hask.Data.List import map as hmap
+        from hask.Data.List import map_ as hmap
 
-        test_f = sig(H/ int >> int)(lambda x: (x + 100) / 2)
+        test_f = (lambda x: (x + 100) / 2) ** (H/ int >> int)
 
         # `map` == `hmap` for Lists
         self.assertEqual(map(test_f, range(20)),
@@ -1080,7 +1081,7 @@ class TestList(unittest.TestCase):
 
 
     def test_hfilter(self):
-        from hask.Data.List import filter as hfilter
+        from hask.Data.List import filter_ as hfilter
 
         test_f = sig(H/ int >> bool)(lambda x: x % 2 == 0)
         self.assertEqual(filter(test_f, range(20)),
@@ -1096,52 +1097,61 @@ class TestList(unittest.TestCase):
 
 class TestDataList(unittest.TestCase):
 
+    def test_basic_functions(self):
+        pass
+
+    def test_list_transformations(self):
+        pass
+
+    def test_reducing_lists(self):
+        pass
+
+    def test_building_lists(self):
+        pass
+
     def test_infinite_lists(self):
         plus_one = (lambda x: x + 1) ** (H/ int >> int)
         #self.assertEquals(iterate(plus_one, 0)[:10], L[range(10)])
+
+    def test_searching_lists(self):
+        pass
+
+    def test_indexing_lists(self):
+        pass
+
+    def test_zipping_lists(self):
+        pass
+
+    def test_set_operations(self):
+        pass
+
+    def test_ordered_lists(self):
+        pass
+
+    def test_generalized_functions(self):
+        pass
 
 
 class TestPrelude(unittest.TestCase):
 
     def test_imports(self):
-        """Prelude imports from Data.* modules; make sure things get loaded in
-           correctly
         """
-        # tuples
-        from hask.Prelude import fst
-        from hask.Prelude import snd
-        from hask.Prelude import curry
-        from hask.Prelude import uncurry
-
-        # strings
-        from hask.Prelude import lines
-        from hask.Prelude import words
-        from hask.Prelude import unlines
-        from hask.Prelude import unwords
-
-        # Maybe
-        from hask.Prelude import Maybe
-        from hask.Prelude import Just
-        from hask.Prelude import Nothing
-        from hask.Prelude import maybe
-
-        # Either
-        from hask.Prelude import Either
-        from hask.Prelude import Left
-        from hask.Prelude import Right
-        from hask.Prelude import either
-
-        # List
-
-        # Ordering
-        from hask.Prelude import Ordering
-        from hask.Prelude import LT
-        from hask.Prelude import EQ
-        from hask.Prelude import GT
-        from hask.Prelude import max
-        from hask.Prelude import min
-        from hask.Prelude import compare
-
+        Prelude imports from Data.* modules; make sure things get loaded in
+        correctly
+        """
+        from hask.Prelude import fst, snd, curry, uncurry
+        from hask.Prelude import lines, words, unlines, unwords
+        from hask.Prelude import Maybe, Just, Nothing, maybe
+        from hask.Prelude import Either, Left, Right, either
+        from hask.Prelude import map_, filter_, head, last, tail, init, null
+        from hask.Prelude import length, reverse, foldl, foldl1, foldr
+        from hask.Prelude import foldr1, and_, or_, any_, all_, sum_, product
+        from hask.Prelude import concat, concatMap, maximum, minimum, scanl
+        from hask.Prelude import scanl1, scanr, scanr1, iterate, repeat
+        from hask.Prelude import replicate, cycle, take, drop, splitAt
+        from hask.Prelude import takeWhile, dropWhile, span, break_, elem
+        from hask.Prelude import notElem, lookup, zip_, zip3, unzip, unzip3
+        from hask.Prelude import Ordering, LT, EQ, GT, max, min, compare
 
     def test_until(self):
         from hask.Prelude import until
@@ -1164,13 +1174,8 @@ class TestPrelude(unittest.TestCase):
 class TestDataMaybe(unittest.TestCase):
 
     def test_all(self):
-        from hask.Data.Maybe import maybe
-        from hask.Data.Maybe import isJust
-        from hask.Data.Maybe import isNothing
-        from hask.Data.Maybe import fromJust
-        from hask.Data.Maybe import listToMaybe
-        from hask.Data.Maybe import maybeToList
-        from hask.Data.Maybe import catMaybes
+        from hask.Data.Maybe import maybe, isJust, isNothing, fromJust
+        from hask.Data.Maybe import listToMaybe, maybeToList, catMaybes
         from hask.Data.Maybe import mapMaybe
 
         self.assertTrue(isJust(Just(1)))
@@ -1182,17 +1187,6 @@ class TestDataMaybe(unittest.TestCase):
 
         self.assertEqual(fromJust(Just("bird")), "bird")
         self.assertEqual(fromJust(Just(Nothing)), Nothing)
-
-
-class TestDataEither(unittest.TestCase):
-
-    def test_all(self):
-        from hask.Data.Either import either
-        from hask.Data.Either import lefts
-        from hask.Data.Either import rights
-        from hask.Data.Either import isLeft
-        from hask.Data.Either import isRight
-        from hask.Data.Either import partitionEithers
 
 
 class TestDataString(unittest.TestCase):
@@ -1242,8 +1236,8 @@ class TestDataTuple(unittest.TestCase):
 
         self.assertEqual(uncurry(curried_fn, ([1, 2], [3, 4])), [1, 2, 3, 4])
         self.assertEqual(curry(uncurried_fn, "a", "b"), "ab")
-        #self.assertEqual(uncurry(curry(uncurried_fn), ("a","b")), "ab")
-        #self.assertEqual(curry(uncurry(curried_fn), ["a"], ["b"]), ["a","b"])
+        self.assertEqual(uncurry(curry(uncurried_fn), ("a","b")), "ab")
+        self.assertEqual(curry(uncurry(curried_fn), ["a"], ["b"]), ["a","b"])
 
 
 class TestDataOrd(unittest.TestCase):
@@ -1269,22 +1263,22 @@ class Test_README_Examples(unittest.TestCase):
 
         @sig(H/ int >> int)
         def fib(x):
-            if x < -5:
-                raise ValueError()
-
             return ~(caseof(x)
                         | m(0)   >> 1
                         | m(1)   >> 1
-                        | m(m.n) >> fib(p.n - 1)#fib(p.n - 1) + fib(p.n - 2)
+                        | m(m.n) >> fib(p.n - 2) + fib(p.n - 1)
                     )
 
         self.assertEqual(1, fib(0))
-        #self.assertEqual(1, fib(1))
-        #self.assertEqual(8, fib(6))
-
+        self.assertEqual(1, fib(1))
+        #self.assertEqual(13, fib(6))
 
     def test_sections(self):
-        pass
+        f = (__ - 20) * (2 ** __) * (__ + 3)
+        self.assertEqual(8172, f(10))
+        self.assertEqual(Just(20) * (__+10) * (90/__), Just(3))
+        self.assertEqual("Hello world", (__+__)('Hello ', 'world'))
+        self.assertEqual(1024, (__**__)(2)(10))
 
     def test_guard(self):
         porridge_tempurature = 80
@@ -1326,19 +1320,6 @@ class Test_README_Examples(unittest.TestCase):
         either_eat = in_either(eat_cheese)
         self.assertEqual(either_eat(10), Right(9))
         self.assertTrue(isinstance(either_eat(0)[0], ValueError))
-
-        @in_either
-        def picky_add_10(n):
-            assert type(n) == int, "not an int!"
-
-            if n < 0:
-                raise ValueError("Too low!")
-
-            return n + 10
-
-        self.assertTrue(isinstance(picky_add_10("hello")[0], AssertionError))
-        self.assertTrue(isinstance(picky_add_10(-10)[0], ValueError))
-        self.assertEqual(picky_add_10(1), Right(11))
 
 
 if __name__ == '__main__':
