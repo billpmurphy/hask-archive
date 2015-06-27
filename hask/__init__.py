@@ -35,13 +35,6 @@ from hask.Prelude import enumFromThenTo
 #from hask.Prelude import foldr
 #from hask.Prelude import length
 
-# TODO: deprecate
-from hask.lang.hof import const
-from hask.lang.hof import flip
-from hask.lang.hof import id
-from hask.lang.hof import F
-from hask.lang.hof import Func
-
 ## Builtin types (Python builtins + Hask builtins)
 from hask.lang import List
 from hask.Prelude import Maybe

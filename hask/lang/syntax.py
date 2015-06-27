@@ -6,12 +6,11 @@ from typeclasses import enumFrom
 from typeclasses import enumFromThen
 from typeclasses import enumFromTo
 from typeclasses import enumFromThenTo
-from type_system import Hask
 from type_system import Typeclass
 from type_system import TypedFunc
 from type_system import TypeSignature
 from type_system import TypeSignatureHKT
-from type_system import __ADT__
+from type_system import ADT
 from type_system import build_ADT
 from type_system import build_sig
 from type_system import make_fn_type
@@ -180,7 +179,7 @@ class sig(Syntax):
 
 
 def t(type_constructor, *params):
-    if isinstance(type_constructor, __ADT__) and \
+    if isinstance(type_constructor, ADT) and \
        len(type_constructor.__params__) != len(params):
             raise TypeError("Incorrect number of type parameters to %s" % \
                             type_constructor.__name__)
@@ -201,8 +200,6 @@ class __undefined__(Undefined):
     pass
 
 wipe_attrs(__undefined__, lambda *a: __undefined__())
-Hask.make_instance(__undefined__, Undefined.__type__)
-
 undefined = __undefined__()
 
 

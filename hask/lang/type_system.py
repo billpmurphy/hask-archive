@@ -3,7 +3,6 @@ import types
 import functools
 from collections import namedtuple
 
-import hof
 from hindley_milner import TypeVariable
 from hindley_milner import TypeOperator
 from hindley_milner import Var
@@ -64,15 +63,6 @@ def nt_to_tuple(nt):
     return tuple((getattr(nt, f) for f in nt.__class__._fields))
 
 
-def resolve(obj):
-    """
-    This should call typeof and return the type constructor
-    """
-    if isinstance(obj, __ADT__):
-        return type(obj)
-    return typeof(obj).name
-
-
 class TypeMeta(type):
     """
     Metaclass for Typeclass type. Ensures that all typeclasses are instantiated
@@ -85,7 +75,9 @@ class TypeMeta(type):
         self.__dependencies__ = self.mro()[1:-2] # excl. self, Typeclass, object
 
     def __getitem__(self, item):
-        return self.__instances__[id(resolve(item))]
+        if is_builtin(type(item)):
+            return self.__instances__[id(type(item))]
+        return self.__instances__[id(typeof(item))]
 
 
 class Typeclass(object):
@@ -130,18 +122,16 @@ def has_instance(cls, typeclass):
     return id(cls) in typeclass.__instances__
 
 
-class Hask(Typeclass):
-    """
-    Typeclass for objects within hask.
-    """
-    @classmethod
-    def make_instance(typeclass, cls, type):
-        build_instance(Hask, cls, {"type":type})
-        return
-
 
 #=============================================================================#
 # Static typing and type signatures
+
+class Hask(object):
+    """
+    Base class for objects within hask.
+    """
+    def __type__(self):
+        raise TypeError()
 
 
 class Undefined(object):
@@ -165,12 +155,8 @@ def typeof(obj):
     Returns:
         An obj
     """
-    if isinstance(obj, __ADT__):
-        return Hask.__instances__[id(type(obj))].type(obj)
-        #return Hask.__instances__[type(obj).__type_constructor__].type(obj)
-
-    elif has_instance(type(obj), Hask):
-        return Hask.__instances__[id(type(obj))].type(obj)
+    if isinstance(obj, Hask):
+        return obj.__type__()
 
     elif isinstance(obj, tuple):
         return Tuple(map(typeof, obj))
@@ -274,7 +260,7 @@ def build_sig(type_signature, var_dict=None):
     return [build_sig_arg(i, var_dict) for i in args]
 
 
-class TypedFunc(object):
+class TypedFunc(Hask):
 
     def __init__(self, fn, fn_args, fn_type):
         self.__doc__ = fn.__doc__
@@ -282,6 +268,9 @@ class TypedFunc(object):
         self.fn_args = fn_args
         self.fn_type = fn_type
         return
+
+    def __type__(self):
+        return self.fn_type
 
     def __call__(self, *args):
         # the environment contains the type of the function and the types
@@ -329,14 +318,11 @@ class TypedFunc(object):
         return TypedFunc(composed, fn_args=newargs, fn_type=newtype)
 
 
-Hask.make_instance(TypedFunc, type=lambda tf: tf.fn_type)
-
-
 #=============================================================================#
 # ADT creation
 
 
-class __ADT__(object):
+class ADT(Hask):
     """Base class for Hask algebraic data types."""
     pass
 
@@ -357,12 +343,10 @@ def make_type_const(name, typeargs):
 
     default_attrs = {"__params__":tuple(typeargs), "__constructors__":(),
              __typeclass_slot__:()}
-    cls = type(name, (__ADT__,), default_attrs)
+    cls = type(name, (ADT,), default_attrs)
 
     cls.__type__ = lambda self: \
         TypeOperator(cls, [TypeVariable() for i in cls.__params__])
-    Hask.make_instance(cls, cls.__type__)
-
     cls.__iter__ = lambda self: raise_fn(TypeError)
     cls.__contains__ = lambda self, other: raise_fn(TypeError)
     cls.__add__ = lambda self, other: raise_fn(TypeError)
@@ -396,17 +380,16 @@ def make_data_const(name, fields, type_constructor):
     # If the data constructor takes no arguments, create an instance of it
     # and return that instance rather than returning the class
     if len(fields) == 0:
-        Hask.make_instance(cls, type_constructor.__type__)
         cls = cls()
-    # Otherwise, modify type() so that it matches up fields from the data
+    # Otherwise, modify __type__ so that it matches up fields from the data
     # constructor with type params from the type constructor
     else:
-        def _type(self):
+        def __type__(self):
             args = [typeof(self[fields.index(p)]) \
                     if p in fields else TypeVariable()
                     for p in type_constructor.__params__]
             return TypeOperator(type_constructor, args)
-        Hask.make_instance(cls, _type)
+        cls.__type__ = __type__
 
     # TODO: make sure __init__ or __new__ is typechecked
     type_constructor.__constructors__ += (cls,)
@@ -455,7 +438,7 @@ def pattern_match(value, pattern, env=None):
         return True, env
 
     elif type(value) == type(pattern):
-        if isinstance(value, __ADT__):
+        if isinstance(value, ADT):
             matches = []
             for v, p in zip(nt_to_tuple(value), nt_to_tuple(pattern)):
                 match_status, newenv = pattern_match(v, p, env)

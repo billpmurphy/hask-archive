@@ -39,7 +39,6 @@ class Show(Typeclass):
         return
 
 
-
 class Eq(Typeclass):
     """
     The Eq class defines equality (==) and inequality (!=).

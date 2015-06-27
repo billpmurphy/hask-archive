@@ -4,10 +4,10 @@ import itertools
 from hindley_milner import TypeVariable
 from hindley_milner import ListType
 
-from type_system import Hask
 from type_system import typeof
 from type_system import build_ADT
 from type_system import TypedFunc
+from type_system import Hask
 
 from typeclasses import Show
 from typeclasses import Eq
@@ -22,7 +22,7 @@ from typeclasses import Read
 # List
 
 
-class List(collections.Sequence):
+class List(collections.Sequence, Hask):
     """
     Efficient lazy sequence datatype.
     """
@@ -73,7 +73,7 @@ class List(collections.Sequence):
         self.eval_all()
         return len(self.evaluated)
 
-    def type(self):
+    def __type__(self):
         if len(self) == 0:
             return ListType(TypeVariable())
         return ListType(typeof(self[0]))
@@ -141,7 +141,6 @@ class List(collections.Sequence):
 
 
 ## Typeclass instances for list
-Hask.make_instance(List, type=List.type)
 Show.make_instance(List, show=List.__str__)
 Eq.make_instance(List, eq=List.__eq__)
 #Read.make_instance(List, read=eval)

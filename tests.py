@@ -15,10 +15,6 @@ from hask import d
 from hask import deriving
 from hask import List
 from hask import L
-from hask import const, flip
-from hask import map as hmap
-from hask import filter as hfilter
-from hask import id as hid
 from hask import Ordering, LT, EQ, GT
 from hask import Maybe, Just, Nothing, in_maybe
 from hask import Either, Left, Right, in_either
@@ -921,7 +917,6 @@ class TestSyntax(unittest.TestCase):
 class TestMaybe(unittest.TestCase):
 
     def test_instances(self):
-        self.assertTrue(has_instance(Maybe, Hask))
         self.assertTrue(has_instance(Maybe, Show))
         self.assertTrue(has_instance(Maybe, Eq))
         self.assertTrue(has_instance(Maybe, Functor))
@@ -946,9 +941,9 @@ class TestMaybe(unittest.TestCase):
         self.assertNotEqual(Just(1), Just("1"))
         self.assertNotEqual(Just(3), Nothing)
         self.assertNotEqual(Nothing, Just(0))
-        self.assertNotEqual(Nothing, None)
-        self.assertNotEqual(Nothing, 1)
-        self.assertNotEqual(Just(1), 1)
+        self.assertNotEqual(Nothing, None) # type error
+        self.assertNotEqual(Nothing, 1) # type error
+        self.assertNotEqual(Just(1), 1) # type error
 
         self.assertTrue(Just(1) == Just(1))
         self.assertFalse(Just(1) == Just(2))
@@ -1073,6 +1068,8 @@ class TestList(unittest.TestCase):
         #                  list(List(range(9)) * test_f))
 
     def test_hmap(self):
+        from hask.Data.List import map as hmap
+
         test_f = sig(H/ int >> int)(lambda x: (x + 100) / 2)
 
         # `map` == `hmap` for Lists
@@ -1083,6 +1080,8 @@ class TestList(unittest.TestCase):
 
 
     def test_hfilter(self):
+        from hask.Data.List import filter as hfilter
+
         test_f = sig(H/ int >> bool)(lambda x: x % 2 == 0)
         self.assertEqual(filter(test_f, range(20)),
                           list(hfilter(test_f, L[range(20)])))
