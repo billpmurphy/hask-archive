@@ -822,8 +822,8 @@ class TestSyntax(unittest.TestCase):
     def test_list_comp(self):
         # numeric lists
         self.assertEqual(10, len(L[0, ...][:10]))
-        self.assertEqual(L[0, ...][:10], range(10)[:10])
-        self.assertEqual(L[-10, ...][:10], range(-10, 0)[:10])
+        self.assertEqual(L[0, ...][:10], L[range(10)])
+        self.assertEqual(L[-10, ...][:10], L[range(-10, 0)])
         self.assertEqual(11, len(L[-5, ..., 5]))
         self.assertEqual(list(L[-5, ..., 5]), list(range(-5, 6)))
         self.assertEqual(list(L[-5, -4, ..., 5]), list(range(-5, 6)))
@@ -850,7 +850,9 @@ class TestSyntax(unittest.TestCase):
                     | m("a") >> 1))
         self.assertEqual(1,
                 ~(caseof(2.0)
-                    | m(2.0) >> 1
+                    | m(2.0) >> ~(caseof("a")
+                                    | m("b") >> 3
+                                    | m("a") >> 1)
                     | m(2.0) >> 2))
         self.assertEqual("x",
                 ~(caseof(Just("x"))
@@ -903,9 +905,17 @@ class TestSyntax(unittest.TestCase):
                 ~(caseof(Nothing)
                     | m(Just(m.x)) >> Just(p.x + 1)
                     | m(Nothing)   >> Just(0)))
-        self.assertEqual(1, ~(caseof(2) # somewhat questionable behavior
-                | m((m.a, m.a)) >> p.a
-                | m(2)          >> 1))
+        self.assertEqual(1,
+                ~(caseof(2)
+                    | m((m.a, m.a)) >> p.a
+                    | m(2)          >> 1))
+
+        self.assertEqual(1,
+                ~(caseof(Just(10))
+                    | m(Just(m.a)) >> ~(caseof(1)
+                                            | m(m.a) >> p.a
+                                            | m(w)   >> False)
+                    | m(Nothing)   >> 11))
 
         with self.assertRaises(se):
             ~(caseof((1, 2))
@@ -928,44 +938,38 @@ class TestMaybe(unittest.TestCase):
         self.assertFalse(has_instance(Maybe, Foldable))
         self.assertFalse(has_instance(Maybe, Traversable))
 
-    def test_show(self):
+        # show
         self.assertEqual("Just(3)", str(Just(3)))
         self.assertEqual("Nothing", str(Nothing))
 
-    def test_eq(self):
+        # eq
         self.assertEqual(Nothing, Nothing)
         self.assertEqual(Just(3), Just(3))
         self.assertEqual(Just("3"), Just("3"))
-
         self.assertNotEqual(Just(1), Just(3))
-        self.assertNotEqual(Just(1), Just("1"))
         self.assertNotEqual(Just(3), Nothing)
         self.assertNotEqual(Nothing, Just(0))
-        self.assertNotEqual(Nothing, None) # type error
-        self.assertNotEqual(Nothing, 1) # type error
-        self.assertNotEqual(Just(1), 1) # type error
-
         self.assertTrue(Just(1) == Just(1))
         self.assertFalse(Just(1) == Just(2))
-
         self.assertTrue(Nothing == Nothing or Nothing != Nothing)
         self.assertTrue(Just(1) == Just(1) or Just(1) != Just(1))
         self.assertFalse(Nothing == Nothing and Nothing != Nothing)
         self.assertFalse(Just(1) == Just(1) and Just(1) != Just(1))
+        with self.assertRaises(te): Just(1) == Just("1")
+        with self.assertRaises(te): Nothing == None
+        with self.assertRaises(te): Nothing == 1
+        with self.assertRaises(te): Just(1) == 1
 
-    def test_ord(self):
-        # add more
+        # ord (add more)
         self.assertTrue(Nothing < Just(0))
         self.assertTrue(Nothing < Just(-float("inf")))
 
-    def test_fmap(self):
-        # add more
+        # functor (add more)
         plus1 = (lambda x: x + 1) ** (H/ int >> int)
         self.assertEqual(Just(3), Just(2) * plus1)
         self.assertEqual(Just("1"), Just(1) * str)
 
-    def test_bind(self):
-        # add more
+        # monad (add more)
         self.assertEqual(Just("1"), Just(1) >> (lambda x: Just(str(x))))
         self.assertEqual(Just(10), Just(1) >> (lambda x: Just(x * 10)))
         #self.assertEqual(Just(10), Just(1) >> F(lambda x: Just(x * 10)))
@@ -973,6 +977,21 @@ class TestMaybe(unittest.TestCase):
         #        (lambda x: Just(x * 10)) >>
         #        (lambda x: Just(x * 10)) >>
         #        (lambda x: Just(x * 10)))
+
+    def test_functions(self):
+        from hask.Data.Maybe import maybe, isJust, isNothing, fromJust
+        from hask.Data.Maybe import listToMaybe, maybeToList, catMaybes
+        from hask.Data.Maybe import mapMaybe
+
+        self.assertTrue(isJust(Just(1)))
+        self.assertTrue(isJust(Just(Nothing)))
+        self.assertFalse(isJust(Nothing))
+        self.assertFalse(isNothing(Just(1)))
+        self.assertFalse(isNothing(Just(Nothing)))
+        self.assertTrue(isNothing(Nothing))
+
+        self.assertEqual(fromJust(Just("bird")), "bird")
+        self.assertEqual(fromJust(Just(Nothing)), Nothing)
 
 
 class TestEither(unittest.TestCase):
@@ -1136,13 +1155,14 @@ class TestPrelude(unittest.TestCase):
 
     def test_imports(self):
         """
-        Prelude imports from Data.* modules; make sure things get loaded in
-        correctly
+        Prelude imports from Data.* modules; ensure things get loaded correctly
         """
         from hask.Prelude import fst, snd, curry, uncurry
         from hask.Prelude import lines, words, unlines, unwords
         from hask.Prelude import Maybe, Just, Nothing, maybe
         from hask.Prelude import Either, Left, Right, either
+        from hask.Prelude import Ordering, LT, EQ, GT, max_, min_, compare
+        from hask.Prelude import Num, abs_, negate, subtract
         from hask.Prelude import map_, filter_, head, last, tail, init, null
         from hask.Prelude import length, reverse, foldl, foldl1, foldr
         from hask.Prelude import foldr1, and_, or_, any_, all_, sum_, product
@@ -1151,7 +1171,6 @@ class TestPrelude(unittest.TestCase):
         from hask.Prelude import replicate, cycle, take, drop, splitAt
         from hask.Prelude import takeWhile, dropWhile, span, break_, elem
         from hask.Prelude import notElem, lookup, zip_, zip3, unzip, unzip3
-        from hask.Prelude import Ordering, LT, EQ, GT, max, min, compare
 
     def test_until(self):
         from hask.Prelude import until
@@ -1169,24 +1188,6 @@ class TestPrelude(unittest.TestCase):
             self.assertTrue(False)
         except Exception as e:
             self.assertEqual(msg, e.message)
-
-
-class TestDataMaybe(unittest.TestCase):
-
-    def test_all(self):
-        from hask.Data.Maybe import maybe, isJust, isNothing, fromJust
-        from hask.Data.Maybe import listToMaybe, maybeToList, catMaybes
-        from hask.Data.Maybe import mapMaybe
-
-        self.assertTrue(isJust(Just(1)))
-        self.assertTrue(isJust(Just(Nothing)))
-        self.assertFalse(isJust(Nothing))
-        self.assertFalse(isNothing(Just(1)))
-        self.assertFalse(isNothing(Just(Nothing)))
-        self.assertTrue(isNothing(Nothing))
-
-        self.assertEqual(fromJust(Just("bird")), "bird")
-        self.assertEqual(fromJust(Just(Nothing)), Nothing)
 
 
 class TestDataString(unittest.TestCase):
@@ -1243,14 +1244,14 @@ class TestDataTuple(unittest.TestCase):
 class TestDataOrd(unittest.TestCase):
 
     def test_ord(self):
-        from hask.Data.Ord import max as hmax
-        from hask.Data.Ord import min as hmin
+        from hask.Data.Ord import max_ as hmax
+        from hask.Data.Ord import min_ as hmin
         from hask.Data.Ord import compare as compare
         from hask.Data.Ord import comparing as comparing
 
         self.assertEqual(hmax(1, 2), 2)
         self.assertEqual(hmin(1, 2), 1)
-        self.assertEqual(compare(1, 2), LT)
+        self.assertEqual(compare(1)(2), LT)
 
         from hask.Data.Tuple import fst, snd
         self.assertEqual(comparing(fst, (1, 2), (3, 0)), LT)

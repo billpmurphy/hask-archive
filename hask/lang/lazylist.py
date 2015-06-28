@@ -139,7 +139,7 @@ class List(collections.Sequence, Hask):
         if is_slice:
             istart, istop, istep = ix.indices(len(self.evaluated))
             indices = enumFromThenTo(istart, istart+istep, istop-istep)
-            return [self.evaluated[idx] for idx in indices]
+            return List([self.evaluated[idx] for idx in indices])
 
         return self.evaluated[ix]
 
@@ -183,7 +183,8 @@ class __list_comprehension__(Syntax):
     # list from 1 to 20 (inclusive), counting by fours
     """
     def __getitem__(self, lst):
-        if isinstance(lst, tuple) and len(lst) < 5 and Ellipsis in lst:
+        if isinstance(lst, tuple) and len(lst) < 5 and \
+                any((Ellipsis is x for x in lst)):
             # L[x, ...]
             if len(lst) == 2 and lst[1] is Ellipsis:
                 return List(enumFrom(lst[0]))

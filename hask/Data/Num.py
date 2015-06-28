@@ -47,7 +47,7 @@ def signum(a):
 
 
 @sig(H[(Num, "a")]/ "a" >> "a")
-def abs(a):
+def abs_(a):
     """
     abs :: Num a => a -> a
 

@@ -56,8 +56,8 @@ def show(obj):
 
 from Data.Eq import Eq
 from Data.Ord import Ord
-from Data.Ord import max
-from Data.Ord import min
+from Data.Ord import max_
+from Data.Ord import min_
 from Data.Ord import compare
 
 
@@ -89,7 +89,7 @@ from Data.Traversable import Traversable
 
 
 from Data.Num import Num
-from Data.Num import abs
+from Data.Num import abs_
 from Data.Num import negate
 from Data.Num import signum
 

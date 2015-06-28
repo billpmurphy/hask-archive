@@ -18,7 +18,7 @@ data.Ordering == d.LT | d.EQ | d.GT & deriving(Show, Eq, Ord, Bounded)
 
 
 @sig(H[(Ord, "a")]/ "a" >> "a" >> "a")
-def max(x, y):
+def max_(x, y):
     """
     max :: a -> a -> a
 
@@ -28,7 +28,7 @@ def max(x, y):
 
 
 @sig(H[(Ord, "a")]/ "a" >> "a" >> "a")
-def min(x, y):
+def min_(x, y):
     """
     min :: a -> a -> a
 

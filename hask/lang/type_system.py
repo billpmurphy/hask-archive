@@ -19,8 +19,6 @@ from hindley_milner import ListType
 # Typeclasses
 
 
-__typeclass_slot__ = "__typeclasses__"
-
 __python_builtins__ = set((
     types.NoneType, types.TypeType, types.BooleanType, types.IntType,
     types.LongType, types.FloatType, types.ComplexType, types.StringType,
@@ -348,8 +346,7 @@ def make_type_const(name, typeargs):
     def raise_fn(err):
         raise err()
 
-    default_attrs = {"__params__":tuple(typeargs), "__constructors__":(),
-             __typeclass_slot__:()}
+    default_attrs = {"__params__":tuple(typeargs), "__constructors__":()}
     cls = type(name, (ADT,), default_attrs)
 
     cls.__type__ = lambda self: \
@@ -370,7 +367,7 @@ def make_type_const(name, typeargs):
     return cls
 
 
-def make_data_const(name, fields, type_constructor):
+def make_data_const(name, fields, type_constructor, slot_num):
     """
     Build a data constructor given the name, the list of field types, and the
     corresponding type constructor.
@@ -400,6 +397,7 @@ def make_data_const(name, fields, type_constructor):
 
     # TODO: make sure __init__ or __new__ is typechecked
     type_constructor.__constructors__ += (cls,)
+    cls.__slot__ = slot_num
     return cls
 
 
@@ -408,7 +406,8 @@ def build_ADT(typename, typeargs, data_constructors, to_derive):
     """
     # 1) Create the new type constructor and data constructors
     newtype = make_type_const(typename, typeargs)
-    dcons = [make_data_const(d[0], d[1], newtype) for d in data_constructors]
+    dcons = [make_data_const(d[0], d[1], newtype, n)
+             for n, d in enumerate(data_constructors)]
 
     # 2) Derive typeclass instances for the new type constructors
     for tclass in to_derive:

@@ -301,23 +301,30 @@ class __match_test__(Syntax):
 
 
 class __unmatched_case__(Syntax):
+
     def __or__(self, line):
         if line.is_match:
             MatchStack.get_frame().matched = True
             return __matched_case__(line.return_value)
         return self
+
     def __invert__(self):
+        value = MatchStack.get_frame().value
         MatchStack.pop()
-        raise IncompletePatternError()
+        raise IncompletePatternError(value)
 
 
 class __matched_case__(Syntax):
+
     def __init__(self, return_value):
         self.value = return_value
         return
+
     def __or__(self, line):
         return self
+
     def __invert__(self):
+        #print "popping", MatchStack.get_frame().value
         MatchStack.pop()
         return self.value
 
@@ -328,6 +335,7 @@ class caseof(__unmatched_case__):
     def __init__(self, value):
         if isinstance(value, Undefined):
             return
+        #print "pushing", value
         MatchStack.push(value)
         return
 
