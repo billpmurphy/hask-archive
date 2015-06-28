@@ -1,5 +1,15 @@
 # Implementation of Hindley-Milner type inference system for Python, based on
-# by Robert Smallshire's implementation for OWL BASIC
+# by Robert Smallshire's implementation for OWL BASIC.
+#
+# Robert's original version can be found here:
+# http://smallshire.org.uk/sufficientlysmall/2010/04/11/a-hindley-milner-type-inference-implementation-in-python/
+#
+# Changes from Robert's version:
+# 1) Simplified type language somewhat (Let and Letrec are merged, as are Var
+#    and Ident)
+# 2) Type system expanded to handle polymorphic higher-kinded types
+# 3) Interface tweaked a bit to work better with Python types, including
+#    pretty-printing of type names and some useful subclasses of TypeOperator
 
 
 #=============================================================================#
@@ -57,10 +67,20 @@ class Let(object):
 
 
 def show_type(type_name):
+    """
+    Pretty-print a Python type or internal type name.
+
+    Args:
+        type_name: a Python type, or a string representing a type name
+
+    Returns: a string representation of the type
+    """
     if isinstance(type_name, str):
         return type_name
+
     elif isinstance(type_name, type):
         return type_name.__name__
+
     return str(type_name)
 
 
@@ -100,6 +120,16 @@ class TypeVariable(object):
 
     def __repr__(self):
         return "TypeVariable(id = {0})".format(self.id)
+
+
+class Constraint(TypeVariable):
+    """
+    A type variable standing in for an ordinary type, with typeclass
+    constraints.
+    """
+    def __init__(self, constraints):
+        self.constraints = constraints
+        super(Constraint, self).__init__(self)
 
 
 class TypeOperator(object):
@@ -254,9 +284,8 @@ def fresh(t, non_generic):
 
 
 def unify(t1, t2):
-    """Unify the two types t1 and t2.
-
-    Makes the types t1 and t2 the same.
+    """
+    Unify the two types t1 and t2. Makes the types t1 and t2 the same.
 
     Args:
         t1: The first type to be made equivalent
@@ -344,7 +373,7 @@ def occursInType(v, type2):
     """
     pruned_type2 = prune(type2)
     if pruned_type2 == v:
-        return "true"
+        return True
     elif isinstance(pruned_type2, TypeOperator):
         return occursIn(v, pruned_type2.types)
     return False

@@ -1271,7 +1271,7 @@ class Test_README_Examples(unittest.TestCase):
 
         self.assertEqual(1, fib(0))
         self.assertEqual(1, fib(1))
-        #self.assertEqual(13, fib(6))
+        self.assertEqual(13, fib(6))
 
     def test_sections(self):
         f = (__ - 20) * (2 ** __) * (__ + 3)

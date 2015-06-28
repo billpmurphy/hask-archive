@@ -1,4 +1,5 @@
 import operator
+from collections import deque
 
 from type_system import Typeclass
 from type_system import TypedFunc
@@ -200,40 +201,81 @@ undefined = __undefined__()
 #=============================================================================#
 # Pattern matching
 
+# Note that the approach implemented here uses lots of global state and is
+# pretty much the opposite of "functional" or "thread-safe."
+
+class __wildcard__(Syntax, Wildcard):
+    pass
+
 
 class IncompletePatternError(Exception):
     pass
 
 
-class MatchVars(object):
-    __cache__ = {}
-    __value__ = undefined
+class MatchStackFrame(object):
+    """One stack frame for pattern matching bound variable stack"""
+    def __init__(self, value):
+        self.value = value
+        self.cache = {}
+        self.matched = False
+
+
+class MatchStack(object):
+    """Stack for pattern matching locally bound variables"""
+    __stack__ = deque()
+
+    @classmethod
+    def push(cls, value):
+        """Push a new frame onto the stack, representing a new case expr"""
+        cls.__stack__.append(MatchStackFrame(value))
+        return
+
+    @classmethod
+    def pop(cls):
+        """Pop the current frame off the stack"""
+        cls.__stack__.pop()
+        return
+
+    @classmethod
+    def get_frame(cls):
+        """Access the current frame"""
+        return cls.__stack__[-1]
+
+    @classmethod
+    def get_name(cls, name):
+        """Lookup a variable name in the current frame"""
+        if cls.get_frame().matched:
+            return undefined
+        return cls.get_frame().cache.get(name, undefined)
 
 
 class __var_bind__(Syntax):
+    """
+    Bind a local variable while pattern matching.
+    For example usage, see help(caseof).
+    """
     def __getattr__(self, name):
         return PatternMatchBind(name)
 
     def __call__(self, pattern):
-        is_match, env = pattern_match(MatchVars.__value__, pattern)
-        if is_match and not isinstance(MatchVars.__value__, Undefined):
-            #print "pattern = ", pattern, "updating the cache"
-            MatchVars.__cache__ = env
-            MatchVars.__value__ = undefined
-        #else:
-            #print "pattern = ", pattern, "NOT updating the cache"
+        is_match, env = pattern_match(MatchStack.get_frame().value, pattern)
+        if is_match and not MatchStack.get_frame().matched:
+            MatchStack.get_frame().cache = env
         return __match_test__(is_match)
 
 
 class __var_access__(Syntax):
+    """
+    Access a local variable bound during pattern matching.
+    For example usage, see help(caseof).
+    """
     def __getattr__(self, name):
-        #print name, MatchVars.__cache__.get(name, "not here b")
-        return MatchVars.__cache__.get(name, undefined)
+        return MatchStack.get_name(name)
 
 
-m = __var_bind__("Error in pattern match")
-p = __var_access__("Error in pattern match")
-w = Wildcard()
+m = __var_bind__("Syntax error in pattern match")
+p = __var_access__("Syntax error in pattern match")
+w = __wildcard__("Syntax error in wildcard pattern")
 
 
 class __match_line__(Syntax):
@@ -254,18 +296,18 @@ class __match_test__(Syntax):
         self.is_match = is_match
         return
     def __rshift__(self, value):
-        MatchVars.__cache__ = {}
+        MatchStack.get_frame().cache = {}
         return __match_line__(self.is_match, value)
 
 
 class __unmatched_case__(Syntax):
     def __or__(self, line):
         if line.is_match:
+            MatchStack.get_frame().matched = True
             return __matched_case__(line.return_value)
         return self
     def __invert__(self):
-        MatchVars.__cache__ = {}
-        MatchVars.__value__ = undefined
+        MatchStack.pop()
         raise IncompletePatternError()
 
 
@@ -276,8 +318,7 @@ class __matched_case__(Syntax):
     def __or__(self, line):
         return self
     def __invert__(self):
-        MatchVars.__cache__ = {}
-        MatchVars.__value__ = undefined
+        MatchStack.pop()
         return self.value
 
 
@@ -287,7 +328,7 @@ class caseof(__unmatched_case__):
     def __init__(self, value):
         if isinstance(value, Undefined):
             return
-        MatchVars.__value__ = value
+        MatchStack.push(value)
         return
 
 #=============================================================================#

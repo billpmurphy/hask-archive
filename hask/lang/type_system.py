@@ -421,16 +421,26 @@ def build_ADT(typename, typeargs, data_constructors, to_derive):
 
 
 class PatternMatchBind(namedtuple("__pattern__", ["name"])):
+    """Represents a local variable bound by pattern matching."""
     pass
 
 
 class Wildcard(object):
+    """Represents a wildcard pattern in a case expression."""
     pass
 
 
 def pattern_match(value, pattern, env=None):
     """
     Pattern match a value and a pattern.
+
+    Args:
+        value: the value to pattern-match on
+        pattern: a pattern, consisting of literals, wildcards, and/or locally
+                 bound variables
+        env: a dictionary of local variables bound while matching
+
+    Returns: (True, env) if the match is successful, and (False, env) otherwise
     """
     env = {} if env is None else env
 
@@ -465,3 +475,6 @@ def pattern_match(value, pattern, env=None):
             return True, env
 
     return False, env
+
+
+

@@ -1,9 +1,7 @@
-[![Build Status](https://magnum.travis-ci.com/billpmurphy/pythaskell.svg?token=ReCFhAz7SQAeN6Fi4dBx&branch=master)](https://magnum.travis-ci.com/billpmurphy/pythaskell)
-
-
 Remaining TODOs:
 * Make sure typeclass functions and data constructors are typechecked
 * Fix pattern matching variable bind, so that it has an actual stack
+* Change type inference ending so it understands polymorphic HKTs
 * Change type inference engine so that it is aware of typeclasses
 * Write rest of Data.List and Prelude, and document everything undocumented
 * Final refactor of everything
