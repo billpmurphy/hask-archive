@@ -28,10 +28,10 @@ language tools from Haskell, including:
   monadic error handling, guards, and more
 * Python port of (some of) the standard libraries from Haskell's `base`,
   including:
-    * Typeclasses from the Haskell `base` libraries, including `Functor`,
-      `Applicative`, `Monad`, `Enum`, `Num`, and all the rest
     * Algebraic datatypes from the Haskell `Prelude`, including `Maybe` and
       `Either`
+    * Typeclasses from the Haskell `base` libraries, including `Functor`,
+      `Applicative`, `Monad`, `Enum`, `Num`, and all the rest
     * Standard library functions from `base`, including all functions from
       `Prelude`, `Data.List`, `Data.Maybe`, and more
 
@@ -45,11 +45,12 @@ Features not yet implemented, but coming soon:
 * More of the Haskell standard library (`Control.*` libraries, QuickCheck, and more)
 * Monadic, lazy I/O
 
-**Note that all of this is still in pre-alpha, and some things may be buggy!**
+**Note that all of this is still very much pre-alpha, and some things may be buggy!**
 
 ## Installation
 
 1) `git clone https://github.com/billpmurphy/hask`
+
 2) `python setup.py install`
 
 To run the tests: `python tests.py`.
@@ -58,12 +59,12 @@ To run the tests: `python tests.py`.
 ## Why did you make this?
 
 My goal was to cram as much of Haskell into Python as possible while still
-being 100% compatible with the rest of the language, and then stepping back to
-see if any useful ideas came out of the wreckage. Also, it was fun!
+being 100% compatible with the rest of the language, just to see if any useful
+ideas came out of the result. Also, it was fun!
 
 Contributions, forks, and extensions to this experiment are always welcome!
 Feel free to submit a pull request, open an issue, or email me. In the spirit
-of this project, taking things to weird extremes is encouraged.
+of this project, abusing the Python language as much as possible is encouraged.
 
 
 ## Features
@@ -71,9 +72,10 @@ of this project, taking things to weird extremes is encouraged.
 Hask is a grab-bag of features that add up to one big pseudo-Haskell functional
 programming library. The rest of this README lays out the basics.
 
-I recommend playing around in the REPL while going through the examples. `from
-hask import *` will give you all the language features and everything from the
-Prelude.
+I recommend playing around in the REPL while going through the examples. You
+can import all the language features and everything from the Prelude with `from
+hask import *`
+
 
 #### The List type and list comprehensions
 
@@ -81,16 +83,16 @@ As in Haskell, there are four basic type of list comprehensions:
 
 ```python
 # list from 1 to infinity, counting by ones
->>> L[1, ...]
+L[1, ...]
 
 # list from 1 to infinity, counting by twos
->>> L[1, 3, ...]
+L[1, 3, ...]
 
 # list from 1 to 10 (inclusive), counting by ones
->>> L[1, ..., 20]
+L[1, ..., 20]
 
 # list from 1 to 20 (inclusive), counting by fours
->>> L[1, 5, ..., 20]
+L[1, 5, ..., 20]
 ```
 
 ### Abstract Data Types
@@ -127,7 +129,7 @@ data.SomeType("a", "b") == d.Foo(int, int, str)
                          | d.Baz("a", "b")
 ```
 
-To automagically derive typeclass instances for the new ADT, just add `&
+To automagically derive typeclass instances for the type, add `&
 deriving(...typeclasses...)` after the data constructor declarations.
 Currently, the only typeclasses that can be derived are `Eq`, `Show`, `Read`,
 `Ord`, and `Bounded`.
@@ -239,7 +241,7 @@ Second, `TypedFunc` objects can be partially applied:
 ```
 
 `TypedFunc` objects also have two special infix operators, `*` and `%`. `*` is the
-compose operator (`.` in Haskell), so `f * g` is equivalent to `f(g(x))`. `%`
+compose operator (equivalent to `.` in Haskell), so `f * g` is equivalent to `f(g(x))`. `%`
 is just the apply operator, which applies a `TypedFunc` to one argument
 (equivalent to `$` in Haskell).
 
@@ -281,16 +283,15 @@ def fib(x):
 ```
 
 If you find pattern matching on ADTs too cumbersome, you can also use numeric
-indexing on ADT fields.
+indexing on ADT fields. An `IndexError` will be thrown if you mess something
+up.
 
 ```
 >>> Just(20.0)[0]
 20.0
 
->>> Nothing[0]
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-IndexError: tuple index out of range
+>>> Left("words words words words")[0]
+'words words words words'
 ```
 
 ### Typeclasses and typeclass instances
@@ -375,7 +376,7 @@ instance for that typeclass. Take a look at the typeclasses defined in
 `Data.Functor` and `Data.Traversable` to see how this is done.
 
 
-#### Operator sections
+### Operator sections
 
 Hask also supports operator sections (e.g. `(1+)` in Haskell). Sections are
 just `TypedFunc` objects, so they are automagically curried and typechecked.
@@ -401,7 +402,7 @@ Double sections are also supported:
 1024
 ```
 
-#### Guards
+### Guards
 
 If you don't need the full power of pattern matching and just want a neater
 switch statement, you can use guards. The syntax for guards is as follows:
@@ -454,7 +455,7 @@ def examine_password_security(password):
 'Same combination as my luggage!'
 ```
 
-#### Monadic error handling (of Python functions)
+### Monadic error handling (of Python functions)
 
 If you want to use `Maybe` and `Either` to handle errors raised by Python
 functions defined outside Hask, you can use the decorators `in_maybe` and
@@ -534,12 +535,20 @@ def some_function(x, y):
 #### Standard libraries
 
 All of your favorite functions from `Prelude`, `Data.List`, `Data.Maybe`,
-`Data.Either`, `Data.Monoid`, and more are implemented too. Some highlights:
+`Data.Either`, `Data.Monoid`, and more are implemented too. Everything is
+pretty well documented, so if you're not sure about some function or typeclass,
+use `help` liberally. Some highlights:
 
 ```python
 >>> from Data.List import isSubsequenceOf
 >>> isSubsequenceOf(L[2, 8], L[1, 4, 6, 2, 8, 3, 7])
 True
+
+
+>>> from Data.String import words
+>>> words("be cool about fire safety")
+L["be", "cool", "about", "fire", "safety"]
 ```
 
 
+That's all, folks!

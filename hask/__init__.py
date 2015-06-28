@@ -83,7 +83,6 @@ from hask.lang import t
 from hask.lang import caseof
 from hask.lang import p
 from hask.lang import m
-from hask.lang import w
 from hask.lang import IncompletePatternError
 
 ## REPL tools

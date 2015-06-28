@@ -11,7 +11,6 @@ from type_system import build_ADT
 from type_system import build_sig
 from type_system import make_fn_type
 from type_system import PatternMatchBind
-from type_system import Wildcard
 from type_system import pattern_match
 from type_system import Undefined
 
@@ -205,10 +204,6 @@ undefined = __undefined__()
 # Note that the approach implemented here uses lots of global state and is
 # pretty much the opposite of "functional" or "thread-safe."
 
-class __wildcard__(Syntax, Wildcard):
-    pass
-
-
 class IncompletePatternError(Exception):
     pass
 
@@ -276,7 +271,6 @@ class __var_access__(Syntax):
 
 m = __var_bind__("Syntax error in pattern match")
 p = __var_access__("Syntax error in pattern match")
-w = __wildcard__("Syntax error in wildcard pattern")
 
 
 class __match_line__(Syntax):

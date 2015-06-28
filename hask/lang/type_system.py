@@ -430,29 +430,21 @@ class PatternMatchBind(namedtuple("__pattern__", ["name"])):
     pass
 
 
-class Wildcard(object):
-    """Represents a wildcard pattern in a case expression."""
-    pass
-
-
 def pattern_match(value, pattern, env=None):
     """
     Pattern match a value and a pattern.
 
     Args:
         value: the value to pattern-match on
-        pattern: a pattern, consisting of literals, wildcards, and/or locally
-                 bound variables
+        pattern: a pattern, consisting of literals, and/or locally bound
+                 variables
         env: a dictionary of local variables bound while matching
 
     Returns: (True, env) if the match is successful, and (False, env) otherwise
     """
     env = {} if env is None else env
 
-    if isinstance(pattern, Wildcard):
-        return True, env
-
-    elif isinstance(pattern, PatternMatchBind):
+    if isinstance(pattern, PatternMatchBind):
         if pattern.name in env:
             msg = "Conflicting definitions for `%s`" % pattern.name
             raise SyntaxError(msg)

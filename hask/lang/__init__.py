@@ -18,7 +18,6 @@ from syntax import undefined
 from syntax import caseof
 from syntax import m
 from syntax import p
-from syntax import w
 from syntax import IncompletePatternError
 from syntax import data
 from syntax import d
