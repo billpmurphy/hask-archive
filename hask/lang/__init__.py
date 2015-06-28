@@ -15,34 +15,27 @@ from type_system import Hask
 from type_system import TypedFunc
 
 from syntax import undefined
-
 from syntax import caseof
 from syntax import m
 from syntax import p
 from syntax import w
 from syntax import IncompletePatternError
-
 from syntax import data
 from syntax import d
 from syntax import deriving
-
 from syntax import H
 from syntax import sig
 from syntax import t
 from syntax import typify
-
 from syntax import NoGuardMatchException
 from syntax import guard
 from syntax import c
 from syntax import otherwise
-
 from syntax import instance
-
 from syntax import __
+from syntax import _t
+from syntax import _q
+from syntax import _i
 
-from syntax import L
-from builtins import List
-
-from builtins import _t
-from builtins import _q
-from builtins import _i
+from lazylist import List
+from lazylist import L

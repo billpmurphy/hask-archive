@@ -1,11 +1,5 @@
 import operator
 
-from builtins import List
-from typeclasses import Enum
-from typeclasses import enumFrom
-from typeclasses import enumFromThen
-from typeclasses import enumFromTo
-from typeclasses import enumFromThenTo
 from type_system import Typeclass
 from type_system import TypedFunc
 from type_system import TypeSignature
@@ -723,52 +717,59 @@ otherwise = c(lambda _: True)
 
 
 #=============================================================================#
-# List comprehension
+# REPL tools (:q, :t, :i)
 
 
-class __list_comprehension__(Syntax):
+def _q(status=None):
     """
-    Syntactic construct for Haskell-style list comprehensions and lazy list
-    creation.
+    Shorthand for sys.exit() or exit() with no arguments. Equivalent to :q in
+    Haskell. Should only be used in the REPL.
 
-    List comprehensions can be used with any instance of Enum, including the
-    built-in types int, long, float, and char.
+    Usage:
 
-    There are four basic list comprehension patterns:
-
-    >>> L[1, ...]
-    # list from 1 to infinity, counting by ones
-
-    >>> L[1, 3, ...]
-    # list from 1 to infinity, counting by twos
-
-    >>> L[1, ..., 20]
-    # list from 1 to 20 (inclusive), counting by ones
-
-    >>> L[1, 5, ..., 20]
-    # list from 1 to 20 (inclusive), counting by fours
+    >>> _q()
     """
-    def __getitem__(self, lst):
-        if isinstance(lst, tuple) and len(lst) < 5 and Ellipsis in lst:
-            # L[x, ...]
-            if len(lst) == 2 and lst[1] is Ellipsis:
-                return List(enumFrom(lst[0]))
-
-            # L[x, y, ...]
-            elif len(lst) == 3 and lst[2] is Ellipsis:
-                return List(enumFromThen(lst[0], lst[1]))
-
-            # L[x, ..., y]
-            elif len(lst) == 3 and lst[1] is Ellipsis:
-                return List(enumFromTo(lst[0], lst[2]))
-
-            # L[x, y, ..., z]
-            elif len(lst) == 4 and lst[2] is Ellipsis:
-                return List(enumFromThenTo(lst[0], lst[1], lst[3]))
-
-            self.raise_invalid()
-        return List(lst)
+    if status is None:
+        exit()
+    exit(status)
+    return
 
 
-L = __list_comprehension__("Invalid list comprehension")
+def _t(obj):
+    """
+    Returns a string representing the type of an object, including
+    higher-kinded types and ADTs. Equivalent to `:t` in Haskell. Meant to be
+    used in the REPL, but might also be useful for debugging.
 
+    Args:
+        obj: the object to inspect
+
+    Returns:
+        A string representation of the type
+
+    Usage:
+
+    >>> _t(1)
+    int
+
+    >>> _t(Just("hello world"))
+    Maybe str
+    """
+    return str(typeof(obj))
+
+
+def _i(obj):
+    """
+    Show information about an object. Equivalent to `:i` in Haskell or
+    help(obj) in Python. Should only be used in the REPL.
+
+    Args:
+        obj: the object to inspect
+
+    Usage:
+
+    >>> _i(Just("hello world"))
+
+    >>> _i(Either)
+    """
+    help(obj)

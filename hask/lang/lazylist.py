@@ -13,9 +13,14 @@ from typeclasses import Show
 from typeclasses import Eq
 from typeclasses import Ord
 from typeclasses import Enum
+from typeclasses import enumFrom
+from typeclasses import enumFromThen
+from typeclasses import enumFromTo
 from typeclasses import enumFromThenTo
 from typeclasses import Bounded
 from typeclasses import Read
+
+from syntax import Syntax
 
 
 #=============================================================================#
@@ -152,59 +157,53 @@ Read.make_instance(List, read=eval)
 
 
 #=============================================================================#
-# REPL tools (:q, :t, :i)
+# List comprehension
 
 
-def _q(status=None):
+class __list_comprehension__(Syntax):
     """
-    Shorthand for sys.exit() or exit() with no arguments. Equivalent to :q in
-    Haskell. Should only be used in the REPL.
+    Syntactic construct for Haskell-style list comprehensions and lazy list
+    creation.
 
-    Usage:
+    List comprehensions can be used with any instance of Enum, including the
+    built-in types int, long, float, and char.
 
-    >>> _q()
+    There are four basic list comprehension patterns:
+
+    >>> L[1, ...]
+    # list from 1 to infinity, counting by ones
+
+    >>> L[1, 3, ...]
+    # list from 1 to infinity, counting by twos
+
+    >>> L[1, ..., 20]
+    # list from 1 to 20 (inclusive), counting by ones
+
+    >>> L[1, 5, ..., 20]
+    # list from 1 to 20 (inclusive), counting by fours
     """
-    if status is None:
-        exit()
-    exit(status)
-    return
+    def __getitem__(self, lst):
+        if isinstance(lst, tuple) and len(lst) < 5 and Ellipsis in lst:
+            # L[x, ...]
+            if len(lst) == 2 and lst[1] is Ellipsis:
+                return List(enumFrom(lst[0]))
+
+            # L[x, y, ...]
+            elif len(lst) == 3 and lst[2] is Ellipsis:
+                return List(enumFromThen(lst[0], lst[1]))
+
+            # L[x, ..., y]
+            elif len(lst) == 3 and lst[1] is Ellipsis:
+                return List(enumFromTo(lst[0], lst[2]))
+
+            # L[x, y, ..., z]
+            elif len(lst) == 4 and lst[2] is Ellipsis:
+                return List(enumFromThenTo(lst[0], lst[1], lst[3]))
+
+            self.raise_invalid()
+        return List(lst)
 
 
-def _t(obj):
-    """
-    Returns a string representing the type of an object, including
-    higher-kinded types and ADTs. Equivalent to `:t` in Haskell. Meant to be
-    used in the REPL, but might also be useful for debugging.
-
-    Args:
-        obj: the object to inspect
-
-    Returns:
-        A string representation of the type
-
-    Usage:
-
-    >>> _t(1)
-    int
-
-    >>> _t(Just("hello world"))
-    Maybe str
-    """
-    return str(typeof(obj))
+L = __list_comprehension__("Invalid list comprehension")
 
 
-def _i(obj):
-    """
-    Show information about an object. Equivalent to `:i` in Haskell or
-    help(obj) in Python. Should only be used in the REPL.
-
-    Args:
-        obj: the object to inspect
-
-    Usage:
-
-    >>> _i(Just("hello world"))
-
-    >>> _i(Either)
-    """
-    help(obj)

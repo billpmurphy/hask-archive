@@ -61,13 +61,6 @@ from Data.Ord import min
 from Data.Ord import compare
 
 
-# builtin instances for Show
-for _type in (str, int, long, float, complex, bool, list, tuple):
-    instance(Show, _type).where(show=_type.__str__)
-    instance(Eq, _type).where(eq=_type.__eq__, ne=_type.__ne__)
-    instance(Ord, _type).where(
-            lt=_type.__lt__, le=_type.__le__, gt=_type.__gt__, ge=_type.__ge__)
-
 
 from .lang.typeclasses import Enum
 from .lang.typeclasses import fromEnum
@@ -79,26 +72,6 @@ from .lang.typeclasses import enumFrom
 from .lang.typeclasses import enumFromThenTo
 from .lang.typeclasses import enumFromTo
 
-
-instance(Enum, int).where(
-        toEnum=int,
-        fromEnum=int
-)
-
-instance(Enum, long).where(
-        toEnum=int,
-        fromEnum=long
-)
-
-instance(Enum, bool).where(
-        toEnum=int,
-        fromEnum=bool
-)
-
-instance(Enum, str).where(
-        toEnum=ord,
-        fromEnum=chr
-)
 
 from .lang.typeclasses import Bounded
 from Data.Functor import Functor
@@ -288,7 +261,6 @@ def sequence_(xs):
     return
 
 
-
 #=============================================================================#
 # Miscellaneous functions
 
@@ -363,7 +335,6 @@ from .lang import undefined
 #=============================================================================#
 # List operations
 
-
 from Data.List import map_
 from Data.List import filter_
 from Data.List import head
@@ -382,7 +353,6 @@ from Data.List import foldr1
 #=============================================================================#
 ## Special folds
 
-
 from Data.List import and_
 from Data.List import or_
 from Data.List import any_
@@ -399,7 +369,6 @@ from Data.List import minimum
 ## Building lists
 ### Scans
 
-
 from Data.List import scanl
 from Data.List import scanl1
 from Data.List import scanr
@@ -409,7 +378,6 @@ from Data.List import scanr1
 #=============================================================================#
 ### Infinite lists
 
-
 from Data.List import iterate
 from Data.List import repeat
 from Data.List import replicate
@@ -418,7 +386,6 @@ from Data.List import cycle
 
 #=============================================================================#
 ## Sublists
-
 
 from Data.List import take
 from Data.List import drop
@@ -432,7 +399,6 @@ from Data.List import break_
 #=============================================================================#
 ## Searching lists
 
-
 from Data.List import elem
 from Data.List import notElem
 from Data.List import lookup
@@ -440,7 +406,6 @@ from Data.List import lookup
 
 #=============================================================================#
 ## Zipping and unzipping lists
-
 
 from Data.List import zip_
 from Data.List import zip3
@@ -452,7 +417,6 @@ from Data.List import unzip3
 
 #=============================================================================#
 ## Functions on strings
-
 
 from Data.List import lines
 from Data.List import words

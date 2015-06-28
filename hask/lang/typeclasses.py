@@ -6,6 +6,8 @@ from type_system import has_instance
 from type_system import nt_to_tuple
 from type_system import build_instance
 
+from syntax import instance
+
 
 #=============================================================================#
 # Basic typeclasses
@@ -208,3 +210,46 @@ def enumFromThenTo(start, second, end):
 
 def enumFromTo(start, end):
     return Enum[start].enumFromTo(start, end)
+
+
+instance(Show, str).where(show=str.__str__)
+instance(Show, int).where(show=int.__str__)
+instance(Show, long).where(show=long.__str__)
+instance(Show, float).where(show=tuple.__str__)
+instance(Show, complex).where(show=complex.__str__)
+instance(Show, bool).where(show=bool.__str__)
+instance(Show, list).where(show=list.__str__)
+instance(Show, tuple).where(show=tuple.__str__)
+
+instance(Eq, str).where(eq=str.__eq__, ne=str.__ne__)
+instance(Eq, int).where(eq=int.__eq__, ne=int.__ne__)
+instance(Eq, long).where(eq=long.__eq__, ne=long.__ne__)
+instance(Eq, float).where(eq=float.__eq__, ne=float.__ne__)
+instance(Eq, complex).where(eq=complex.__eq__, ne=complex.__ne__)
+instance(Eq, bool).where(eq=bool.__eq__, ne=bool.__ne__)
+instance(Eq, list).where(eq=list.__eq__, ne=list.__ne__)
+instance(Eq, tuple).where(eq=tuple.__eq__, ne=tuple.__ne__)
+
+instance(Ord, str).where(lt=str.__lt__, le=str.__le__,
+                         gt=str.__gt__, ge=str.__ge__)
+instance(Ord, int).where(lt=int.__lt__, le=int.__le__,
+                         gt=int.__gt__, ge=int.__ge__)
+instance(Ord, long).where(lt=long.__lt__, le=long.__le__,
+                          gt=long.__gt__, ge=long.__ge__)
+instance(Ord, float).where(lt=float.__lt__, le=float.__le__,
+                           gt=float.__gt__, ge=float.__ge__)
+instance(Ord, complex).where(lt=complex.__lt__, le=complex.__le__,
+                             gt=complex.__gt__, ge=complex.__ge__)
+instance(Ord, bool).where(lt=bool.__lt__, le=bool.__le__,
+                          gt=bool.__gt__, ge=bool.__ge__)
+instance(Ord, list).where(lt=list.__lt__, le=list.__le__,
+                          gt=list.__gt__, ge=list.__ge__)
+instance(Ord, tuple).where(lt=tuple.__lt__, le=tuple.__le__,
+                           gt=tuple.__gt__, ge=tuple.__ge__)
+
+instance(Enum, int).where(toEnum=int, fromEnum=int)
+instance(Enum, long).where(toEnum=int, fromEnum=long)
+instance(Enum, bool).where(toEnum=int, fromEnum=bool)
+instance(Enum, str).where(toEnum=ord, fromEnum=chr)
+
+
