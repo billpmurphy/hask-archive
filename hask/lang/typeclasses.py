@@ -123,10 +123,10 @@ class Ord(Eq):
             """
             Compare the data constructor and all of the fields of two ADTs.
             """
-            if self.__slot__ == other.__slot__:
+            if self.__ADT_slot__ == other.__ADT_slot__:
                 zipped_fields = zip(nt_to_tuple(self), nt_to_tuple(other))
                 return all((fn(a, b) for a, b in zipped_fields))
-            return fn(self.__slot__, other.__slot__)
+            return fn(self.__ADT_slot__, other.__ADT_slot__)
 
         lt = lambda s, o: zip_cmp(s, o, operator.lt)
         le = lambda s, o: zip_cmp(s, o, operator.le)

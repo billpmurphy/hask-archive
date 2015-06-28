@@ -414,7 +414,6 @@ def unfoldr(f, x):
 def take(n, xs):
     pass
 
-
 def drop(n, xs):
     pass
 
@@ -455,15 +454,23 @@ def tails(xs):
 
 
 def isPrefixOf(xs, ys):
-    pass
+    return xs == ys[:len(xs)]
 
 
 def isSuffixOf(xs, ys):
-    pass
+    return xs == ys[-len(xs):]
 
 
 def isSubsequenceOf(xs, ys):
-    pass
+    """
+    """
+    for i in xrange(len(ys)-len(xs)+1):
+        for j in xrange(len(xs)):
+            if ys[i+j] != xs[j]:
+                break
+        else:
+            return True
+    return False
 
 
 #=============================================================================#

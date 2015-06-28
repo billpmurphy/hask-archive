@@ -1,6 +1,7 @@
 import operator
 from collections import deque
 
+from type_system import typeof
 from type_system import Typeclass
 from type_system import TypedFunc
 from type_system import TypeSignature

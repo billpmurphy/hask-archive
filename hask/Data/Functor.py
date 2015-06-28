@@ -19,7 +19,7 @@ class Functor(Typeclass):
         return
 
 
-@sig(H[(Functor, "f")]/ (H/ "a" >> "b") >> t("f", "a") >> t("f", "b"))
+#@sig(H[(Functor, "f")]/ (H/ "a" >> "b") >> t("f", "a") >> t("f", "b"))
 def fmap(f, x):
     return Functor[x].fmap(f, x)
 

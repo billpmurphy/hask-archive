@@ -50,11 +50,11 @@ class List(collections.Sequence, Hask):
         self.evaluated.extend(self.unevaluated)
         return
 
-    def __rpow__(self, item):
+    def __rxor__(self, item):
         """
-        ** is the cons operator (equivalent to : in Haskell)
+        ^ is the cons operator (equivalent to : in Haskell)
         """
-        raise NotImplementedError("hmm")
+        return List([item]) + self
 
     def __add__(self, iterable):
         """

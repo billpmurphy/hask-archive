@@ -1132,6 +1132,16 @@ class TestDataList(unittest.TestCase):
         plus_one = (lambda x: x + 1) ** (H/ int >> int)
         #self.assertEquals(iterate(plus_one, 0)[:10], L[range(10)])
 
+    def test_sublists(self):
+        from hask.Data.List import isPrefixOf, isSuffixOf, isSubsequenceOf
+        self.assertTrue(isPrefixOf(L["a", "b"], L["a", "b", "c"]))
+        self.assertFalse(isPrefixOf(L["a", "b"], L["d", "a", "b", "c"]))
+        self.assertTrue(isSuffixOf(L["b", "c"], L["a", "b", "c"]))
+        self.assertFalse(isSuffixOf(L["a", "b"], L["d", "a", "b", "c"]))
+        self.assertTrue(isSubsequenceOf(L[1, 2], L[2, 3, 1, 2, 4]))
+        self.assertFalse(isSubsequenceOf(L[8, 1], L[2, 3, 1, 2, 4]))
+        self.assertFalse(isSubsequenceOf(L[1, 2], L[2, 3, 1, 4]))
+
     def test_searching_lists(self):
         pass
 

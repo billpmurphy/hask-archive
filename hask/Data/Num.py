@@ -96,5 +96,3 @@ instance(Num, complex).where(
     negate = complex.__neg__,
     sub = complex.__sub__
 )
-
-

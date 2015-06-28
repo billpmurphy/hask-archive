@@ -1,14 +1,14 @@
 Remaining TODOs:
 * Make sure typeclass functions and data constructors are typechecked
-* Fix pattern matching variable bind, so that it has an actual stack
 * Change type inference ending so it understands polymorphic HKTs
-* Change type inference engine so that it is aware of typeclasses
+* Rewrite List type to work the way it should
 * Write rest of Data.List and Prelude, and document everything undocumented
 * Final refactor of everything
 * Write rest of README
 * Write tests for everything
 * ???
 * Profit
+* Change type inference engine so that it is aware of typeclasses
 
 
 # Hask
@@ -57,9 +57,9 @@ To run the tests: `python tests.py`.
 
 ## Why did you make this?
 
-It was an experiment! My goal was to cram as much of Haskell into Python as
-possible while still being 100% compatible with the rest of the language, and
-then stepping back to see if any useful ideas came out of the wreckage.
+My goal was to cram as much of Haskell into Python as possible while still
+being 100% compatible with the rest of the language, and then stepping back to
+see if any useful ideas came out of the wreckage. Also, it was fun!
 
 Contributions, forks, and extensions to this experiment are always welcome!
 Feel free to submit a pull request, open an issue, or email me. In the spirit
@@ -71,12 +71,34 @@ of this project, taking things to weird extremes is encouraged.
 Hask is a grab-bag of features that add up to one big pseudo-Haskell functional
 programming library. The rest of this README lays out the basics.
 
+I recommend playing around in the REPL while going through the examples. `from
+hask import *` will give you all the language features and everything from the
+Prelude.
+
+#### The List type and list comprehensions
+
+As in Haskell, there are four basic type of list comprehensions:
+
+```python
+# list from 1 to infinity, counting by ones
+>>> L[1, ...]
+
+# list from 1 to infinity, counting by twos
+>>> L[1, 3, ...]
+
+# list from 1 to 10 (inclusive), counting by ones
+>>> L[1, ..., 20]
+
+# list from 1 to 20 (inclusive), counting by fours
+>>> L[1, 5, ..., 20]
+```
+
 ### Abstract Data Types
 
-Hask makes it easy to define Haskell-like algebraic datatypes, which are
-immutable objects with a fixed number of fields.
+Hask allows you to define Haskell-like algebraic datatypes, which are
+immutable objects with a fixed number of unnamed fields.
 
-Here is the definition for `Maybe`:
+Here is the definition for the `Maybe` type:
 
 ```python
 from hask import data, d, deriving
@@ -154,6 +176,88 @@ Either a (str, int)
 
 ### Typed functions
 
+There are two ways to create `TypedFunc` objects:
+
+1) Use the `sig` decorator to decorate the function with the type signature
+
+```python
+@sig(H/ "a" >> "b" >> "a")
+def const(x, y):
+    return x
+```
+
+2) Use the `**` operator (similar to `::` in Haskell) to provide the type.
+Useful for giving turning functions or lambdas into `TypedFunc` objects in the
+REPL.
+
+```python
+def const(x, y):
+    return x
+
+const = const ** (H/ "a" >> "b" >> "a")
+```
+
+`TypedFunc` objects have several special properties.  First, they are type
+checked--when arguments are supplied, the type inference engine will check
+whether their types match the type signature, and raise a `TypeError` if there
+is a discrepancy.
+
+```python
+>>> f = (lambda x, y: x + y) ** (H/ int >> int >> int)
+
+>>> f(2, 3)
+5
+
+>>> f(9, 1.0)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "hask/lang/type_system.py", line 295, in __call__
+    result_type = analyze(ap, env)
+  File "hask/lang/hindley_milner.py", line 220, in analyze
+    unify(Function(arg_type, result_type), fun_type)
+  File "hask/lang/hindley_milner.py", line 313, in unify
+    unify(p, q)
+  File "hask/lang/hindley_milner.py", line 311, in unify
+    raise TypeError("Type mismatch: {0} != {1}".format(str(a), str(b)))
+TypeError: Type mismatch: float != int
+```
+
+Second, `TypedFunc` objects can be partially applied:
+
+```python
+>>> g = (lambda a, b, c: a / (b + c)) ** (H/ int >> int >> int >> int)
+
+>>> g(10, 2, 3)
+2
+
+>>> a = g(12)
+>>> a(2, 2)
+3
+
+>>> g(20, 1)(4)
+4
+```
+
+`TypedFunc` objects also have two special infix operators, `*` and `%`. `*` is the
+compose operator (`.` in Haskell), so `f * g` is equivalent to `f(g(x))`. `%`
+is just the apply operator, which applies a `TypedFunc` to one argument
+(equivalent to `$` in Haskell).
+
+```python
+>>> f = (lambda x, y: x + " " + y) ** (H/ str >> str >> str)
+
+>>> h = f("goodnight") * f("sweet")
+>>> h("prince")
+'goodnight sweet prince'
+
+>>> f("I") * f("am") * f("a") % "banana"
+'I am a banana'
+```
+
+The compose operation is also typed-checked, which makes it appealing to
+write programs in the Haskell style of chaining together lots of functions with
+composition and relying on the type system to catch programming errors.
+
 
 ### Pattern matching
 
@@ -176,9 +280,18 @@ def fib(x):
 13
 ```
 
+If you find pattern matching on ADTs too cumbersome, you can also use numeric
+indexing on ADT fields.
 
-For convinience, you can also use numeric indexing on ADT fields.
+```
+>>> Just(20.0)[0]
+20.0
 
+>>> Nothing[0]
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+IndexError: tuple index out of range
+```
 
 ### Typeclasses and typeclass instances
 
@@ -193,7 +306,7 @@ instance(Functor, Maybe).where(
 )
 ```
 
-We can now make `Maybe` an instance of `Functor`. This allows us to call `fmap`
+`Maybe` is now an instance of `Functor`. This allows us to call `fmap`
 and map any function of type `a -> b` into a value of type `Maybe a`.
 
 ```python
@@ -209,7 +322,7 @@ Just(50.0)
 
 Lots of nested calls to `fmap` get unwieldy very fast. Fortunately, any
 instance of `Functor` can be used with the infix `fmap` operator, `*`. This is
-equivalent to `<*>` in Haskell. Rewriting our example from above:
+equivalent to `<$>` in Haskell. Rewriting our example from above:
 
 ```python
 >>> Just(25) * times2 * toFloat
@@ -238,12 +351,12 @@ to provide `pure`. To implement `Monad`, we need to provide `bind`.
 ... )
 ```
 
-Of course, `bind` also has an infix form, which is `>>` in Hask.
+The `bind` function also has an infix form, which is `>>` in Hask.
 
 ```python
->>> f = (lambda x: x + 10)
->>>
->>> h = (lambda _: Nothing) ** (H/ "a" >> Maybe "a")
+>>> f = (lambda x: Just(x + 10)) ** (H/ int >> int)
+>>> g = (lambda x: Just(x+3) if x != Nothing else x) ** (H/ int >> t(Maybe, int))
+>>> h = (lambda _: Nothing) ** (H/ "a" >> t(Maybe, "a"))
 
 >>> Just(3) >> f >> g
 Just(16)
@@ -255,16 +368,11 @@ Nothing
 Nothing
 ```
 
-
-#### Defining your own typeclasses
-
-Defining your own typeclasses is pretty easy. For example, let's look at the definition of `Monad`.
-
-
-There are a few things to note here:
-
-1) Monad is a subclass of Applicative
-2) In order to get the desired infix `>>` behavior,
+Defining your own typeclasses is pretty easy. Typeclasses are just Python
+classes that are subclasses of `Typeclass`, and which implement a classmethod
+called `make_instance` that controls what happens when you define a new
+instance for that typeclass. Take a look at the typeclasses defined in
+`Data.Functor` and `Data.Traversable` to see how this is done.
 
 
 #### Operator sections
@@ -414,28 +522,12 @@ Left(ValueError('Out of cheese error',))
 Chained cheese-eating in the `Either` monad is left as an exercise for
 the reader.
 
-You can also use `in_maybe` or `in_either` as decorators.
-
-
-#### The List type and List comprehensions
-
-As in Haskell, there are four basic type of list comprehensions:
+You can also use `in_maybe` or `in_either` as decorators:
 
 ```python
-# list from 1 to infinity, counting by ones
->>> L[1, ...]
-L[1, 2, 3, 4, 5, 6, 7, 8, 9 ...
-
-# list from 1 to infinity, counting by twos
->>> L[1, 3, ...]
-
-
-# list from 1 to 10 (inclusive), counting by ones
->>> L[1, ..., 20]
-
-# list from 1 to 20 (inclusive), counting by fours
->>> L[1, 5, ..., 20]
-[1, 5, 9, 13, 17]
+@in_maybe
+def some_function(x, y):
+    ...
 ```
 
 
@@ -445,6 +537,9 @@ All of your favorite functions from `Prelude`, `Data.List`, `Data.Maybe`,
 `Data.Either`, `Data.Monoid`, and more are implemented too. Some highlights:
 
 ```python
+>>> from Data.List import isSubsequenceOf
+>>> isSubsequenceOf(L[2, 8], L[1, 4, 6, 2, 8, 3, 7])
+True
 ```
 
 

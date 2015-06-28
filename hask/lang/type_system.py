@@ -73,9 +73,14 @@ class TypeMeta(type):
         self.__dependencies__ = self.mro()[1:-2] # excl. self, Typeclass, object
 
     def __getitem__(self, item):
-        if is_builtin(type(item)):
-            return self.__instances__[id(type(item))]
-        return self.__instances__[id(typeof(item))]
+        try:
+            if is_builtin(type(item)):
+                return self.__instances__[id(type(item))]
+            elif isinstance(item, ADT):
+                return self.__instances__[id(item.__type_constructor__)]
+            return self.__instances__[id(typeof(item))]
+        except KeyError:
+            raise TypeError("No instance for {0}".format(item))
 
 
 class Typeclass(object):
@@ -380,14 +385,15 @@ def make_data_const(name, fields, type_constructor, slot_num):
     base = namedtuple(name, ["i%s" % i for i, _ in enumerate(fields)])
     cls = type(name, (type_constructor, base), {})
     cls.__type_constructor__ = type_constructor
+    cls.__ADT_slot__ = slot_num
 
-    # If the data constructor takes no arguments, create an instance of it
-    # and return that instance rather than returning the class
     if len(fields) == 0:
+        # If the data constructor takes no arguments, create an instance of it
+        # and return that instance rather than returning the class
         cls = cls()
-    # Otherwise, modify __type__ so that it matches up fields from the data
-    # constructor with type params from the type constructor
     else:
+        # Otherwise, modify __type__ so that it matches up fields from the data
+        # constructor with type params from the type constructor
         def __type__(self):
             args = [typeof(self[fields.index(p)]) \
                     if p in fields else TypeVariable()
@@ -395,9 +401,7 @@ def make_data_const(name, fields, type_constructor, slot_num):
             return TypeOperator(type_constructor, args)
         cls.__type__ = __type__
 
-    # TODO: make sure __init__ or __new__ is typechecked
     type_constructor.__constructors__ += (cls,)
-    cls.__slot__ = slot_num
     return cls
 
 
@@ -409,9 +413,11 @@ def build_ADT(typename, typeargs, data_constructors, to_derive):
     dcons = [make_data_const(d[0], d[1], newtype, n)
              for n, d in enumerate(data_constructors)]
 
-    # 2) Derive typeclass instances for the new type constructors
+    # 2) Derive typeclass instances for the new type constructor
     for tclass in to_derive:
         tclass.derive_instance(newtype)
+
+    # TODO: make sure __init__ or __new__ is typechecked
     return tuple([newtype,] + dcons)
 
 
