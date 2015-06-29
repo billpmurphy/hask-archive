@@ -1,6 +1,3 @@
-import math
-import fractions
-
 from .lang import build_instance
 from .lang import H
 from .lang import sig
@@ -60,8 +57,6 @@ from Data.Ord import max_
 from Data.Ord import min_
 from Data.Ord import compare
 
-
-
 from .lang.typeclasses import Enum
 from .lang.typeclasses import fromEnum
 from .lang.typeclasses import toEnum
@@ -72,14 +67,13 @@ from .lang.typeclasses import enumFrom
 from .lang.typeclasses import enumFromThenTo
 from .lang.typeclasses import enumFromTo
 
-
 from .lang.typeclasses import Bounded
 from Data.Functor import Functor
 from Data.Functor import fmap
 
 from Control.Applicative import Applicative
 from Control.Monad import Monad
-from Data.Foldable import Foldable
+from Data.List import Foldable
 from Data.Traversable import Traversable
 
 
@@ -92,94 +86,12 @@ from Data.Num import Num
 from Data.Num import abs_
 from Data.Num import negate
 from Data.Num import signum
-
-
-class Fractional(Num):
-    @classmethod
-    def make_instance(typeclass, cls):
-        build_instance(Fractional, cls, {})
-        return
-
-instance(Fractional, float).where()
-
-
-class Floating(Fractional):
-    @classmethod
-    def make_instance(typeclass, cls):
-        build_instance(Floating, cls, {})
-        return
-
-instance(Floating, float).where()
-
-
-class Real(Num, Ord):
-    @classmethod
-    def make_instance(typeclass, cls):
-        build_instance(Real, cls, {})
-        return
-
-
-instance(Real, int).where()
-instance(Real, long).where()
-instance(Real, float).where()
-
-
-class Integral(Real, Enum):
-    @classmethod
-    def make_instance(typeclass, cls, quotRem, toInteger, quot=None, rem=None,
-            div=None, mod=None, divMod=None):
-        attrs = {"quotRem":quotRem, "toInteger":toInteger, "quot":quot,
-                 "rem":rem, "div":div, "mod":mod, "divMod":divMod}
-        build_instance(Integral, cls, attrs)
-        return
-
-
-instance(Integral, int).where(
-    quotRem = lambda x, y: (x / y, x % y),
-    toInteger = int
-)
-
-instance(Integral, long).where(
-    quotRem = lambda x, y: (x / y, x % y),
-    toInteger = int
-)
-
-
-class RealFrac(Real, Fractional):
-    @classmethod
-    def make_instance(typeclass, cls):
-        build_instance(RealFrac, cls, {})
-        return
-
-
-instance(RealFrac, float).where()
-
-
-class RealFloat(Floating, RealFrac):
-    @classmethod
-    def make_instance(typeclass, cls, floatRadix, floatDigits, floatRange,
-            decodeFloat, encodeFloat, exponent, significant, scaleFloat, isNan,
-            isInfinite, isDenormalized, isNegativeZero, isIEEE, atan2):
-        build_instance(RealFloat, cls, {})
-        return
-
-
-instance(RealFloat, float).where(
-    floatRadix=None,
-    floatDigits=None,
-    floatRange=None,
-    decodeFloat=None,
-    encodeFloat=None,
-    exponent=None,
-    significant=None,
-    scaleFloat=None,
-    isNan=None,
-    isInfinite=lambda x: x == float('inf') or x == -float('inf'),
-    isDenormalized=None,
-    isNegativeZero=None,
-    isIEEE=None,
-    atan2=math.atan2
-)
+from Data.Num import Fractional
+from Data.Num import Integral
+from Data.Num import Floating
+from Data.Num import Real
+from Data.Num import RealFrac
+from Data.Num import RealFloat
 
 
 #=============================================================================#
@@ -344,25 +256,26 @@ from Data.List import init
 from Data.List import null
 from Data.List import reverse
 from Data.List import length
-from Data.List import foldl
-from Data.List import foldl1
-from Data.List import foldr
-from Data.List import foldr1
+
+from Data.Foldable import foldl
+from Data.Foldable import foldl1
+from Data.Foldable import foldr
+from Data.Foldable import foldr1
 
 
 #=============================================================================#
 ## Special folds
 
-from Data.List import and_
-from Data.List import or_
-from Data.List import any_
-from Data.List import all_
-from Data.List import sum_
-from Data.List import product
-from Data.List import concat
-from Data.List import concatMap
-from Data.List import maximum
-from Data.List import minimum
+from Data.Foldable import and_
+from Data.Foldable import or_
+from Data.Foldable import any_
+from Data.Foldable import all_
+from Data.Foldable import sum_
+from Data.Foldable import product
+from Data.Foldable import concat
+from Data.Foldable import concatMap
+from Data.Foldable import maximum
+from Data.Foldable import minimum
 
 
 #=============================================================================#

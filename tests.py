@@ -3,7 +3,7 @@ import unittest
 from hask import H
 from hask import sig
 from hask import t
-from hask import p, m, caseof, w, IncompletePatternError
+from hask import p, m, caseof, IncompletePatternError
 from hask import has_instance
 from hask import guard
 from hask import c
@@ -41,7 +41,6 @@ from hask.lang.type_system import typeof
 from hask.lang.type_system import make_data_const
 from hask.lang.type_system import make_type_const
 from hask.lang.type_system import pattern_match
-from hask.lang.type_system import Wildcard
 from hask.lang.type_system import PatternMatchBind
 
 from hask.lang.hindley_milner import Var
@@ -429,7 +428,6 @@ class TestTypeSystem(unittest.TestCase):
     def test_match(self):
         match_only = lambda v, p: pattern_match(v, p)[0]
         pb = PatternMatchBind
-        w = Wildcard()
 
         # literal matches
         self.assertTrue(match_only(1, 1))
@@ -445,13 +443,13 @@ class TestTypeSystem(unittest.TestCase):
         self.assertFalse(match_only(Right(2), Left(2)))
 
         # matches with wildcard
-        self.assertTrue(match_only(1, w))
-        self.assertTrue(match_only(Nothing, w))
-        self.assertTrue(match_only(Just("whatever"), Just(w)))
-        self.assertTrue(match_only(Right(Just(5)), Right(Just(w))))
-        self.assertTrue(match_only(("a", "b", "c"), ("a", w, "c")))
-        self.assertFalse(match_only(("a", "b", "c"), ("1", w, "c")))
-        self.assertFalse(match_only(("a", "b", "d"), ("a", w, "c")))
+        self.assertTrue(match_only(1, pb("_")))
+        self.assertTrue(match_only(Nothing, pb("_")))
+        self.assertTrue(match_only(Just("whatever"), Just(pb("_"))))
+        self.assertTrue(match_only(Right(Just(5)), Right(Just(pb("_")))))
+        self.assertTrue(match_only(("a", "b", "c"), ("a", pb("_"), "c")))
+        self.assertFalse(match_only(("a", "b", "c"), ("1", pb("_"), "c")))
+        self.assertFalse(match_only(("a", "b", "d"), ("a", pb("_"), "c")))
 
         # matches with variable binding
         self.assertEqual((True, {"a":1}), pattern_match(1, pb("a")))
@@ -470,8 +468,8 @@ class TestTypeSystem(unittest.TestCase):
             pattern_match((1, 2), (pb("c"), pb("a")), {"a":1})
 
         # putting it all together
-        self.assertEqual((True, {"a":1, "b":2}),
-                pattern_match((1, "a", 2), (pb("a"), w, pb("b"))))
+        self.assertEqual((True, {"a":1, "b":2, "_":"a"}),
+                pattern_match((1, "a", 2), (pb("a"), pb("_"), pb("b"))))
 
 
 class TestADTInternals_Enum(unittest.TestCase):
@@ -874,29 +872,29 @@ class TestSyntax(unittest.TestCase):
         # matches with wildcard
         self.assertEqual(1,
                 ~(caseof(1)
-                    | m(w) >> 1
+                    | m(m._) >> 1
                     | m(1) >> 2))
         self.assertEqual(True,
                 ~(caseof(GT)
                     | m(LT) >> False
                     | m(EQ) >> False
-                    | m(w) >> True))
+                    | m(m._) >> True))
         self.assertEqual(False,
                 ~(caseof(GT)
                     | m(LT) >> False
-                    | m(w)  >> False
+                    | m(m._)  >> False
                     | m(GT) >> True))
         self.assertEqual(2,
                 ~(caseof((1, 2, 3))
                     | m((2, 1, 3)) >> 1
-                    | m((1, w, 3)) >> 2
+                    | m((1, m._, 3)) >> 2
                     | m((1, 2, 3)) >> 3))
 
         # variable bind
         self.assertEqual(("b", "a"),
                 ~(caseof(("a", "b"))
                     | m((m.x, m.y)) >> (p.y, p.x)
-                    | m(w)          >> None))
+                    | m(m._)          >> None))
         self.assertEqual(1,
                 ~(caseof(Just(1))
                     | m(Just(m.x)) >> p.x
@@ -914,7 +912,7 @@ class TestSyntax(unittest.TestCase):
                 ~(caseof(Just(10))
                     | m(Just(m.a)) >> ~(caseof(1)
                                             | m(m.a) >> p.a
-                                            | m(w)   >> False)
+                                            | m(m._) >> False)
                     | m(Nothing)   >> 11))
 
         with self.assertRaises(se):
@@ -1133,14 +1131,15 @@ class TestDataList(unittest.TestCase):
         #self.assertEquals(iterate(plus_one, 0)[:10], L[range(10)])
 
     def test_sublists(self):
-        from hask.Data.List import isPrefixOf, isSuffixOf, isSubsequenceOf
+        from hask.Data.List import isPrefixOf, isSuffixOf, isInfixOf
+        from hask.Data.List import isSubsequenceOf
         self.assertTrue(isPrefixOf(L["a", "b"], L["a", "b", "c"]))
         self.assertFalse(isPrefixOf(L["a", "b"], L["d", "a", "b", "c"]))
         self.assertTrue(isSuffixOf(L["b", "c"], L["a", "b", "c"]))
         self.assertFalse(isSuffixOf(L["a", "b"], L["d", "a", "b", "c"]))
-        self.assertTrue(isSubsequenceOf(L[1, 2], L[2, 3, 1, 2, 4]))
-        self.assertFalse(isSubsequenceOf(L[8, 1], L[2, 3, 1, 2, 4]))
-        self.assertFalse(isSubsequenceOf(L[1, 2], L[2, 3, 1, 4]))
+        self.assertTrue(isInfixOf(L[1, 2], L[2, 3, 1, 2, 4]))
+        self.assertFalse(isInfixOf(L[8, 1], L[2, 3, 1, 2, 4]))
+        self.assertFalse(isInfixOf(L[1, 2], L[2, 3, 1, 4]))
 
     def test_searching_lists(self):
         pass

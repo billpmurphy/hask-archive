@@ -6,9 +6,12 @@ from ..lang import sig
 from ..lang import t
 from ..lang import L
 
+from Foldable import Foldable
 from Eq import Eq
 from Ord import Ord
+from Ord import Ordering
 from Num import Num
+from Num import Integral
 from Maybe import Maybe
 from Maybe import Just
 from Maybe import Nothing
@@ -97,13 +100,13 @@ def length(xs):
 
 
 @sig(H/ (H/ "a" >> "b") >> ["a"] >> ["b"])
-def map_(fn, iterable):
-    return L[itertools.imap(fn, iterable)]
+def map_(f, xs):
+    """
+    map_ :: (a -> b) -> [a] -> [b]
 
-
-@sig(H/ (H/ "a" >> bool) >> ["a"] >> ["a"])
-def filter_(fn, iterable):
-    return L[itertools.ifilter(fn, iterable)]
+    map(f, xs) is the list obtained by applying f to each element of xs
+    """
+    return L[itertools.imap(f, xs)]
 
 
 @sig(H/ ["a"] >> ["a"] )
@@ -140,8 +143,6 @@ def intercalate(xs, xss):
     intercalate(xs,xss) is equivalent to concat(intersperse(xs,xss)). It
     inserts the list xs in between the lists in xss and concatenates the
     result.
-
-    TODO: make this more efficient
     """
     return concat(intersperse(xs, xss))
 
@@ -163,10 +164,8 @@ def subsequences(xs):
 
     The subsequences function returns the list of all subsequences of the
     argument.
-
-    subsequences(L["a","b","c"]) == L["","a","b","ab","c","ac","bc","abc"]
     """
-    pass
+    raise NotImplementedError()
 
 
 @sig(H/ ["a"] >> [["a"]] )
@@ -176,8 +175,6 @@ def permutations(xs):
 
     The permutations function returns the list of all permutations of the
     argument.
-
-    permutations(L["a","b","c"]) == L["abc","bac","cba","bca","cab","acb"]
     """
     return L[itertools.permutations(xs)]
 
@@ -185,162 +182,86 @@ def permutations(xs):
 #=============================================================================#
 # Reducing lists (folds)
 
-
-@sig(H/ (H/ "a" >> "b" >> "a") >> "a" >> ["b"] >> "a")
-def foldl(f, b, xs):
-    """
-    foldl :: (a -> b -> a) -> a -> [b] -> a
-    """
-    pass
-
-
-@sig(H/ (H/ "a" >> "b" >> "a") >> "a" >> ["b"] >> "a")
-def foldl_(f, b, xs):
-    """
-    foldl' :: (a -> b -> a) -> a -> [b] -> a
-    """
-    pass
-
-
-@sig(H/ (H/ "a" >> "a" >> "a") >> ["a"] >> "a")
-def foldl1(f, b, xs):
-    pass
-
-
-@sig(H/ (H/ "a" >> "a" >> "a") >> ["a"] >> "a")
-def foldl1_(f, b, xs):
-    """
-    foldl1' :: (a -> a -> a) -> [a] -> a
-    """
-    pass
-
-
-@sig(H/ (H/ "a" >> "b" >> "b") >> "b" >> ["a"] >> "b")
-def foldr(f, b, xs):
-    """
-    foldr :: (a -> b -> b) -> b -> [a] -> b
-    """
-    pass
-
-
-@sig(H/ (H/ "a" >> "a" >> "a") >> ["a"] >> "a")
-def foldr1(f, b, xs):
-    """
-    foldr1 :: (a -> a -> a) -> [a] -> a
-    """
-    pass
+from Foldable import foldl
+from Foldable import foldl_
+from Foldable import foldl1_
+from Foldable import foldr
+from Foldable import foldr1
 
 
 #=============================================================================#
 ## Special folds
 
-
-@sig(H/ [["a"]] >> ["a"] )
-def concat(xss):
-    """
-    Concatenate a list of lists.
-    """
-    return L[(x for xs in xss for x in xs)]
-
-
-@sig(H/ (H/ "a" >> ["b"]) >> ["a"] >> ["b"])
-def concatMap(f, xs):
-    """
-    concatMap :: (a -> [b]) -> [a] -> [b]
-    """
-    return bind(xs, f)
-
-
-@sig(H/ [bool] >> bool)
-def and_(xs):
-    """
-    and :: [Bool] -> Bool
-    """
-    return all(xs)
-
-
-@sig(H/ [bool] >> bool)
-def or_(xs):
-    """
-    or :: [Bool] -> Bool
-    """
-    return any(xs)
-
-
-@sig(H/ (H/ "a" >> bool) >> ["a"] >> bool)
-def any_(xs):
-    """
-    any :: (a -> Bool) -> [a] -> Bool
-    """
-    return any((p(x) for x in xs))
-
-
-@sig(H/ (H/ "a" >> bool) >> ["a"] >> bool)
-def all_(p, xs):
-    """
-    all :: (a -> Bool) -> [a] -> Bool
-    """
-    return all((p(x) for x in xs))
-
-
-@sig(H[(Num, "a")]/ ["a"] >> "a")
-def sum_(xs):
-    return functools.reduce(operator.add, xs)
-
-
-@sig(H[(Num, "a")]/ ["a"] >> "a")
-def product(xs):
-    return functools.reduce(operator.mul, xs)
-
-
-@sig(H[(Ord, "a")]/ ["a"] >> "a")
-def maximum(xs):
-    return max(xs)
-
-
-@sig(H[(Ord, "a")]/ ["a"] >> "a")
-def minimum(xs):
-    return min(xs)
+from Foldable import concat
+from Foldable import concatMap
+from Foldable import and_
+from Foldable import or_
+from Foldable import any_
+from Foldable import all_
+from Foldable import sum_
+from Foldable import product
+from Foldable import maximum
+#from Foldable import minumum
 
 
 #=============================================================================#
 # Building lists
 ## Scans
 
-
+@sig(H/ (H/ "b" >> "a" >> "b") >> "b" >> ["a"] >> ["b"])
 def scanl(f, z, xs):
-    pass
+    """
+    scanl :: (b -> a -> b) -> b -> [a] -> [b]
+
+    scanl is similar to foldl, but returns a list of successive reduced values
+    from the left
+    """
+    raise NotImplementedError()
 
 
-def scanl_(f, z, xs):
-    pass
-
-
+@sig(H/ (H/ "a" >> "a" >> "a") >> ["a"] >> ["a"])
 def scanl1(f, xs):
-    pass
+    """
+    scanl1 :: (a -> a -> a) -> [a] -> [a]
+
+    scanl1 is a variant of scanl that has no starting value argument
+    """
+    raise NotImplementedError()
 
 
+@sig(H/ (H/ "a" >> "a" >> "b") >> "b" >> ["a"] >> ["b"])
 def scanr(f, z, xs):
-    pass
+    """
+    scanr :: (a -> b -> b) -> b -> [a] -> [b]
 
+    scanr is the right-to-left dual of scanl.
+    """
+    raise NotImplementedError()
+
+
+@sig(H/ (H/ "a" >> "a" >> "a") >> ["a"] >> ["a"])
 def scanr1(f, xs):
-    pass
+    """
+    scanr1 :: (a -> a -> a) -> [a] -> [a]
+
+    scanr1 is a variant of scanr that has no starting value argument.
+    """
+    raise NotImplementedError()
 
 
 #=============================================================================#
 ## Accumulating maps
 
-
 def mapAccumL(f, a, tb):
-    pass
+    raise NotImplementedError()
+
 
 def mapAccumR(f, a, tb):
-    pass
+    raise NotImplementedError()
 
 
 #=============================================================================#
 ## Infinite lists
-
 
 @sig(H/ (H/ "a" >> "a") >> "a" >> ["a"])
 def iterate(f, x):
@@ -401,68 +322,194 @@ def cycle(x):
 #=============================================================================#
 ## Unfolding
 
-
+@sig(H/ (H/ "b" >> t(Maybe, ("a", "b"))) >> "b" >> ["a"])
 def unfoldr(f, x):
-    pass
+    """
+    unfoldr :: (b -> Maybe (a, b)) -> b -> [a]
+
+    The unfoldr function is a `dual' to foldr: while foldr reduces a list to a
+    summary value, unfoldr builds a list from a seed value. The function takes
+    the element and returns Nothing if it is done producing the list or returns
+    Just (a,b), in which case, a is a prepended to the list and b is used as
+    the next element in a recursive call
+    """
+    raise NotImplementedError()
 
 
 #=============================================================================#
 # Sublists
 ## Extracting sublists
 
-
+@sig(H/ int >> ["a"] >> ["a"])
 def take(n, xs):
-    pass
+    """
+    take :: Int -> [a] -> [a]
 
+    take(n), applied to a list xs, returns the prefix of xs of length n, or xs
+    itself if n > length xs
+    """
+    return xs[:n]
+
+
+@sig(H/ int >> ["a"] >> ["a"])
 def drop(n, xs):
-    pass
+    """
+    drop :: Int -> [a] -> [a]
 
+    drop(n, xs) returns the suffix of xs after the first n elements, or [] if n >
+    length xs
+    """
+    return xs[n:]
+
+
+@sig(H/ int >> ["a"] >> (["a"], ["a"]))
 def splitAt(n, xs):
-    pass
+    """
+    splitAt :: Int -> [a] -> ([a], [a])
 
+    splitAt(n, xs) returns a tuple where first element is xs prefix of length n
+    and second element is the remainder of the list
+    """
+    return (xs[:n], xs[n:])
+
+
+@sig(H/ (H/ "a" >> bool) >> ["a"] >> ["a"])
 def takeWhile(p, xs):
-    pass
+    """
+    takeWhile :: (a -> Bool) -> [a] -> [a]
 
+    takeWhile, applied to a predicate p and a list xs, returns the longest
+    prefix (possibly empty) of xs of elements that satisfy p
+    """
+    raise NotImplementedError()
+
+
+@sig(H/ (H/ "a" >> bool) >> ["a"] >> ["a"])
 def dropWhile(p, xs):
-    pass
+    """
+    dropWhile :: (a -> Bool) -> [a] -> [a]
 
+    dropWhile(p, xs) returns the suffix remaining after takeWhile(p, xs)
+    """
+    raise NotImplementedError()
+
+
+@sig(H/ (H/ "a" >> bool) >> ["a"] >> ["a"])
 def dropWhileEnd(p, xs):
-    pass
+    """
+    dropWhileEnd :: (a -> Bool) -> [a] -> [a]
 
+    The dropWhileEnd function drops the largest suffix of a list in which the
+    given predicate holds for all elements.
+    """
+    raise NotImplementedError()
+
+
+@sig(H/ (H/ "a" >> bool)  >> ["a"] >> (["a"], ["a"]))
 def span(p, xs):
-    pass
+    """
+    span :: (a -> Bool) -> [a] -> ([a], [a])
 
+    span, applied to a predicate p and a list xs, returns a tuple where first
+    element is longest prefix (possibly empty) of xs of elements that satisfy p
+    and second element is the remainder of the list
+    """
+    raise NotImplementedError()
+
+
+@sig(H/ (H/ "a" >> bool)  >> ["a"] >> (["a"], ["a"]))
 def break_(p, xs):
-    pass
+    """
+    break :: (a -> Bool) -> [a] -> ([a], [a])
 
+    break, applied to a predicate p and a list xs, returns a tuple where first
+    element is longest prefix (possibly empty) of xs of elements that do not
+    satisfy p and second element is the remainder of the list
+    """
+    raise NotImplementedError()
+
+
+@sig(H[(Eq, "a")]/ ["a"] >> ["a"] >> t(Maybe, ["a"]))
 def stripPrefix(xs, ys):
-    pass
+    """
+    stripPrefix :: Eq a => [a] -> [a] -> Maybe [a]
 
+    The stripPrefix function drops the given prefix from a list. It returns
+    Nothing if the list did not start with the prefix given, or Just the list
+    after the prefix, if it does.
+    """
+    raise NotImplementedError()
+
+
+@sig(H[(Eq, "a")]/ ["a"] >> [["a"]])
 def group(xs):
-    pass
+    """
+    group :: Eq a => [a] -> [[a]]
 
+    The group function takes a list and returns a list of lists such that the
+    concatenation of the result is equal to the argument. Moreover, each
+    sublist in the result contains only equal elements.
+    It is a special case of groupBy, which allows the programmer to supply
+    their own equality test.
+    """
+    raise NotImplementedError()
+
+
+@sig(H/ ["a"] >> [["a"]])
 def inits(xs):
-    pass
+    """
+    inits :: [a] -> [[a]]
 
+    The inits function returns all initial segments of the argument, shortest
+    first.
+    """
+    raise NotImplementedError()
+
+
+@sig(H/ ["a"] >> [["a"]])
 def tails(xs):
-    pass
+    """
+    tails :: [a] -> [[a]]
 
+    The tails function returns all final segments of the argument, longest
+    first.
+    """
+    raise NotImplementedError()
 
 
 #=============================================================================#
 ## Predicates
 
 
+@sig(H[(Eq, "a")]/ ["a"] >> ["a"] >> bool)
 def isPrefixOf(xs, ys):
+    """
+    isPrefixOf :: Eq a => [a] -> [a] -> Bool
+
+    The isPrefixOf function takes two lists and returns True iff the first list
+    is a prefix of the second.
+    """
     return xs == ys[:len(xs)]
 
 
+@sig(H[(Eq, "a")]/ ["a"] >> ["a"] >> bool)
 def isSuffixOf(xs, ys):
+    """
+    isSuffixOf :: Eq a => [a] -> [a] -> Bool
+
+    The isSuffixOf function takes two lists and returns True iff the first list
+    is a suffix of the second. The second list must be finite.
+    """
     return xs == ys[-len(xs):]
 
 
-def isSubsequenceOf(xs, ys):
+@sig(H[(Eq, "a")]/ ["a"] >> ["a"] >> bool)
+def isInfixOf(xs, ys):
     """
+    isInfixOf :: Eq a => [a] -> [a] -> Bool
+
+    The isInfixOf function takes two lists and returns True iff the first list
+    is contained, wholly and intact, anywhere within the second.
     """
     for i in xrange(len(ys)-len(xs)+1):
         for j in xrange(len(xs)):
@@ -472,6 +519,18 @@ def isSubsequenceOf(xs, ys):
             return True
     return False
 
+
+@sig(H[(Eq, "a")]/ ["a"] >> ["a"] >> bool)
+def isSubsequenceOf(xs, ys):
+    """
+    isSubsequenceOf :: Eq a => [a] -> [a] -> Bool
+
+    The isSubsequenceOf function takes two lists and returns True if the first
+    list is a subsequence of the second list.
+
+    isSubsequenceOf(x, y) is equivalent to elem(x, subsequences(y))
+    """
+    raise NotImplementedError()
 
 #=============================================================================#
 # Searching lists
@@ -501,13 +560,14 @@ def notElem(x, xs):
 
 
 @sig(H[(Eq, "a")]/ "a" >> [("a", "b")] >> t(Maybe, "b"))
-def lookup(a, assoc_list):
+def lookup(key, assocs):
     """
     lookup :: Eq a => a -> [(a, b)] -> Maybe b
 
+    lookup(key, assocs) looks up a key in an association list.
     """
-    for key, value in assoc_list:
-        if key == a:
+    for k, value in assocs:
+        if k == key:
             return Just(value)
     return Nothing
 
@@ -531,6 +591,17 @@ def find(p, xs):
     return Nothing
 
 
+@sig(H/ (H/ "a" >> bool) >> ["a"] >> ["a"])
+def filter_(f, xs):
+    """
+    filter :: (a -> Bool) -> [a] -> [a]
+
+    filter, applied to a predicate and a list, returns the list of those
+    elements that satisfy the predicate
+    """
+    return L[itertools.ifilter(f, xs)]
+
+
 @sig(H/ (H/ "a" >> bool) >> ["a"] >> (["a"], ["a"]))
 def partition(f, xs):
     """
@@ -539,73 +610,163 @@ def partition(f, xs):
     The partition function takes a predicate a list and returns the pair of
     lists of elements which do and do not satisfy the predicate.
     """
-    return L[(x for x in xs if f(x))], L[(y for y in xs if not f(y))]
+    yes, no = [], []
+    for item in xs:
+        if f(item):
+            yes.append(item)
+        else:
+            no.append(item)
+    return L[yes], L[no]
 
 
 #=============================================================================#
 # Indexing lists
 
 
+@sig(H[(Eq, "a")]/ "a" >> ["a"] >> t(Maybe, int))
 def elemIndex(x, xs):
-    pass
+    """
+    elemIndex :: Eq a => a -> [a] -> Maybe Int
+
+    The elemIndex function returns the index of the first element in the given
+    list which is equal (by ==) to the query element, or Nothing if there is no
+    such element.
+    """
+    for i, a in enumerate(xs):
+        if a == x:
+            return Just(i)
+    return Nothing
+
+
+@sig(H[(Eq, "a")]/ "a" >> ["a"] >> [int])
+def elemIndices(x, xs):
+    """
+    elemIndices :: Eq a => a -> [a] -> [Int]
+
+    The elemIndices function extends elemIndex, by returning the indices of all
+    elements equal to the query element, in ascending order.
+    """
+    return L[(i for i, a in enumerate(xs) if a == x)]
+
+
+@sig(H/ (H/ "a" >> bool) >> ["a"] >> t(Maybe, int))
+def findIndex(f, xs):
+    """
+    findIndex :: (a -> Bool) -> [a] -> Maybe Int
+
+    The findIndex function takes a predicate and a list and returns the index
+    of the first element in the list satisfying the predicate, or Nothing if
+    there is no such element.
+    """
+    for i, x in enumerate(xs):
+        if f(x):
+            return Just(i)
+    return Nothing
+
+
+@sig(H/ (H/ "a" >> bool) >> ["a"] >> [int])
+def findIndicies(f, xs):
+    """
+    findIndices :: (a -> Bool) -> [a] -> [Int]
+
+    The findIndices function extends findIndex, by returning the indices of all
+    elements satisfying the predicate, in ascending order.
+    """
+    return L[(i for i, x in enumerate(xs) if f(x))]
 
 
 #=============================================================================#
 # Zipping and unzipping lists
 
 def zip_(xs, ys):
-    pass
+    """
+    """
+    return L[zip(xs, ys)]
 
 def zip3(a, b, c):
-    pass
+    """
+    """
+    return L[zip(a, b, c)]
 
 def zip4(a, b, c, d):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 def zip5(a, b, c, d, e):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 def zip6(a, b, c, d, e, f):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 def zip7(a, b, c, d, e, f, g):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 def zipWith(fn, xs, ys):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 def zipWith3(fn, a, b, c):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 def zipWith4(fn, a, b, c, d):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 def zipWith5(fn, a, b, c, d, e):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 def zipWith6(fn, a, b, c, d, e, f):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 def zipWith7(fn, a, b, c, d, e, f):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 def unzip(xs):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 def unzip3(xs):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 def unzip4(xs):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 def unzip5(xs):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 def unzip6(xs):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 def unzip7(xs):
-    pass
+    """
+    """
+    raise NotImplementedError()
 
 
 #=============================================================================#
@@ -626,19 +787,19 @@ def nub(xs):
 
 
 def delete(a, xs):
-    pass
+    raise NotImplementedError()
 
 
 def diff(xs, ys):
-    pass
+    raise NotImplementedError()
 
 
 def union(xs, ys):
-    pass
+    raise NotImplementedError()
 
 
 def intersect(xs, ys):
-    pass
+    raise NotImplementedError()
 
 
 #=============================================================================#
@@ -647,12 +808,12 @@ def intersect(xs, ys):
 
 @sig(H[(Ord, "a")]/ ["a"] >> ["a"])
 def sort(xs):
-    pass
+    raise NotImplementedError()
 
 
 @sig(H[(Ord, "b")]/ (H/ "a" >> "b") >> ["a"] >> ["a"])
 def sortOn(f, xs):
-    pass
+    return L[sorted(xs, key=f)]
 
 
 @sig(H[(Ord, "a")]/ "a" >> ["a"] >> ["a"])
@@ -680,58 +841,175 @@ def insert(x, xs):
 
 
 def nubBy(f, xs):
-    pass
+    """
+    nubBy :: (a -> a -> Bool) -> [a] -> [a]
+
+    The nubBy function behaves just like nub, except it uses a user-supplied
+    equality predicate instead of the overloaded == function.
+    """
+    raise NotImplementedError()
 
 
 def deleteBy(f, xs):
-    pass
+    """
+    deleteBy :: (a -> a -> Bool) -> a -> [a] -> [a]
+
+    The deleteBy function behaves like delete, but takes a user-supplied
+    equality predicate.
+    """
+    raise NotImplementedError()
 
 
 def deleteFirstBy(f, xs, ys):
-    pass
+    """
+    deleteFirstsBy :: (a -> a -> Bool) -> [a] -> [a] -> [a]
+
+    The deleteFirstsBy function takes a predicate and two lists and returns the
+    first list with the first occurrence of each element of the second list
+    removed.
+    """
+    raise NotImplementedError()
 
 
 def unionBy(f, xs, ys):
-    pass
+    """
+    unionBy :: (a -> a -> Bool) -> [a] -> [a] -> [a]
+
+    The unionBy function is the non-overloaded version of union.
+    """
+    raise NotImplementedError()
 
 
 def intersectBy(f, xs, ys):
-    pass
+    """
+    intersectBy :: (a -> a -> Bool) -> [a] -> [a] -> [a]
+
+    The intersectBy function is the non-overloaded version of intersect.
+    """
+    raise NotImplementedError()
 
 
 def groupBy(f, xs):
-    pass
+    """
+    groupBy :: (a -> a -> Bool) -> [a] -> [[a]]
+
+    The groupBy function is the non-overloaded version of group.
+    """
+    raise NotImplementedError()
 
 
 #=============================================================================#
 ### User-supplied comparison (replacing an Ord context)
 
+@sig(H/ (H/ "a" >> "a" >> Ordering) >> ["a"] >> ["a"])
 def sortBy(f, xs):
-    pass
+    """
+    sortBy :: (a -> a -> Ordering) -> [a] -> [a]
+
+    The sortBy function is the non-overloaded version of sort.
+    """
+    raise NotImplementedError()
 
 
+@sig(H/ (H/ "a" >> "a" >> Ordering) >> "a" >> ["a"] >> ["a"])
 def insertBy(f, xs):
-    pass
+    """
+    insertBy :: (a -> a -> Ordering) -> a -> [a] -> [a]
+
+    The non-overloaded version of insert.
+    """
+    raise NotImplementedError()
 
 
+@sig(H/ (H/ "a" >> "a" >> Ordering) >> ["a"] >> "a")
 def maximumBy(f, xs):
-    pass
+    """
+    maximumBy :: (a -> a -> Ordering) -> [a] -> a
+
+    The maximumBy function takes a comparison function and a list and returns
+    the greatest element of the list by the comparison function. The list must
+    be finite and non-empty.
+    """
+    return max(xs, key=f)
 
 
+@sig(H/ (H/ "a" >> "a" >> Ordering) >> ["a"] >> "a")
 def minimumBy(f, xs):
-    pass
+    """
+    minimumBy :: (a -> a -> Ordering) -> [a] -> a
+
+    The minimumBy function takes a comparison function and a list and returns
+    the least element of the list by the comparison function. The list must be
+    finite and non-empty.
+    """
+    return min(xs, key=f)
 
 
+#=============================================================================#
 ## The "generic" operators
 
+@sig(H[(Num, "i")]/ ["a"] >> "i")
 def genericLength(xs):
-    pass
+    """
+    genericLength :: Num i => [a] -> i
 
+    The genericLength function is an overloaded version of length. In
+    particular, instead of returning an Int, it returns any type which is an
+    instance of Num. It is, however, less efficient than length.
+    """
+    raise NotImplementedError()
+
+
+@sig(H[Integral, "i"]/ "i" >> ["a"] >> ["a"])
 def genericTake(n, xs):
-    pass
+    """
+    genericTake :: Integral i => i -> [a] -> [a]
 
+    The genericTake function is an overloaded version of take, which accepts
+    any Integral value as the number of elements to take.
+    """
+    raise NotImplementedError()
+
+
+@sig(H[Integral, "i"]/ "i" >> ["a"] >> ["a"])
 def genericDrop(n, xs):
-    pass
+    """
+    genericDrop :: Integral i => i -> [a] -> [a]
 
+    The genericDrop function is an overloaded version of drop, which accepts
+    any Integral value as the number of elements to drop.
+    """
+    raise NotImplementedError()
+
+
+@sig(H[Integral, "i"]/ "i" >> ["a"] >> (["a"], ["a"]))
 def genericSplitAt(n, xs):
-    pass
+    """
+    genericSplitAt :: Integral i => i -> [a] -> ([a], [a])
+
+    The genericSplitAt function is an overloaded version of splitAt, which
+    accepts any Integral value as the position at which to split.
+    """
+    raise NotImplementedError()
+
+
+@sig(H[Integral, "i"]/ ["a"] >> "i" >> ["a"])
+def genericIndex(xs, i):
+    """
+    genericIndex :: Integral i => [a] -> i -> a
+
+    The genericIndex function is an overloaded version of !!, which accepts any
+    Integral value as the index.
+    """
+    raise NotImplementedError()
+
+
+@sig(H[Integral, "i"]/ "i" >> ["a"] >> ["a"])
+def genericReplicate(i, a):
+    """
+    genericReplicate :: Integral i => i -> a -> [a]
+
+    The genericReplicate function is an overloaded version of replicate, which
+    accepts any Integral value as the number of repetitions to make.
+    """
+    raise NotImplementedError()

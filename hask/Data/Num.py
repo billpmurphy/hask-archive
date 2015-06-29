@@ -1,9 +1,14 @@
+import math
+import fractions
+
 from ..lang import sig
 from ..lang import H
 from ..lang import instance
 from ..lang import build_instance
+from ..lang import Enum
 from ..lang import Show
-from ..lang import Eq
+from Eq import Eq
+from Ord import Ord
 
 
 class Num(Show, Eq):
@@ -95,4 +100,92 @@ instance(Num, complex).where(
     fromInteger = complex,
     negate = complex.__neg__,
     sub = complex.__sub__
+)
+
+
+class Fractional(Num):
+    @classmethod
+    def make_instance(typeclass, cls):
+        build_instance(Fractional, cls, {})
+        return
+
+instance(Fractional, float).where()
+
+
+class Floating(Fractional):
+    @classmethod
+    def make_instance(typeclass, cls):
+        build_instance(Floating, cls, {})
+        return
+
+instance(Floating, float).where()
+
+
+class Real(Num, Ord):
+    @classmethod
+    def make_instance(typeclass, cls):
+        build_instance(Real, cls, {})
+        return
+
+
+instance(Real, int).where()
+instance(Real, long).where()
+instance(Real, float).where()
+
+
+class Integral(Real, Enum):
+    @classmethod
+    def make_instance(typeclass, cls, quotRem, toInteger, quot=None, rem=None,
+            div=None, mod=None, divMod=None):
+        attrs = {"quotRem":quotRem, "toInteger":toInteger, "quot":quot,
+                 "rem":rem, "div":div, "mod":mod, "divMod":divMod}
+        build_instance(Integral, cls, attrs)
+        return
+
+
+instance(Integral, int).where(
+    quotRem = lambda x, y: (x / y, x % y),
+    toInteger = int
+)
+
+instance(Integral, long).where(
+    quotRem = lambda x, y: (x / y, x % y),
+    toInteger = int
+)
+
+
+class RealFrac(Real, Fractional):
+    @classmethod
+    def make_instance(typeclass, cls):
+        build_instance(RealFrac, cls, {})
+        return
+
+
+instance(RealFrac, float).where()
+
+
+class RealFloat(Floating, RealFrac):
+    @classmethod
+    def make_instance(typeclass, cls, floatRadix, floatDigits, floatRange,
+            decodeFloat, encodeFloat, exponent, significant, scaleFloat, isNan,
+            isInfinite, isDenormalized, isNegativeZero, isIEEE, atan2):
+        build_instance(RealFloat, cls, {})
+        return
+
+
+instance(RealFloat, float).where(
+    floatRadix=None,
+    floatDigits=None,
+    floatRange=None,
+    decodeFloat=None,
+    encodeFloat=None,
+    exponent=None,
+    significant=None,
+    scaleFloat=None,
+    isNan=None,
+    isInfinite=lambda x: x == float('inf') or x == -float('inf'),
+    isDenormalized=None,
+    isNegativeZero=None,
+    isIEEE=None,
+    atan2=math.atan2
 )
