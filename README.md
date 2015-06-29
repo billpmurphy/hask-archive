@@ -94,7 +94,7 @@ L[1, ..., 20]
 L[1, 5, ..., 20]
 ```
 
-List comprehension are also evaluated lazily, so
+List comprehensions are also evaluated lazily:
 
 ```python
 >>> from hask.Data.List import take
@@ -185,6 +185,8 @@ Maybe str
 Either a (str, int)
 ```
 
+
+
 ### Typed functions
 
 There are two ways to create `TypedFunc` objects:
@@ -249,10 +251,10 @@ Second, `TypedFunc` objects can be partially applied:
 4
 ```
 
-`TypedFunc` objects also have two special infix operators, `*` and `%`. `*` is the
-compose operator (equivalent to `.` in Haskell), so `f * g` is equivalent to `f(g(x))`. `%`
-is just the apply operator, which applies a `TypedFunc` to one argument
-(equivalent to `$` in Haskell).
+`TypedFunc` objects also have two special infix operators, the `*` and `%`
+operators. `*` is the compose operator (equivalent to `(.)` in Haskell), so `f *
+g` is equivalent to `f(g(x))`. `%` is just the apply operator, which applies a
+`TypedFunc` to one argument (equivalent to `($)` in Haskell).
 
 ```python
 >>> f = (lambda x, y: x + " " + y) ** (H/ str >> str >> str)
@@ -275,6 +277,31 @@ As you would expect, data constructors are also `TypedFunc` instances:
 >>> Just * Just * Just * Just % 77
 Just(Just(Just(Just(77))))
 ```
+
+The type signature syntax is very simple, and consists of a few basic
+primitives:
+
+
+Some examples:
+
+```python
+# reverse order of arguments to a function
+@sig(H/ (H/ "a" >> "b" >> "c") >> "b" >> "a" >> "c")
+def flip(f, b, a):
+    return f(a, b)
+
+
+# map a Python (untyped) function over a Python (untyped) list
+@sig(H/ func >> list >> list)
+def my_map(fn, lst):
+    return [fn(x) for x in lst]
+
+
+@sig(H[(Eq, "a")]/ "a" >> "a" >> bool)
+def not_equals(x, y):
+    return not (x == y)
+```
+
 
 ### Pattern matching
 
@@ -310,6 +337,9 @@ up.
 ```
 
 ### Typeclasses and typeclass instances
+
+
+
 
 ```python
 def maybe_fmap(maybe_value, fn):
@@ -560,8 +590,8 @@ pretty well documented, so if you're not sure about some function or typeclass,
 use `help` liberally. Some highlights:
 
 ```python
->>> from Data.List import isSubsequenceOf
->>> isSubsequenceOf(L[2, 8], L[1, 4, 6, 2, 8, 3, 7])
+>>> from Data.List import isInfixOf
+>>> isInfixOf(L[2, 8], L[1, 4, 6, 2, 8, 3, 7])
 True
 
 

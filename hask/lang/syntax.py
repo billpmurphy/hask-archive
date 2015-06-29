@@ -21,19 +21,20 @@ from hindley_milner import TypeVariable
 # Base class for syntactic constructs
 
 
-basic_attrs = set(("len", "getitem", "setitem", "delitem", "iter", "reversed",
-    "contains", "missing", "delattr", "call", "enter", "exit", "eq", "ne",
-    "gt", "lt", "ge", "le", "pos", "neg", "abs", "invert", "round", "floor",
-    "ceil", "trunc", "add", "sub", "mul", "div", "truediv", "floordiv", "mod",
+__magic_methods__ = ["__%s__" % s for s in set((
+    "len", "getitem", "setitem", "delitem", "iter", "reversed", "contains",
+    "missing", "delattr", "call", "enter", "exit", "eq", "ne", "gt", "lt",
+    "ge", "le", "pos", "neg", "abs", "invert", "round", "floor", "ceil",
+    "trunc", "add", "sub", "mul", "div", "truediv", "floordiv", "mod",
     "divmod", "pow", "lshift", "rshift", "or", "and", "xor", "radd", "rsub",
     "rmul", "rdiv", "rtruediv", "rfloordiv", "rmod", "rdivmod", "rpow",
     "rlshift", "rrshift", "ror", "rand", "rxor", "isub", "imul", "ifloordiv",
     "idiv", "imod", "idivmod", "irpow", "ilshift", "irshift", "ior", "iand",
-    "ixor", "nonzero"))
+    "ixor", "nonzero"))]
 
 
 def wipe_attrs(cls, fn):
-    for attr in ("__%s__" % b for b in basic_attrs):
+    for attr in __magic_methods__:
         setattr(cls, attr, fn)
     return
 
@@ -126,6 +127,7 @@ class __signature__(Syntax):
 
 
 H = __constraints__()
+func = type(lambda x: x)
 
 
 class sig(Syntax):
@@ -245,6 +247,10 @@ class MatchStack(object):
         return cls.get_frame().cache.get(name, undefined)
 
 
+class PatternSyntax(Syntax, PatternMatchBind):
+    pass
+
+
 class __var_bind__(Syntax):
     """
     Bind a local variable while pattern matching.
@@ -319,7 +325,6 @@ class __matched_case__(Syntax):
         return self
 
     def __invert__(self):
-        #print "popping", MatchStack.get_frame().value
         MatchStack.pop()
         return self.value
 
@@ -330,7 +335,6 @@ class caseof(__unmatched_case__):
     def __init__(self, value):
         if isinstance(value, Undefined):
             return
-        #print "pushing", value
         MatchStack.push(value)
         return
 
@@ -601,6 +605,10 @@ __ = __section__("Error in section")
 #=============================================================================#
 # Guards! Guards!
 
+# Unlike pattern matching, this approach is completely stateless and
+# thread-safe. However, it has the pretty undesireable property that it cannot
+# be used with recursive functions.
+
 
 class NoGuardMatchException(Exception):
     pass
@@ -799,7 +807,8 @@ def _t(obj):
     >>> _t(Just("hello world"))
     Maybe str
     """
-    return str(typeof(obj))
+    print(str(typeof(obj)))
+    return
 
 
 def _i(obj):

@@ -84,7 +84,14 @@ class TypeMeta(type):
 
 
 class Typeclass(object):
-    """Base class for typeclasses"""
+    """
+    Base class for Hask typeclasses.
+
+    All subclasses should implement make_instance, which controls what happens
+    when a new instance is added. This method should set up whatever
+    attributes/functions belong to the typeclass, and then call build_instance.
+    See typeclasses.py for examples.
+    """
     __metaclass__ = TypeMeta
 
     @classmethod
@@ -97,13 +104,27 @@ class Typeclass(object):
 
 
 def build_instance(typeclass, cls, attrs):
+    """
+    Add a new instance to a typeclass, i.e. modify the typeclass's instance
+    dictionary to include the new instance.
+
+    Args:
+        typeclass: The typeclass for which we are adding an instance
+        type_: The class or type to be added
+        attrs: A dict of {str:function}, mapping function names to functions
+               for the typeclass instance
+
+    Returns: None
+
+    Raises:
+        TypeError, if type_ is not a member of all superclasses of typeclass
+    """
     # 1) check dependencies
     for dep in typeclass.__dependencies__:
         if id(cls) not in dep.__instances__:
             raise TypeError("Missing dependency: %s" % dep.__name__)
 
     # 2) add type and its instance method to typeclass's instance dictionary
-    #name = cls.__name__ if hasattr(cls, __name__) else str(cls)
     __methods__ = namedtuple("__%s__" % str(id(cls)), attrs.keys())(**attrs)
     typeclass.__instances__[id(cls)] = __methods__
     return
@@ -145,11 +166,10 @@ class Hask(object):
 
 class Undefined(Hask):
     """
-    A class with no concrete type definition. Used to create `undefined` and to
-    enable psuedo-laziness in pattern matching.
+    A class with no concrete type definition (so its type can unify with any
+    other type). Used to create `undefined` and to enable psuedo-laziness in
+    pattern matching.
     """
-    make_undefined = lambda self, *a: self.__class__.__init__(self)
-
     def __type__(self):
         return TypeVariable()
 
@@ -162,7 +182,8 @@ def typeof(obj):
         obj: the object to inspect
 
     Returns:
-        An obj
+        An object representing the type in the internal type system language
+        (i.e., a TypeOperator or TypeVariable)
     """
     if isinstance(obj, Hask):
         return obj.__type__()
@@ -178,7 +199,9 @@ def typeof(obj):
 
 class TypeSignature(object):
     """
-    Internal representation of a type signature.
+    Internal representation of a type signature, consisting of a list of
+    function type arguments and a list of (typeclass, type_variable) typeclass
+    constraint pairs.
     """
     def __init__(self, args, constraints):
         self.args = args
@@ -188,7 +211,7 @@ class TypeSignature(object):
 class TypeSignatureHKT(object):
     """
     Internal representation of a higher-kinded type within a type signature,
-    consisting of the type constructor and its arguments.
+    consisting of the type constructor and its type parameter names.
     """
     def __init__(self, tcon, params):
         self.tcon = tcon
@@ -261,8 +284,8 @@ def make_fn_type(params):
 
 def build_sig(type_signature, var_dict=None):
     """
-    Parse a list of items (representing a type signature) and convert it to the
-    internal type system language.
+    Parse a TypeSignature object and convert it to the internal type system
+    language.
     """
     args = type_signature.args
     var_dict = {} if var_dict is None else var_dict
@@ -439,9 +462,14 @@ def build_ADT(typename, typeargs, data_constructors, to_derive):
 # Pattern matching
 
 
-class PatternMatchBind(namedtuple("__pattern__", ["name"])):
+class PatternMatchBind(namedtuple("pattern", ["name"])):
     """Represents a local variable bound by pattern matching."""
     pass
+
+
+class PatternMatchListBind(namedtuple("listpattern", ["head", "tail"])):
+    pass
+
 
 
 def pattern_match(value, pattern, env=None):
@@ -450,7 +478,7 @@ def pattern_match(value, pattern, env=None):
 
     Args:
         value: the value to pattern-match on
-        pattern: a pattern, consisting of literals, and/or locally bound
+        pattern: a pattern, consisting of literals and/or locally bound
                  variables
         env: a dictionary of local variables bound while matching
 
@@ -476,6 +504,9 @@ def pattern_match(value, pattern, env=None):
 
         elif hasattr(value, "__iter__"):
             matches = []
+            if len(value) != len(pattern):
+                return False, env
+
             for v, p in zip(value, pattern):
                 match_status, newenv = pattern_match(v, p, env)
                 env.update(newenv)

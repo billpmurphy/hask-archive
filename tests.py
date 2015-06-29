@@ -870,6 +870,10 @@ class TestSyntax(unittest.TestCase):
                     | m(LT) >> False
                     | m(EQ) >> False
                     | m(GT) >> True))
+        self.assertEqual(2,
+                ~(caseof((1, 2, 3))
+                    | m((1, 2))    >> 1
+                    | m((1, 2, 3)) >> 2))
 
         with self.assertRaises(IncompletePatternError):
             ~(caseof(1) | m(2) >> 2)

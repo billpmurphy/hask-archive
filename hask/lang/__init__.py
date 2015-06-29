@@ -25,6 +25,7 @@ from syntax import deriving
 from syntax import H
 from syntax import sig
 from syntax import t
+from syntax import func
 from syntax import typify
 from syntax import NoGuardMatchException
 from syntax import guard
