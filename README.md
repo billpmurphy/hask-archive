@@ -77,7 +77,7 @@ can import all the language features and everything from the Prelude with `from
 hask import *`
 
 
-#### The List type and list comprehensions
+### The List type and list comprehensions
 
 As in Haskell, there are four basic type of list comprehensions:
 
@@ -94,6 +94,16 @@ L[1, ..., 20]
 # list from 1 to 20 (inclusive), counting by fours
 L[1, 5, ..., 20]
 ```
+
+List comprehension are also evaluated lazily, so
+
+```python
+>>> from hask.Data.List import take
+
+>>> take(5, L[1, ...]
+L[1, 2, 3, 4, 5]
+```
+
 
 ### Abstract Data Types
 
@@ -390,6 +400,11 @@ just `TypedFunc` objects, so they are automagically curried and typechecked.
 
 >>> Just(20) * (__+10) * (90/__)
 Just(3)
+
+
+>>> from hask.Data.List import takeWhile
+>>> takeWhile((__<5), L[1, ...])
+L[1, 2, 3, 4]
 ```
 
 Double sections are also supported:

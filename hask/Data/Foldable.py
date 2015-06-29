@@ -151,18 +151,6 @@ def product(xs):
 
 
 @sig(H[(Ord, "a")]/ ["a"] >> "a")
-def maximum(xs):
-    """
-    maximum :: Ord a => [a] -> a
-
-    maximum returns the maximum value from a list, which must be non-empty,
-    finite, and of an ordered type. It is a special case of maximumBy, which
-    allows the programmer to supply their own comparison function.
-    """
-    return max(xs)
-
-
-@sig(H[(Ord, "a")]/ ["a"] >> "a")
 def minimum(xs):
     """
     minimum :: Ord a => [a] -> a
@@ -174,5 +162,15 @@ def minimum(xs):
     return min(xs)
 
 
+@sig(H[(Ord, "a")]/ ["a"] >> "a")
+def maximum(xs):
+    """
+    maximum :: Ord a => [a] -> a
 
-minimum = 1
+    maximum returns the maximum value from a list, which must be non-empty,
+    finite, and of an ordered type. It is a special case of maximumBy, which
+    allows the programmer to supply their own comparison function.
+    """
+    return max(xs)
+
+

@@ -201,7 +201,7 @@ from Foldable import all_
 from Foldable import sum_
 from Foldable import product
 from Foldable import maximum
-#from Foldable import minumum
+from Foldable import minimum
 
 
 #=============================================================================#

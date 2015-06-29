@@ -73,7 +73,7 @@ from Data.Functor import fmap
 
 from Control.Applicative import Applicative
 from Control.Monad import Monad
-from Data.List import Foldable
+from Data.Foldable import Foldable
 from Data.Traversable import Traversable
 
 
