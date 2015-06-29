@@ -539,7 +539,12 @@ class TestADTInternals_Builtin(unittest.TestCase):
     def test_adt(self):
         self.assertTrue(isinstance(self.M1(1), self.Type_Const))
         self.assertTrue(isinstance(self.M2(1, "abc"), self.Type_Const))
+        self.assertTrue(isinstance(self.M2(1)("abc"), self.Type_Const))
         self.assertTrue(isinstance(self.M3(1, 2, 3), self.Type_Const))
+        self.assertTrue(isinstance(self.M3(1)(2, 3), self.Type_Const))
+
+        with self.assertRaises(te): self.M1(1.0)
+        with self.assertRaises(te): self.M3(1, 2, "3")
 
     def test_derive_eq_data(self):
         with self.assertRaises(te): self.M1(1) == self.M1(1)
@@ -938,6 +943,7 @@ class TestMaybe(unittest.TestCase):
 
         # show
         self.assertEqual("Just(3)", str(Just(3)))
+        self.assertEqual("Just(Just(3))", str(Just(Just(3))))
         self.assertEqual("Nothing", str(Nothing))
 
         # eq

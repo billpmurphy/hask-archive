@@ -1,5 +1,4 @@
 Remaining TODOs:
-* Make sure typeclass functions and data constructors are typechecked
 * Change type inference ending so it understands polymorphic HKTs
 * Rewrite List type to work the way it should
 * Write rest of Data.List and Prelude, and document everything undocumented
@@ -270,6 +269,12 @@ The compose operation is also typed-checked, which makes it appealing to
 write programs in the Haskell style of chaining together lots of functions with
 composition and relying on the type system to catch programming errors.
 
+As you would expect, data constructors are also `TypedFunc` instances:
+
+```python
+>>> Just * Just * Just * Just % 77
+Just(Just(Just(Just(77))))
+```
 
 ### Pattern matching
 

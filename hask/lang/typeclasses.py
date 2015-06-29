@@ -40,7 +40,10 @@ class Show(Typeclass):
             if len(self.__class__._fields) == 0:
                 return self.__class__.__name__
             nt_tup = nt_to_tuple(self)
-            tuple_str = "(%s)" % nt_tup[0] if len(nt_tup) == 1 else str(nt_tup)
+            if len(nt_tup) == 1:
+                tuple_str = "(%s)" % str(nt_tup[0])
+            else:
+                tuple_str = str(nt_tup)
             return "{0}{1}".format(self.__class__.__name__, tuple_str)
         Show.make_instance(cls, show=show)
         return

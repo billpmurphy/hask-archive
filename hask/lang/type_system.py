@@ -356,6 +356,9 @@ def make_type_const(name, typeargs):
 
     cls.__type__ = lambda self: \
         TypeOperator(cls, [TypeVariable() for i in cls.__params__])
+
+    # Unless typeclasses are derived, ADTs do not support any of these
+    # attributes
     cls.__iter__ = lambda self: raise_fn(TypeError)
     cls.__contains__ = lambda self, other: raise_fn(TypeError)
     cls.__add__ = lambda self, other: raise_fn(TypeError)
@@ -407,6 +410,9 @@ def make_data_const(name, fields, type_constructor, slot_num):
 
 def build_ADT(typename, typeargs, data_constructors, to_derive):
     """
+    Returns:
+        The type constructor, followed by each of the data constructors (in the
+        order they were defined)
     """
     # 1) Create the new type constructor and data constructors
     newtype = make_type_const(typename, typeargs)
@@ -417,7 +423,15 @@ def build_ADT(typename, typeargs, data_constructors, to_derive):
     for tclass in to_derive:
         tclass.derive_instance(newtype)
 
-    # TODO: make sure __init__ or __new__ is typechecked
+    # 3) Wrap data constructors in TypedFunc instances
+    for i, dc_spec in enumerate(data_constructors):
+        if len(dc_spec[1]) == 0:
+            continue
+
+        return_type = TypeSignatureHKT(newtype, typeargs)
+        sig = TypeSignature(list(dc_spec[1]) + [return_type], [])
+        sig_args = build_sig(sig, {})
+        dcons[i] = TypedFunc(dcons[i], sig_args, make_fn_type(sig_args))
     return tuple([newtype,] + dcons)
 
 
@@ -472,6 +486,3 @@ def pattern_match(value, pattern, env=None):
             return True, env
 
     return False, env
-
-
-
