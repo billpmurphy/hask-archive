@@ -599,7 +599,7 @@ class TestADTInternals_Builtin(unittest.TestCase):
             Bounded.derive_instance(self.Type_Const)
 
 
-class TestADT(unittest.TestCase):
+class TestADTSyntax(unittest.TestCase):
 
     def test_data(self):
         # these are not syntactically valid
@@ -924,24 +924,31 @@ class TestSyntax(unittest.TestCase):
                     | m(Nothing)   >> 11))
 
         # cons matches
-        self.assertEqual(True,
+        self.assertEqual([3],
                 ~(caseof([1, 2, 3])
-                    | m(1 ^ (2 ^ m.x)) >> True
+                    | m(1 ^ (2 ^ m.x)) >> p.x
                     | m(m.x)           >> False))
-        self.assertEqual(True,
-                ~(caseof(L[1, 2, 3])
-                    | m(1 ^ (2 ^ m.x)) >> True
-                    | m(m.x)           >> False))
-
         self.assertEqual([3, 2, 1],
                 ~(caseof([3, 2, 1])
                     | m(m.a ^ (2 ^ m.c)) >> [p.a, 2, p.c[0]]
-                    | m(m.x)           >> False))
+                    | m(m.x)             >> False))
+        self.assertEqual([3, 2, [1, 0]],
+                ~(caseof([3, 2, 1, 0])
+                    | m(m.a ^ (m.b ^ m.c)) >> [p.a, p.b, p.c]
+                    | m(m.x)               >> False))
+        self.assertEqual(L[3, 2, L[1, 0]],
+                ~(caseof(L[3, 2, 1, 0])
+                    | m(m.a ^ (m.b ^ m.c)) >> L[p.a, p.b, p.c]
+                    | m(m.x)               >> False))
 
         with self.assertRaises(se):
             ~(caseof((1, 2))
                 | m((m.a, m.a)) >> p.a
                 | m(1)          >> 1)
+        with self.assertRaises(se):
+            ~(caseof([1, 2, 3, 4])
+                | m(m.a ^ m.b ^ m.c) >> True
+                | m(m.x)             >> False)
 
 
 class TestMaybe(unittest.TestCase):
@@ -993,11 +1000,6 @@ class TestMaybe(unittest.TestCase):
         # monad (add more)
         self.assertEqual(Just("1"), Just(1) >> (lambda x: Just(str(x))))
         self.assertEqual(Just(10), Just(1) >> (lambda x: Just(x * 10)))
-        #self.assertEqual(Just(10), Just(1) >> F(lambda x: Just(x * 10)))
-        #self.assertEqual(Just(1000), Just(1) >>
-        #        (lambda x: Just(x * 10)) >>
-        #        (lambda x: Just(x * 10)) >>
-        #        (lambda x: Just(x * 10)))
 
     def test_functions(self):
         from hask.Data.Maybe import maybe, isJust, isNothing, fromJust
@@ -1010,7 +1012,6 @@ class TestMaybe(unittest.TestCase):
         self.assertFalse(isNothing(Just(1)))
         self.assertFalse(isNothing(Just(Nothing)))
         self.assertTrue(isNothing(Nothing))
-
         self.assertEqual(fromJust(Just("bird")), "bird")
         self.assertEqual(fromJust(Just(Nothing)), Nothing)
 
@@ -1066,6 +1067,19 @@ class TestList(unittest.TestCase):
         #self.assertTrue(has_instance(List, Foldable))
         #self.assertTrue(has_instance(List, Traversable))
 
+    def test_cons(self):
+        self.assertEqual(L[[1]], 1 ^ L[[]])
+        self.assertEqual(L[1, 2, 3], 1 ^ (2 ^ L[[3]]))
+        with self.assertRaises(te): "a" ^ L[2, 4]
+
+    def test_extend(self):
+        self.assertEqual(L[1, 2, 3, 4], L[1, 2] + L[3, 4])
+        with self.assertRaises(te): L[1.0, 2.0] + L[3, 4]
+
+    def test_show(self):
+        from hask.Prelude import show
+        #self.assertEqual("L[1, 2]", show(L[1, 2]))
+
     def test_indexing(self):
         # TODO: add more corner cases
 
@@ -1107,27 +1121,6 @@ class TestList(unittest.TestCase):
         #                  list(List(range(9)) * test_f))
         #self.assertEqual(map(test_f, range(9)),
         #                  list(List(range(9)) * test_f))
-
-    def test_hmap(self):
-        from hask.Data.List import map_ as hmap
-
-        test_f = (lambda x: (x + 100) / 2) ** (H/ int >> int)
-
-        # `map` == `hmap` for Lists
-        self.assertEqual(map(test_f, range(20)),
-                          list(hmap(test_f, L[range(20)])))
-        self.assertEqual(map(test_f, range(20)),
-                          map(test_f, L[range(20)]))
-
-
-    def test_hfilter(self):
-        from hask.Data.List import filter_ as hfilter
-
-        test_f = sig(H/ int >> bool)(lambda x: x % 2 == 0)
-        self.assertEqual(filter(test_f, range(20)),
-                          list(hfilter(test_f, L[range(20)])))
-        self.assertEqual(filter(test_f, range(20)),
-                          filter(test_f, L[range(20)]))
 
     def test_len(self):
         self.assertEqual(0, len(L[None]))
@@ -1195,6 +1188,8 @@ class TestPrelude(unittest.TestCase):
         from hask.Prelude import Either, Left, Right, either
         from hask.Prelude import Ordering, LT, EQ, GT, max_, min_, compare
         from hask.Prelude import Num, abs_, negate, subtract
+
+        # Data.List, Data.Foldable
         from hask.Prelude import map_, filter_, head, last, tail, init, null
         from hask.Prelude import length, reverse, foldl, foldl1, foldr
         from hask.Prelude import foldr1, and_, or_, any_, all_, sum_, product
@@ -1235,7 +1230,9 @@ class TestDataString(unittest.TestCase):
         self.assertEqual(unlines(L[["a", "b ", "", "c"]]), "a\nb \n\nc")
         self.assertEqual(unlines(L[[]]), "")
         self.assertEqual(words(" 1 2  4"), L[["", "1", "2", "", "4"]])
+        self.assertEqual(words(""), L[[]])
         self.assertEqual(unwords(L[["", "1", "2", "", "4"]]), " 1 2  4")
+        self.assertEqual(unwords(L[[]]), "")
 
 
 class TestDataTuple(unittest.TestCase):
@@ -1253,8 +1250,8 @@ class TestDataTuple(unittest.TestCase):
 
         self.assertEqual(2, snd((1, 2)))
         self.assertEqual(("c", "d"), snd((("a", "b"), ("c", "d"))))
-        self.assertEqual("b", snd(fst((("a", "b"), ("c", "d")))))
-        self.assertEqual("c", fst(snd((("a", "b"), ("c", "d")))))
+        self.assertEqual("b", snd * fst % (("a", "b"), ("c", "d")))
+        self.assertEqual("c", fst * snd % (("a", "b"), ("c", "d")))
 
         self.assertEqual(swap(swap((1, 2))), (1, 2))
         self.assertEqual(swap((1, "a")), ("a", 1))
@@ -1293,7 +1290,6 @@ class TestDataOrd(unittest.TestCase):
 class Test_README_Examples(unittest.TestCase):
     """Make sure the README examples are all working"""
     def test_match(self):
-
         @sig(H/ int >> int)
         def fib(x):
             return ~(caseof(x)
