@@ -916,7 +916,6 @@ class TestSyntax(unittest.TestCase):
                 ~(caseof(2)
                     | m((m.a, m.a)) >> p.a
                     | m(2)          >> 1))
-
         self.assertEqual(1,
                 ~(caseof(Just(10))
                     | m(Just(m.a)) >> ~(caseof(1)
@@ -924,11 +923,25 @@ class TestSyntax(unittest.TestCase):
                                             | m(m._) >> False)
                     | m(Nothing)   >> 11))
 
+        # cons matches
+        self.assertEqual(True,
+                ~(caseof([1, 2, 3])
+                    | m(1 ^ (2 ^ m.x)) >> True
+                    | m(m.x)           >> False))
+        self.assertEqual(True,
+                ~(caseof(L[1, 2, 3])
+                    | m(1 ^ (2 ^ m.x)) >> True
+                    | m(m.x)           >> False))
+
+        self.assertEqual([3, 2, 1],
+                ~(caseof([3, 2, 1])
+                    | m(m.a ^ (2 ^ m.c)) >> [p.a, 2, p.c[0]]
+                    | m(m.x)           >> False))
+
         with self.assertRaises(se):
             ~(caseof((1, 2))
                 | m((m.a, m.a)) >> p.a
                 | m(1)          >> 1)
-
 
 
 class TestMaybe(unittest.TestCase):

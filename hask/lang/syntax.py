@@ -11,6 +11,7 @@ from type_system import build_ADT
 from type_system import build_sig
 from type_system import make_fn_type
 from type_system import PatternMatchBind
+from type_system import PatternMatchListBind
 from type_system import pattern_match
 from type_system import Undefined
 
@@ -144,14 +145,6 @@ class sig(Syntax):
     def add(x, y):
         return x + y
 
-
-    @sig(H/ int >> int >> Maybe(int) >> Maybe(int))
-    def safe_div(x, y):
-        if y == 0:
-            return Nothing
-        return Just(x / y)
-
-
     @sig(H[(Show, "a")]/ >> "a" >> str)
     def to_str(x):
         return str(x)
@@ -247,8 +240,26 @@ class MatchStack(object):
         return cls.get_frame().cache.get(name, undefined)
 
 
-class PatternSyntax(Syntax, PatternMatchBind):
-    pass
+class __pattern_bind_list__(Syntax, PatternMatchListBind):
+
+    def __init__(self, head, tail):
+        self.head = [head]
+        self.tail = tail
+        super(__pattern_bind_list__, self).__init__("Syntax error in match")
+
+    def __rxor__(self, head):
+        self.head.insert(0, head)
+        return self
+
+
+class __pattern_bind__(Syntax, PatternMatchBind):
+
+    def __init__(self, name):
+        self.name = name
+        super(__pattern_bind__, self).__init__("Syntax error in match")
+
+    def __rxor__(self, cell):
+        return __pattern_bind_list__(cell, self)
 
 
 class __var_bind__(Syntax):
@@ -257,7 +268,7 @@ class __var_bind__(Syntax):
     For example usage, see help(caseof).
     """
     def __getattr__(self, name):
-        return PatternMatchBind(name)
+        return __pattern_bind__(name)
 
     def __call__(self, pattern):
         is_match, env = pattern_match(MatchStack.get_frame().value, pattern)
