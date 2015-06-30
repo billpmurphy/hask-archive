@@ -22,7 +22,7 @@ def words(string):
     words breaks a string up into a list of words, which were delimited by
     white space.
     """
-    return L[string.split(" ")]
+    return L[[]] if string == "" else L[string.split(" ")]
 
 
 @sig(H/ [str] >> str)

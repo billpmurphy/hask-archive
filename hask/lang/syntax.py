@@ -240,28 +240,6 @@ class MatchStack(object):
         return cls.get_frame().cache.get(name, undefined)
 
 
-class __pattern_bind_list__(Syntax, PatternMatchListBind):
-
-    def __init__(self, head, tail):
-        self.head = [head]
-        self.tail = tail
-        super(__pattern_bind_list__, self).__init__("Syntax error in match")
-
-    def __rxor__(self, head):
-        self.head.insert(0, head)
-        return self
-
-
-class __pattern_bind__(Syntax, PatternMatchBind):
-
-    def __init__(self, name):
-        self.name = name
-        super(__pattern_bind__, self).__init__("Syntax error in match")
-
-    def __rxor__(self, cell):
-        return __pattern_bind_list__(cell, self)
-
-
 class __var_bind__(Syntax):
     """
     Bind a local variable while pattern matching.
@@ -288,6 +266,38 @@ class __var_access__(Syntax):
 
 m = __var_bind__("Syntax error in pattern match")
 p = __var_access__("Syntax error in pattern match")
+
+
+class __pattern_bind_list__(Syntax, PatternMatchListBind):
+
+    def __init__(self, head, tail):
+        self.head = [head]
+        self.tail = tail
+        super(__pattern_bind_list__, self).__init__("Syntax error in match")
+
+    def __rxor__(self, head):
+        self.head.insert(0, head)
+        return self
+
+
+class __pattern_bind__(Syntax, PatternMatchBind):
+
+    def __init__(self, name):
+        self.name = name
+        super(__pattern_bind__, self).__init__("Syntax error in match")
+
+    def __rxor__(self, cell):
+        return __pattern_bind_list__(cell, self)
+
+    def __xor__(self, other):
+        if isinstance(other, __pattern_bind_list__):
+            return other.__rxor__(self)
+
+        elif isinstance(other, __pattern_bind__):
+            return __pattern_bind_list__(self, other)
+
+        self.raise_invalid()
+        return
 
 
 class __match_line__(Syntax):

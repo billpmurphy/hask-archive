@@ -49,6 +49,11 @@ class Show(Typeclass):
         return
 
 
+@sig(H/ "a" >> str)
+def show(obj):
+    return Show[obj].show(obj)
+
+
 class Eq(Typeclass):
     """
     The Eq class defines equality (==) and inequality (!=).
@@ -224,7 +229,7 @@ def enumFromTo(start, end):
     return Enum[start].enumFromTo(start, end)
 
 
-instance(Show, str).where(show=str.__str__)
+instance(Show, str).where(show=str.__repr__)
 instance(Show, int).where(show=int.__str__)
 instance(Show, long).where(show=long.__str__)
 instance(Show, float).where(show=tuple.__str__)

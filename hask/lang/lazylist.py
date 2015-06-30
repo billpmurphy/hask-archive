@@ -3,6 +3,7 @@ import itertools
 
 from hindley_milner import TypeVariable
 from hindley_milner import ListType
+from hindley_milner import unify
 
 from type_system import typeof
 from type_system import build_ADT
@@ -10,6 +11,7 @@ from type_system import TypedFunc
 from type_system import Hask
 
 from typeclasses import Show
+from typeclasses import show
 from typeclasses import Eq
 from typeclasses import Ord
 from typeclasses import Enum
@@ -31,90 +33,91 @@ class List(collections.Sequence, Hask):
     """
     Efficient lazy sequence datatype.
     """
-    def __init__(self, iterable=None):
-        self.evaluated = collections.deque()
-        self.unevaluated = itertools.chain([])
+    def __init__(self, head=None, tail=None):
+        self.__head = collections.deque()
+        self.__tail = itertools.chain([])
 
-        if iterable is None:
-            return
-        elif hasattr(iterable, "next") or hasattr(iterable, "__next__"):
-            self.unevaluated = itertools.chain(self.unevaluated, iterable)
+        if head is not None:
+            self.__head.extend(head)
+        if tail is not None:
+            self.__tail = itertools.chain(self.__tail, tail)
+            self.__is_evaluated = False
         else:
-            self.evaluated.extend(iterable)
+            self.__is_evaluated = True
         return
 
-    def eval_all(self):
+    def __type__(self):
+        if self.__is_evaluated and len(self.__head) == 0:
+            if len(self) == 0:
+                return ListType(TypeVariable())
+            return ListType(typeof(self[0]))
+        elif len(self.__head) == 0:
+            try:
+                return ListType(typeof(self.__next__()))
+            except StopIteration:
+                return ListType(TypeVariable())
+        return ListType(typeof(self[0]))
+
+    def __evaluate(self):
         """
         Evaluate the entire List.
         """
-        self.evaluated.extend(self.unevaluated)
+        self.__head.extend(self.__tail)
+        self.__tail = itertools.chain([])
+        self.__is_evaluated = True
         return
 
     def __rxor__(self, item):
         """
         ^ is the cons operator (equivalent to : in Haskell)
         """
-        return List([item]) + self
+        unify(self.__type__(), ListType(typeof(item)))
+        self.__head.appendleft(item)
+        return self
 
-    def __add__(self, iterable):
+    def __add__(self, other):
         """
         (+) :: [a] -> [a] -> [a]
 
         + is the list concatenation operator, equivalent to ++ in Haskell and +
         for Python lists
         """
-        self.unevaluated = itertools.chain(self.unevaluated, iterable)
+        unify(self.__type__(), other.__type__())
+        self.__tail = itertools.chain(self.__tail, other)
         return self
 
     def __str__(self):
-        # this needs to be better
-        return str(list(self.evaluated))[:-1] + "...]"
+        if self.__is_evaluated:
+            return "L[%s]" % ", ".join(map(show, self.__head))
+        return "L[%s ...]" % ",".join(map(show, self.__head))
 
     def __eq__(self, other):
         # this is horrifically inefficient
         return list(self) == list(other)
 
     def __len__(self):
-        self.eval_all()
-        return len(self.evaluated)
-
-    def __type__(self):
-        if len(self) == 0:
-            return ListType(TypeVariable())
-        return ListType(typeof(self[0]))
-
-    def fmap(self, fn):
-        return List(itertools.imap(fn, iter(self)))
-
-    def pure(self, x):
-        return List([x])
-
-    def bind(self, fn):
-        return List(itertools.chain.from_iterable(self.fmap(fn)))
-
-    def foldr(self, fn, a):
-        # note that this is not lazy
-        for i in reversed(self):
-            a = fn(i, a)
-        return a
+        self.__evaluate()
+        return len(self.__head)
 
     def __next__(self):
         try:
-            next_iter = next(self.unevaluated)
+            next_iter = next(self.__tail)
         except StopIteration as si:
             raise si
-        self.evaluated.append(next_iter)
+        #unify(self, ListType(next_iter))
+        self.__head.append(next_iter)
         return next_iter
 
     def __iter__(self):
         count = 0
-        for item in itertools.chain(self.evaluated, self.unevaluated):
-            if count >= len(self.evaluated):
-                self.evaluated.append(item)
+        for item in itertools.chain(self.__head, self.__tail):
+            if count >= len(self.__head):
+                self.__head.append(item)
             count += 1
             yield item
 
     def __contains__(self, item):
+        """Requires an Eq instance"""
         for i in self:
             if i == item:
                 return True
@@ -126,22 +129,36 @@ class List(collections.Sequence, Hask):
 
         # make sure that the list is evaluated enough to do the indexing, but
         # not any more than necessary
+        # if index is negative, evaluate the entire list
         if i >= 0:
-            while (i+1) > len(self.evaluated):
+            while (i+1) > len(self.__head):
                 try:
                     self.__next__()
                 except (StopIteration, IndexError):
                     raise IndexError("List index out of range: %s" % i)
         else:
-            # if index is negative, evaluate the entire list
-            self.eval_all()
+            self.__evaluate()
 
         if is_slice:
-            istart, istop, istep = ix.indices(len(self.evaluated))
+            istart, istop, istep = ix.indices(len(self.__head))
             indices = enumFromThenTo(istart, istart+istep, istop-istep)
-            return List([self.evaluated[idx] for idx in indices])
+            return List([self.__head[idx] for idx in indices])
+        return self.__head[ix]
 
-        return self.evaluated[ix]
+    def fmap(self, fn):
+        return List(itertools.imap(fn, iter(self)))
+
+    def pure(self, x):
+        return List(head=[x])
+
+    def bind(self, fn):
+        return List(itertools.chain.from_iterable(self.fmap(fn)))
+
+    def foldr(self, fn, a):
+        # note that this is not lazy
+        for i in reversed(self):
+            a = fn(i, a)
+        return a
 
 
 
@@ -183,28 +200,33 @@ class __list_comprehension__(Syntax):
     # list from 1 to 20 (inclusive), counting by fours
     """
     def __getitem__(self, lst):
-        if isinstance(lst, tuple) and len(lst) < 5 and \
+        if isinstance(lst, List):
+            return lst
+
+        elif isinstance(lst, tuple) and len(lst) < 5 and \
                 any((Ellipsis is x for x in lst)):
             # L[x, ...]
             if len(lst) == 2 and lst[1] is Ellipsis:
-                return List(enumFrom(lst[0]))
+                return List(tail=enumFrom(lst[0]))
 
             # L[x, y, ...]
             elif len(lst) == 3 and lst[2] is Ellipsis:
-                return List(enumFromThen(lst[0], lst[1]))
+                return List(tail=enumFromThen(lst[0], lst[1]))
 
             # L[x, ..., y]
             elif len(lst) == 3 and lst[1] is Ellipsis:
-                return List(enumFromTo(lst[0], lst[2]))
+                return List(tail=enumFromTo(lst[0], lst[2]))
 
             # L[x, y, ..., z]
             elif len(lst) == 4 and lst[2] is Ellipsis:
-                return List(enumFromThenTo(lst[0], lst[1], lst[3]))
+                return List(tail=enumFromThenTo(lst[0], lst[1], lst[3]))
 
             self.raise_invalid()
-        return List(lst)
+
+        elif hasattr(lst, "next") or hasattr(lst, "__next__"):
+            return List(tail=lst)
+
+        return List(head=lst)
 
 
 L = __list_comprehension__("Invalid list comprehension")
-
-

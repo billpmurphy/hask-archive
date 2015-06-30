@@ -99,7 +99,7 @@ List comprehensions are also evaluated lazily:
 ```python
 >>> from hask.Data.List import take
 
->>> take(5, L[1, ...]
+>>> take(5, L[1, ...])
 L[1, 2, 3, 4, 5]
 ```
 
@@ -133,7 +133,7 @@ should be separted by `|`. If your data constructor has no fields, you can omit
 the parens. For example:
 
 ```python
-data.SomeType("a", "b") == d.Foo(int, int, str)
+data.FooBar("a", "b") == d.Foo(int, int, str)
                          | d.Bar
                          | d.Baz("a", "b")
 ```
@@ -324,6 +324,42 @@ def fib(x):
 13
 ```
 
+Notice that in the above example, we can pattern match on a recursive function
+without a hitch.
+
+You can also break apart an iterable using `^`, the cons operator. Here is a
+function that adds the first two elements of any iterable, returning `Nothing` if there are less than two elements:
+
+```python
+def add_first_two(x):
+    return ~(caseof(lst)
+                | m(m.x ^ (m.y ^ m.z)) >> Just(p.y + .py)
+                | m(m.x)               >> Nothing
+
+
+>>> add_first_two([1, 2, 3, 4, 5])
+Just(3)
+
+>>> add_first_two([9])
+Nothing
+```
+
+```python
+@sig(H/ t(Maybe, int) >> int)
+def default_zero(x):
+    return ~(caseof(x)
+                | m(Just(m.x)) >> p.x
+                | m(Nothing)   >> 0)
+
+
+>>> default_zero(Just(20))
+27
+
+
+>>> default_zero(Nothing)
+0
+```
+
 If you find pattern matching on ADTs too cumbersome, you can also use numeric
 indexing on ADT fields. An `IndexError` will be thrown if you mess something
 up.
@@ -339,11 +375,9 @@ up.
 ### Typeclasses and typeclass instances
 
 
-
-
 ```python
 def maybe_fmap(maybe_value, fn):
-    return ~(caseof(maybe_value)
+    return lambda x: ~(caseof(x)
         | m(Nothing)   >> Nothing
         | m(Just(m.x)) >> Just(fn(p.x)))
 
@@ -510,7 +544,7 @@ def examine_password_security(password):
 If you want to use `Maybe` and `Either` to handle errors raised by Python
 functions defined outside Hask, you can use the decorators `in_maybe` and
 `in_either` to create functions that call the original function and return the
-result inside the `Maybe` or `Either` monads.
+result wrapped inside the `Maybe` or `Either` monads.
 
 If a function wrapped in `in_maybe` raises an exception, the wrapped function
 will return `Nothing`. Otherwise, the result will be returned wrapped in a
@@ -590,6 +624,14 @@ pretty well documented, so if you're not sure about some function or typeclass,
 use `help` liberally. Some highlights:
 
 ```python
+@sig(H/ int >> int >> t(Maybe, int)
+def safe_div(x, y):
+    return Nothing if y == 0 else Just(x/y)
+
+>>> mapMaybe(safe_div(12), L[1, 3, 0, 6])
+[12, 4, 2]
+
+
 >>> from Data.List import isInfixOf
 >>> isInfixOf(L[2, 8], L[1, 4, 6, 2, 8, 3, 7])
 True
@@ -599,6 +641,5 @@ True
 >>> words("be cool about fire safety")
 L["be", "cool", "about", "fire", "safety"]
 ```
-
 
 That's all, folks!

@@ -44,12 +44,7 @@ from Data.Tuple import uncurry
 
 from .lang.typeclasses import Read
 from .lang.typeclasses import Show
-
-
-@sig(H/ "a" >> str)
-def show(obj):
-    return Show.show(obj)
-
+from .lang.typeclasses import show
 
 from Data.Eq import Eq
 from Data.Ord import Ord
