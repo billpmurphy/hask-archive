@@ -661,11 +661,23 @@ That's all, folks!
 
 Typeclasses and their member functions
 
-| Typeclass | Required functions | Optional functions |
-------------------------------------------------
-| `Show` | `show` | |
-| `Read` | `read` | |
-| `Eq` | `eq` | `ne` |
-| `Ord` | `lt` | `gt`, `le`, `ge` |
-| `Enum` | `toEnum`, `fromEnum` | `enumTo`, `enumFromTo`, `enumFromThen`, `enumFromThenTo` |
+| Typeclass | Required functions | Optional functions | Magic Methods |
+| --------- | ------------------ | ------------------ | ------------- |
+| `Show` | `show` | | |
+| `Read` | `read` | | |
+| `Eq` | `eq` | `ne` | `==`, `!=` | |
+| `Ord` | `lt` | `gt`, `le`, `ge` | `<`, `<`, `=<`, `=>` | |
+| `Enum` | `toEnum`, `fromEnum` | `enumTo`, `enumFromTo`, `enumFromThen`, `enumFromThenTo` | |
+| `Functor` | `fmap` | | `*` (`fmap`) |
+| `Applicative` | `pure` | | |
+| `Monad` | `bind` | `>>` (`bind`) |
+| `Monoid` | `mappend`, `mempty`, `mconcat` | `+` (`mconcat`) |
+| `Num` | | | `+`, `-`, `*`, `/` |
+| `Integral` | | | |
+
+
+
+
+
+
 
