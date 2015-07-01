@@ -15,8 +15,6 @@ from type_system import PatternMatchListBind
 from type_system import pattern_match
 from type_system import Undefined
 
-from hindley_milner import TypeVariable
-
 
 #=============================================================================#
 # Base class for syntactic constructs
@@ -653,7 +651,7 @@ class __guard_test__(Syntax):
     See help(guard) for more details.
     """
     def __init__(self, fn):
-        if not hasattr(fn, "__call__"):
+        if not callable(fn):
             raise ValueError("Guard condition must be callable")
         self.__test = fn
         super(__guard_test__, self).__init__("Syntax error in guard condition")

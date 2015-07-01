@@ -303,7 +303,7 @@ class TypedFunc(Hask):
     def __type__(self):
         return self.fn_type
 
-    def __call__(self, *args):
+    def __call__(self, *args, **kwargs):
         # the environment contains the type of the function and the types
         # of the arguments
         env = {id(self):self.fn_type}
@@ -320,7 +320,7 @@ class TypedFunc(Hask):
             result = self.func(*args)
             unify(result_type, typeof(result))
             return result
-        return TypedFunc(functools.partial(self.func, *args),
+        return TypedFunc(functools.partial(self.func, *args, **kwargs),
                          self.fn_args[len(args):], result_type)
 
     def __mod__(self, arg):

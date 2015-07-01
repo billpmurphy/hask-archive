@@ -95,17 +95,21 @@ L[1, ..., 20]
 L[1, 5, ..., 20]
 ```
 
-List comprehensions are also evaluated lazily, so you can use infinite lists in your programs without blowing up the interpreter, so long as you don't evaluate the entire list (e.g. by
+List comprehensions are also evaluated lazily, so you can use infinite lists in
+your programs without blowing up the interpreter, so long as you don't evaluate
+the entire list (e.g. by trying to find the length of the list with `len`).
 
 ```python
+>>> from hask.Data.Char import chr
 >>> from hask.Data.List import take
->>> take(5, map_(show, L[1, ...]))
-L['1', '2', '3', '4', '5']
+>>> take(5, map_(toUpper * chr, L[1, ...]))
+L['A', 'B', 'C', 'D', 'E']
 
 
 def naive_prime_sieve(n):
     """Find the first n primes"""
     primes = L[[]]
+
     for i in L[1, ...]:
         if len(primes) == n:
             break
@@ -121,8 +125,8 @@ def naive_prime_sieve(n):
 
 ### Abstract Data Types
 
-Hask allows you to define Haskell-like algebraic datatypes, which are
-immutable objects with a fixed number of unnamed fields.
+Hask allows you to define algebraic datatypes, which are immutable objects with
+a fixed number of typed, unnamed fields.
 
 Here is the definition for the `Maybe` type:
 
@@ -148,9 +152,11 @@ should be separted by `|`. If your data constructor has no fields, you can omit
 the parens. For example:
 
 ```python
-data.FooBar("a", "b") == d.Foo(int, int, str)
-                       | d.Bar
-                       | d.Baz("a", "b")
+FooBar, Foo, Bar, Baz =\
+    data.FooBar("a", "b") == d.Foo(int, int, str)
+                           | d.Bar
+                           | d.Baz("a", "b")
+                           & deriving (Show, Eq)
 ```
 
 To automagically derive typeclass instances for the type, add `&
@@ -180,8 +186,8 @@ Just(Just(10))
 >>> Left(1)
 Left(1)
 
->>> Right("a")
-Right("a")
+>>> Foo(1, 2, "hello")
+Foo(1, 2, 'hello')
 ```
 
 You can view the type of an object with `_t` (equivalent to `:t` in ghci).
@@ -208,7 +214,7 @@ Either a (str, int)
 
 ### The type system and typed functions
 
-What's up with those types?
+So what's up with those types?
 
 There are two ways to create `TypedFunc` objects:
 
@@ -222,7 +228,7 @@ def const(x, y):
 
 2) Use the `**` operator (similar to `::` in Haskell) to provide the type.
 Useful for giving turning functions or lambdas into `TypedFunc` objects in the
-REPL.
+REPL or wrapping already-defined functions.
 
 ```python
 def const(x, y):
@@ -262,9 +268,9 @@ Second, `TypedFunc` objects can be partially applied:
 ```
 
 `TypedFunc` objects also have two special infix operators, the `*` and `%`
-operators. `*` is the compose operator (equivalent to `(.)` in Haskell), so `f *
-g` is equivalent to `f(g(x))`. `%` is just the apply operator, which applies a
-`TypedFunc` to one argument (equivalent to `($)` in Haskell).
+operators. `*` is the compose operator (equivalent to `(.)` in Haskell), so `f
+* g` is equivalent to `lambda x: f(g(x))`. `%` is just the apply operator,
+which applies a `TypedFunc` to one argument (equivalent to `($)` in Haskell).
 
 ```python
 >>> f = (lambda x, y: x + " " + y) ** (H/ str >> str >> str)
@@ -295,23 +301,56 @@ primitives:
 Some examples:
 
 ```python
+# add two ints together
+@sig(H/ int >> int >> int)
+def add(x, y):
+    return x + y
+
+
 # reverse order of arguments to a function
 @sig(H/ (H/ "a" >> "b" >> "c") >> "b" >> "a" >> "c")
 def flip(f, b, a):
     return f(a, b)
 
 
-# map a Python (untyped) function over a Python (untyped) list
-@sig(H/ func >> list >> list)
-def my_map(fn, lst):
-    return [fn(x) for x in lst]
+# map a Python (untyped) function over a Python (untyped) set
+@sig(H/ func >> set >> set)
+def set_map(fn, lst):
+    return set((fn(x) for x in lst))
 
 
+# map a typed function over a List
+@sig(H/ (H/ "a" >> "b") >> ["a"] >> ["b"])
+def map(f, xs):
+    return L[(f(x) for x in xs)]
+
+
+# type signature with an Eq constraint
 @sig(H[(Eq, "a")]/ "a" >> "a" >> bool)
 def not_equals(x, y):
     return not (x == y)
+
+
+# type signature with a type constructor (Maybe) that has type arguments
+@sig(H/ int >> int >> t(Maybe, int))
+def safe_div(x, y):
+    return Nothing if y == 0 else Just(x/y)
 ```
 
+It is also possible to create type synonyms using `t`. For example, check out the definition of `Rational`:
+
+```python
+Ratio, R =\
+        data.Ratio("a") == d.R("a", "a") & deriving(Eq)
+
+
+Rational = t(Ratio, int)
+
+
+@sig(H/ Rational >> Rational >> Rational)
+def addRational(rat1, rat2):
+    ...
+```
 
 ### Pattern matching
 
@@ -334,13 +373,15 @@ def fib(x):
 13
 ```
 
-Notice that in the above example, we can pattern match on a recursive function
-without a hitch.
+Notice that in the above example, we are pattern matching on a recursive
+function without a hitch.
 
-You can also break apart an iterable using `^`, the cons operator. Here is a
-function that adds the first two elements of any iterable, returning `Nothing` if there are less than two elements:
+You can also deconstruct an iterable using `^`, the cons operator. Here is a
+function that adds the first two elements of any iterable, returning `Nothing`
+if there are less than two elements:
 
 ```python
+@sig(H[(Num, "a")]/ ["a"] >> t(Maybe, "a"))
 def add_first_two(x):
     return ~(caseof(lst)
                 | m(m.x ^ (m.y ^ m.z)) >> Just(p.y + .py)
@@ -350,23 +391,25 @@ def add_first_two(x):
 >>> add_first_two([1, 2, 3, 4, 5])
 Just(3)
 
->>> add_first_two([9])
+>>> add_first_two([9.0])
 Nothing
 ```
 
+Pattern matching is also very useful for deconstructing ADTs and assigning
+their fields to temporary variables.
+
 ```python
-@sig(H/ t(Maybe, int) >> int)
-def default_zero(x):
+def default_to_zero(x):
     return ~(caseof(x)
                 | m(Just(m.x)) >> p.x
                 | m(Nothing)   >> 0)
 
 
->>> default_zero(Just(20))
+>>> default_to_zero(Just(27))
 27
 
 
->>> default_zero(Nothing)
+>>> default_to_zero(Nothing)
 0
 ```
 
@@ -380,16 +423,28 @@ up.
 
 >>> Left("words words words words")[0]
 'words words words words'
+
+>>> Nothing[0]  # IndexError
 ```
+
 
 ### Typeclasses and typeclass instances
 
 
+Typeclasses allow you to add additional functionality to your ADTs. Hask
+implements all of the major typeclasses from Haskell (see the appendix for a
+full list) and provides syntax for creating a new typeclass instance.  As an
+example, let's add a `Monad` instance for the `Maybe` type.  First, we need to
+add `Functor` and `Applicative` instances.
+
+
 ```python
 def maybe_fmap(maybe_value, fn):
-    return lambda x: ~(caseof(x)
-        | m(Nothing)   >> Nothing
-        | m(Just(m.x)) >> Just(fn(p.x)))
+    """Apply a function to the value inside of a (Maybe a) value"""
+    return ~(caseof(x)
+                | m(Nothing)   >> Nothing
+                | m(Just(m.x)) >> Just(fn(p.x)))
+
 
 instance(Functor, Maybe).where(
     fmap = maybe_fmap
@@ -400,9 +455,9 @@ instance(Functor, Maybe).where(
 and map any function of type `a -> b` into a value of type `Maybe a`.
 
 ```python
->>> Functor(Maybe, maybe_fmap)
-
+>>> times2 = (lambda x: x) ** (H/ int >> int)
 >>> toFloat = float ** (H/ int >> float))
+
 >>> fmap(Just(10), toFloat)
 Just(10.0)
 
@@ -458,6 +513,34 @@ Nothing
 Nothing
 ```
 
+As in Haskell, `List` is also a monad, and `bind` for the `List` type is just
+`concatMap`.
+
+```python
+```
+
+You can also define typeclass instances for classes that are not ADTs:
+
+```python
+class Person(object):
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+
+instance(Eq, Person).where(
+    eq = lambda p1, p2: p1.name == p2.name and p1.age == p2.age
+)
+
+>>> Person("Philip Wadler", 59) == Person("Simon Peyton Jones", 57)
+False
+```
+
+If you want instances of the`Show`, `Eq`, `Read`, `Ord`, and `Bounded`
+typeclassesfor your ADTs, it is adviseable to use `deriving` to automagically
+generate instances rather than defining them manually.
+
+
 Defining your own typeclasses is pretty easy. Typeclasses are just Python
 classes that are subclasses of `Typeclass`, and which implement a classmethod
 called `make_instance` that controls what happens when you define a new
@@ -480,7 +563,6 @@ just `TypedFunc` objects, so they are automagically curried and typechecked.
 >>> Just(20) * (__+10) * (90/__)
 Just(3)
 
-
 >>> from hask.Data.List import takeWhile
 >>> takeWhile((__<5), L[1, ...])
 L[1, 2, 3, 4]
@@ -496,21 +578,26 @@ Double sections are also supported:
 1024
 ```
 
+As you can see, this much easier than using `lambda` and adding a type
+signature with the `(lambda x: ...) ** (H/ ...)` syntax.
+
+
 ### Guards
 
 If you don't need the full power of pattern matching and just want a neater
-switch statement, you can use guards. The syntax for guards is as follows:
+switch statement, you can use guards. The syntax for guards is almost identical
+to the syntax for pattern matching.
 
 ```python
-~(guard(<expr to test>)
-    | c(<test 1>) >> <return value 1>
-    | c(<test 2>) >> <return value 2>
-    | otherwise   >> <return value 3>
+~(guard(expr_to_test)
+    | c(test_1) >> return_value_1
+    | c(test_2) >> return_value_2
+    | otherwise >> return_value_3
 )
 ```
 
 As in Haskell, `otherwise` will always evaluate to `True` and can be used as a
-catch-all in guard statements. If no match is found (and an `otherwise` clause
+catch-all in guard expressions. If no match is found (and an `otherwise` clause
 is not present), a `NoGuardMatchException` will be raised.
 
 Guards will also play nicely with sections:
@@ -538,7 +625,7 @@ def examine_password_security(password):
         | c(lambda x: len(x) > 20) >> "Wow, that's one secure password"
         | c(lambda x: len(x) < 5)  >> "You made Bruce Schneier cry"
         | c(__ == "12345")         >> "Same combination as my luggage!"
-        | otherwise                >> "Hope it's not `password`"
+        | otherwise                >> "Hope it's not 'password'"
     )
     return analysis
 
@@ -554,7 +641,7 @@ def examine_password_security(password):
 If you want to use `Maybe` and `Either` to handle errors raised by Python
 functions defined outside Hask, you can use the decorators `in_maybe` and
 `in_either` to create functions that call the original function and return the
-result wrapped inside the `Maybe` or `Either` monads.
+result wrapped inside a `Maybe` or `Either` value.
 
 If a function wrapped in `in_maybe` raises an exception, the wrapped function
 will return `Nothing`. Otherwise, the result will be returned wrapped in a
@@ -576,22 +663,20 @@ Nothing
 ```
 
 Note that this is equivalent to lifting the original function into the Maybe
-monad. That is, we have changed its type from `function` to `a -> Maybe b`. This
-makes it easier to implement the convineient monad error handling commonly seen
-in Haskell with your existing Python functions.
+monad. That is, we have changed its type from `function` to `a -> Maybe b`.
+This makes it easier to use the convineient monad error handling style commonly
+seen in Haskell with existing Python functions.
 
 Continuing with our silly example, we can try to eat three pieces of cheese,
 returning `Nothing` if the attempt was unsuccessful:
 
 ```python
 >>> cheese = 10
-
 >>> cheese_left = maybe_eat(cheese) >> maybe_eat >> maybe_eat
 >>> cheese_left
 Just(7)
 
 >>> cheese = 1
-
 >>> cheese_left = maybe_eat(cheese) >> maybe_eat >> maybe_eat
 >>> cheese_left
 Nothing
@@ -634,28 +719,33 @@ pretty well documented, so if you're not sure about some function or typeclass,
 use `help` liberally. Some highlights:
 
 ```python
-@sig(H/ int >> int >> t(Maybe, int)
-def safe_div(x, y):
-    return Nothing if y == 0 else Just(x/y)
-
->>> mapMaybe(safe_div(12), L[1, 3, 0, 6])
-[12, 4, 2]
+>>> from Data.List import mapMaybe
+>>> mapMaybe * safe_div(12) % L[0, 1, 3, 0, 6]
+L[12, 4, 2]
 
 
 >>> from Data.List import isInfixOf
 >>> isInfixOf(L[2, 8], L[1, 4, 6, 2, 8, 3, 7])
 True
-
-
->>> from Data.String import words
->>> words("be cool about fire safety")
-L["be", "cool", "about", "fire", "safety"]
 ```
 
-Note that Hask also wraps some existing Python functions in TypedFunc objects,
-for easy of compatibity.
+Hask also has wrappers some existing Python functions in TypedFunc objects, for
+easy of compatibity. (Eventually, Hask will have typed wrappers for much of the
+Python standard library.)
+
+```python
+>>> from hask.Prelude import flip
+>>> from hask.Data.Tuple import snd
+>>> from hask.Python.builtins import divmod, hex
+
+>>> hexMod = hex * snd * flip(divmod, 16)
+>>> hexMod(24)
+'0x8'
+```
+
 
 That's all, folks!
+
 
 ## Appendix
 
@@ -663,16 +753,16 @@ That's all, folks!
 
 | Typeclass | Superclasses | Required functions | Optional functions | Magic Methods |
 | --------- | ------------ | ------------------ | ------------------ | ------------- |
-| `Show` | | `show` | | |
+| `Show` | | `show` | | `str` |
 | `Read` | | `read` | | |
 | `Eq` | | `eq` | `ne` | `==`, `!=` | |
 | `Ord` | `Eq` | `lt` | `gt`, `le`, `ge` | `<`, `<`, `=<`, `=>` | |
 | `Enum` | | `toEnum`, `fromEnum` | `enumTo`, `enumFromTo`, `enumFromThen`, `enumFromThenTo` | |
 | `Bounded` | | `minBound`, `maxBound` | | |
-| `Functor` | | `fmap` | | `*` (fmap) |
+| `Functor` | | `fmap` | | `*` |
 | `Applicative` | `Functor` | `pure` | | |
-| `Monad` | `Applicative` | `bind` | | `>>` (bind) |
-| `Monoid` | | `mappend`, `mempty` |  `mconcat` | `+` (mappend) |
+| `Monad` | `Applicative` | `bind` | | `>>` |
+| `Monoid` | | `mappend`, `mempty` |  `mconcat` | `+` |
 | `Foldable` | `Functor` |
 | `Traversable` |
 | `Num` | `Show`, `Eq` | | | `+`, `-`, `*`, `/` |
@@ -686,18 +776,29 @@ That's all, folks!
 
 **Table 2.** Hask library structure.
 
-| File | Dependencies | Exported functions |
-| ---- | ------------ | ------------------ |
-| hask | | |
-| hask.Prelude
-| hask.Data.List
-|
-|
-|
-|
-| hask.lang |
-| hask.lang.hindley_milner
-| hask.lang.type_system
-| hask.lang.syntax
-| hask.lang.typeclasses
-| hask.lang.lazylist
+| Module | Dependencies | Exported functions |
+| ------ | ------------ | ------------------ |
+| `hask` | | |
+| `hask.Prelude` | `hask.lang` |
+| `hask.Data.Maybe` | `hask.lang`, `hask.Data.Eq`, `hask.Data.Ord`, `hask.Data.Functor`, `hask.Control.Applicative`, `hask.Control.Monad` |
+| `hask.Data.Either` | `hask.lang`, `hask.Data.Eq`, `hask.Data.Ord`, `hask.Data.Functor`, `hask.Control.Applicative`, `hask.Control.Monad` |
+| `hask.Data.List` | `hask.lang`
+| `hask.Data.String` | `hask.lang` | `words`, `unwords`, `lines`, `unlines` |
+| `hask.Data.Tuple` | `hask.lang` | `fst`, `snd`, `swap`, `curry`, `uncurry` |
+| `hask.Data.Eq` | `hask.lang` | `Eq` (`==`, `!=`)
+| `hask.Data.Ord` | `hask.lang`, `hask.Data.Eq` |
+| `hask.Data.Functor` | `hask.lang` | `Functor` (`fmap`, `>>`) |
+| `hask.Data.Foldable` | `hask.lang`
+| `hask.Data.Traversable` | `hask.lang`
+| `hask.Data.Monoid` | `hask.lang`
+| `hask.Data.Ratio` | `hask.lang`
+| `hask.Data.Num` | `hask.lang`
+| `hask.Control.Applicative` | `hask.lang`
+| `hask.Control.Monad` | `hask.lang`
+| `hask.Python.builtins` | `hask.lang`
+| `hask.lang` |
+| `hask.lang.hindley_milner` |
+| `hask.lang.type_system` | `hask.lang.hindley_milner`
+| `hask.lang.syntax` | `hask.lang.type_system`
+| `hask.lang.typeclasses` | `hask.lang.type_system`, `hask.lang.syntax`
+| hask.lang.lazylist | `hask.lang.type_system`, `hask.lang.hindley_milner`, `hask.lang.syntax`, `hask.lang.typeclasses |

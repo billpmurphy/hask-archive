@@ -1275,8 +1275,8 @@ class TestDataOrd(unittest.TestCase):
     def test_ord(self):
         from hask.Data.Ord import max_ as hmax
         from hask.Data.Ord import min_ as hmin
-        from hask.Data.Ord import compare as compare
-        from hask.Data.Ord import comparing as comparing
+        from hask.Data.Ord import compare, comparing
+        from hask.Data.Ord import comparing
 
         self.assertEqual(hmax(1, 2), 2)
         self.assertEqual(hmin(1, 2), 1)
@@ -1287,8 +1287,48 @@ class TestDataOrd(unittest.TestCase):
         self.assertEqual(comparing(snd, (1, 2), (3, 0)), GT)
 
 
+class TestDataRatio(unittest.TestCase):
+
+    def test_ratio(self):
+        from hask.Data.Ratio import Ratio, R, Rational, toRatio, toRational
+        from hask.Data.Ratio import numerator, denominator
+
+
+class TestDataChar(unittest.TestCase):
+
+    def test_char(self):
+        from hask.Data.Char import chr, ord
+        self.assertEqual("a", chr(97))
+        self.assertEqual("a", chr * ord % "a")
+        with self.assertRaises(te): ord(97)
+        with self.assertRaises(te): chr("a")
+        with self.assertRaises(te): chr * chr
+
+
+class TestPython(unittest.TestCase):
+
+    def test_builtins(self):
+        from hask.Python.builtins import cmp, divmod, frozenset, getattr
+        from hask.Python.builtins import hasattr, hash, hex, len, oct, repr
+        from hask.Python.builtins import sorted
+
+        # add more
+        self.assertEqual(1, cmp(10)(9))
+        self.assertEqual(divmod(5)(2), (2, 1))
+        with self.assertRaises(te): oct(1.0)
+        with self.assertRaises(te): hex(1.0)
+        with self.assertRaises(te): hasattr(list)(len)
+
+
 class Test_README_Examples(unittest.TestCase):
     """Make sure the README examples are all working"""
+
+    def test_list(self):
+        pass
+
+    def test_sig(self):
+        pass
+
     def test_match(self):
         @sig(H/ int >> int)
         def fib(x):
@@ -1301,6 +1341,9 @@ class Test_README_Examples(unittest.TestCase):
         self.assertEqual(1, fib(0))
         self.assertEqual(1, fib(1))
         self.assertEqual(13, fib(6))
+
+    def test_typeclasses(self):
+        pass
 
     def test_sections(self):
         f = (__ - 20) * (2 ** __) * (__ + 3)

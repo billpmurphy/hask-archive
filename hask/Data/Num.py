@@ -1,8 +1,12 @@
 import math
 import fractions
 
-from ..lang import sig
+from ..lang import data
+from ..lang import d
+from ..lang import deriving
 from ..lang import H
+from ..lang import sig
+from ..lang import t
 from ..lang import instance
 from ..lang import build_instance
 from ..lang import Enum
@@ -120,16 +124,22 @@ class Floating(Fractional):
 instance(Floating, float).where()
 
 
+Ratio, R =\
+        data.Ratio("a") == d.R("a", "a") & deriving(Eq)
+
+Rational = t(Ratio, int)
+
+
 class Real(Num, Ord):
     @classmethod
-    def make_instance(typeclass, cls):
+    def make_instance(typeclass, cls, toRational):
         build_instance(Real, cls, {})
         return
 
 
-instance(Real, int).where()
-instance(Real, long).where()
-instance(Real, float).where()
+@sig(H[(Real, "a")]/ "a" >> Rational)
+def toRational(x):
+    return Real[x].toRational(x)
 
 
 class Integral(Real, Enum):
@@ -141,6 +151,25 @@ class Integral(Real, Enum):
         build_instance(Integral, cls, attrs)
         return
 
+
+@sig(H[(Integral, "a")]/ "a" >> "a" >> t(Ratio, "a"))
+def toRatio(num, denom):
+    frac = fractions.Fraction(num, denom)
+    return R(frac.numerator, frac.deominator)
+
+
+
+instance(Real, int).where(
+    toRational = lambda x: toRatio(x, 1)
+)
+
+instance(Real, long).where(
+    toRational = lambda x: toRatio(x, 1)
+)
+
+instance(Real, float).where(
+    toRational = lambda x: toRatio(round(x), 1)
+)
 
 instance(Integral, int).where(
     quotRem = lambda x, y: (x / y, x % y),

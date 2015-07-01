@@ -16,8 +16,3 @@ class Monoid(Typeclass):
 @sig(H/ "a" >> "a" >> "a")
 def mappend(x, y):
     Monoid[x].mappend(x, y)
-
-
-#@sig(H/ "a")
-#def mempty():
-#    return Monoid[x].mempty
