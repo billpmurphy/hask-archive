@@ -78,6 +78,7 @@ hask import *`
 
 ### The List type and list comprehensions
 
+
 As in Haskell, there are four basic type of list comprehensions:
 
 ```python
@@ -94,13 +95,27 @@ L[1, ..., 20]
 L[1, 5, ..., 20]
 ```
 
-List comprehensions are also evaluated lazily:
+List comprehensions are also evaluated lazily, so you can use infinite lists in your programs without blowing up the interpreter, so long as you don't evaluate the entire list (e.g. by
 
 ```python
 >>> from hask.Data.List import take
+>>> take(5, map_(show, L[1, ...]))
+L['1', '2', '3', '4', '5']
 
->>> take(5, L[1, ...])
-L[1, 2, 3, 4, 5]
+
+def naive_prime_sieve(n):
+    """Find the first n primes"""
+    primes = L[[]]
+    for i in L[1, ...]:
+        if len(primes) == n:
+            break
+
+        for prime in primes:
+            if i % prime == 0:
+                break
+        else:
+            primes.append(i)
+    return primes
 ```
 
 
@@ -134,8 +149,8 @@ the parens. For example:
 
 ```python
 data.FooBar("a", "b") == d.Foo(int, int, str)
-                         | d.Bar
-                         | d.Baz("a", "b")
+                       | d.Bar
+                       | d.Baz("a", "b")
 ```
 
 To automagically derive typeclass instances for the type, add `&
@@ -165,7 +180,6 @@ Just(Just(10))
 >>> Left(1)
 Left(1)
 
-
 >>> Right("a")
 Right("a")
 ```
@@ -183,11 +197,18 @@ Maybe str
 
 >>> _t(Right(("a", 1)))
 Either a (str, int)
+
+>>> _t(Just)
+(a -> Maybe a)
+
+>>> _t(L[1, 2, 3, 4])
+[int]
 ```
 
 
+### The type system and typed functions
 
-### Typed functions
+What's up with those types?
 
 There are two ways to create `TypedFunc` objects:
 
@@ -221,18 +242,7 @@ is a discrepancy.
 >>> f(2, 3)
 5
 
->>> f(9, 1.0)
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-  File "hask/lang/type_system.py", line 295, in __call__
-    result_type = analyze(ap, env)
-  File "hask/lang/hindley_milner.py", line 220, in analyze
-    unify(Function(arg_type, result_type), fun_type)
-  File "hask/lang/hindley_milner.py", line 313, in unify
-    unify(p, q)
-  File "hask/lang/hindley_milner.py", line 311, in unify
-    raise TypeError("Type mismatch: {0} != {1}".format(str(a), str(b)))
-TypeError: Type mismatch: float != int
+>>> f(9, 1.0)  # type error
 ```
 
 Second, `TypedFunc` objects can be partially applied:

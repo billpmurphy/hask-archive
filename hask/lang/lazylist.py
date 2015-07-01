@@ -36,14 +36,13 @@ class List(collections.Sequence, Hask):
     def __init__(self, head=None, tail=None):
         self.__head = collections.deque()
         self.__tail = itertools.chain([])
+        self.__is_evaluated = True
 
         if head is not None:
             self.__head.extend(head)
         if tail is not None:
             self.__tail = itertools.chain(self.__tail, tail)
             self.__is_evaluated = False
-        else:
-            self.__is_evaluated = True
         return
 
     def __type__(self):
@@ -159,7 +158,6 @@ class List(collections.Sequence, Hask):
         for i in reversed(self):
             a = fn(i, a)
         return a
-
 
 
 ## Typeclass instances for list
