@@ -661,11 +661,11 @@ That's all, folks!
 
 Typeclasses and their member functions
 
-|Typeclass|Required functions|Optional functions|
+| Typeclass | Required functions | Optional functions |
 ------------------------------------------------
-|`Show`|`show`||
-|`Read`|`read`||
-|`Eq`|`eq`|`ne`|
-|`Ord`|`lt`|`gt`, `le`, `ge'|
-|`Enum`|`toEnum`, `fromEnum`|`enumTo`, `enumFromTo`, `enumFromThen`, `enumFromThenTo`|
+| `Show` | `show` | |
+| `Read` | `read` | |
+| `Eq` | `eq` | `ne` |
+| `Ord` | `lt` | `gt`, `le`, `ge` |
+| `Enum` | `toEnum`, `fromEnum` | `enumTo`, `enumFromTo`, `enumFromThen`, `enumFromThenTo` |
 
