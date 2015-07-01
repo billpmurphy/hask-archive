@@ -661,21 +661,27 @@ That's all, folks!
 
 Typeclasses and their member functions
 
-| Typeclass | Required functions | Optional functions | Magic Methods |
-| --------- | ------------------ | ------------------ | ------------- |
-| `Show` | `show` | | |
-| `Read` | `read` | | |
-| `Eq` | `eq` | `ne` | `==`, `!=` | |
-| `Ord` | `lt` | `gt`, `le`, `ge` | `<`, `<`, `=<`, `=>` | |
-| `Enum` | `toEnum`, `fromEnum` | `enumTo`, `enumFromTo`, `enumFromThen`, `enumFromThenTo` | |
-| `Functor` | `fmap` | | `*` (`fmap`) |
-| `Applicative` | `pure` | | |
-| `Monad` | `bind` | `>>` (`bind`) |
-| `Monoid` | `mappend`, `mempty`, `mconcat` | `+` (`mconcat`) |
-| `Num` | | | `+`, `-`, `*`, `/` |
-| `Integral` | | | |
-
-
+| Typeclass | Superclasses | Required functions | Optional functions | Magic Methods |
+| --------- | ------------ | ------------------ | ------------------ | ------------- |
+| `Show` | | `show` | | |
+| `Read` | | `read` | | |
+| `Eq` | | `eq` | `ne` | `==`, `!=` | |
+| `Ord` | `Eq` | `lt` | `gt`, `le`, `ge` | `<`, `<`, `=<`, `=>` | |
+| `Enum` | | `toEnum`, `fromEnum` | `enumTo`, `enumFromTo`, `enumFromThen`, `enumFromThenTo` | |
+| `Bounded` | | `minBound`, `maxBound` | | |
+| `Functor` | | `fmap` | | `*` (fmap) |
+| `Applicative` | `Functor` | `pure` | | |
+| `Monad` | `Applicative` | `bind` | `>>` (bind) |
+| `Monoid` | | `mappend`, `mempty`, `mconcat` | `+` (mconcat) |
+| `Foldable` | `Functor` |
+| `Traversable` |
+| `Num` | `Show`, `Eq` | | | `+`, `-`, `*`, `/` |
+| `Fractional` | `Num` |
+| `Floating` | `Fractional` |
+| `Real` | `Num`, `Ord` |
+| `Integral` | `Real`, `Enum` | | |
+| `RealFrac` | `Real`, `Fractional` |
+| `RealFloat` | `Floating`, `RealFrac` |
 
 
 
