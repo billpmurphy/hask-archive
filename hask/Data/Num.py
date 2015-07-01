@@ -61,7 +61,6 @@ def abs_(a):
     return Num[a].abs(a)
 
 
-
 instance(Num, int).where(
     add = int.__add__,
     mul = int.__mul__,

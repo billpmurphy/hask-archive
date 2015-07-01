@@ -671,14 +671,14 @@ Typeclasses and their member functions
 | `Bounded` | | `minBound`, `maxBound` | | |
 | `Functor` | | `fmap` | | `*` (fmap) |
 | `Applicative` | `Functor` | `pure` | | |
-| `Monad` | `Applicative` | `bind` | `>>` (bind) |
-| `Monoid` | | `mappend`, `mempty`, `mconcat` | `+` (mconcat) |
+| `Monad` | `Applicative` | `bind` | | `>>` (bind) |
+| `Monoid` | | `mappend`, `mempty` |  `mconcat` | `+` (mappend) |
 | `Foldable` | `Functor` |
 | `Traversable` |
 | `Num` | `Show`, `Eq` | | | `+`, `-`, `*`, `/` |
 | `Fractional` | `Num` |
 | `Floating` | `Fractional` |
-| `Real` | `Num`, `Ord` |
+| `Real` | `Num`, `Ord` | `toRational` | |
 | `Integral` | `Real`, `Enum` | | |
 | `RealFrac` | `Real`, `Fractional` |
 | `RealFloat` | `Floating`, `RealFrac` |
