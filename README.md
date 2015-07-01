@@ -100,7 +100,7 @@ your programs without blowing up the interpreter, so long as you don't evaluate
 the entire list (e.g. by trying to find the length of the list with `len`).
 
 ```python
->>> from hask.Data.Char import chr
+>>> from hask.Data.Char import chr, toUpper
 >>> from hask.Data.List import take
 >>> take(5, map_(toUpper * chr, L[1, ...]))
 L['A', 'B', 'C', 'D', 'E']
@@ -171,7 +171,9 @@ Either, Left, Right =\
     data.Either("a", "b") == d.Left("a") | d.Right("b") & deriving(Read, Show, Eq)
 ```
 
-We can now use the data constructors defined in a `data` statement to create instances of our new types. If our data constructor takes no arguments, we can use it just like a variable.
+We can now use the data constructors defined in a `data` statement to create
+instances of our new types. If our data constructor takes no arguments, we can
+use it just like a variable.
 
 ```python
 >>> Just(10)
@@ -268,8 +270,8 @@ Second, `TypedFunc` objects can be partially applied:
 ```
 
 `TypedFunc` objects also have two special infix operators, the `*` and `%`
-operators. `*` is the compose operator (equivalent to `(.)` in Haskell), so `f
-* g` is equivalent to `lambda x: f(g(x))`. `%` is just the apply operator,
+operators. `*` is the compose operator (equivalent to `(.)` in Haskell), so
+`f * g` is equivalent to `lambda x: f(g(x))`. `%` is just the apply operator,
 which applies a `TypedFunc` to one argument (equivalent to `($)` in Haskell).
 
 ```python
@@ -470,12 +472,17 @@ instance of `Functor` can be used with the infix `fmap` operator, `*`. This is
 equivalent to `<$>` in Haskell. Rewriting our example from above:
 
 ```python
->>> Just(25) * times2 * toFloat
+>>> (times2 * toFloat) * Just(25)
 Just(50.0)
 
->>> Nothing * times2 * toFloat
+>>> (times2 * toFloat) * Nothing
 Nothing
 ```
+
+(Note that in this example we use `*` as both the function compose operator and
+as `fmap`, to lift functions into a `Maybe` value. If this seems confusing,
+remember that `fmap` for functions is just function composition!)
+
 
 Now that we have made `Maybe` an instance of `Functor`, we can make it an
 instance of `Applicative` and then an instance of `Monad` by defining the
@@ -517,6 +524,9 @@ As in Haskell, `List` is also a monad, and `bind` for the `List` type is just
 `concatMap`.
 
 ```python
+>>> from Data.List import replicate
+>>> L[1, 2] >> replicate(2) >> replicate(2)
+L[1, 1, 1, 1, 2, 2, 2, 2]
 ```
 
 You can also define typeclass instances for classes that are not ADTs:
@@ -537,15 +547,13 @@ False
 ```
 
 If you want instances of the`Show`, `Eq`, `Read`, `Ord`, and `Bounded`
-typeclassesfor your ADTs, it is adviseable to use `deriving` to automagically
+typeclasses for your ADTs, it is adviseable to use `deriving` to automagically
 generate instances rather than defining them manually.
 
 
-Defining your own typeclasses is pretty easy. Typeclasses are just Python
-classes that are subclasses of `Typeclass`, and which implement a classmethod
-called `make_instance` that controls what happens when you define a new
-instance for that typeclass. Take a look at the typeclasses defined in
-`Data.Functor` and `Data.Traversable` to see how this is done.
+Defining your own typeclasses is pretty easy--take a look at `help(Typeclass)`
+and look at the typeclasses defined in `Data.Functor` and `Data.Traversable` to
+see how it's done.
 
 
 ### Operator sections
@@ -560,11 +568,11 @@ just `TypedFunc` objects, so they are automagically curried and typechecked.
 >>> f(10)
 8172
 
->>> Just(20) * (__+10) * (90/__)
+>>> ((__+10) * (90/__)) * Just(20)
 Just(3)
 
 >>> from hask.Data.List import takeWhile
->>> takeWhile((__<5), L[1, ...])
+>>> takeWhile(__<5, L[1, ...])
 L[1, 2, 3, 4]
 ```
 
@@ -785,6 +793,7 @@ That's all, folks!
 | `hask.Data.List` | `hask.lang`
 | `hask.Data.String` | `hask.lang` | `words`, `unwords`, `lines`, `unlines` |
 | `hask.Data.Tuple` | `hask.lang` | `fst`, `snd`, `swap`, `curry`, `uncurry` |
+| 'hask.Data.Char` | `hask.lang` |
 | `hask.Data.Eq` | `hask.lang` | `Eq` (`==`, `!=`)
 | `hask.Data.Ord` | `hask.lang`, `hask.Data.Eq` |
 | `hask.Data.Functor` | `hask.lang` | `Functor` (`fmap`, `>>`) |

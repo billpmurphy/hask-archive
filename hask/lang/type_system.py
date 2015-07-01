@@ -341,13 +341,13 @@ class TypedFunc(Hask):
             raise TypeError("Cannot compose non-TypedFunc with TypedFunc")
 
         env = {id(self):self.fn_type, id(fn):fn.fn_type}
-        ap = Lam("arg", App(Var(id(self)), App(Var(id(fn)), Var("arg"))))
-        newtype = analyze(ap, env)
+        compose = Lam("arg", App(Var(id(self)), App(Var(id(fn)), Var("arg"))))
+        newtype = analyze(compose, env)
 
-        composed = lambda x: self.func(fn.func(x))
+        composed_fn = lambda x: self.func(fn.func(x))
         newargs = [fn.fn_args[0]] + self.fn_args[1:]
 
-        return TypedFunc(composed, fn_args=newargs, fn_type=newtype)
+        return TypedFunc(composed_fn, fn_args=newargs, fn_type=newtype)
 
 
 #=============================================================================#

@@ -1235,6 +1235,10 @@ class TestDataString(unittest.TestCase):
         self.assertEqual(unwords(L[[]]), "")
 
 
+class TestDataChar(unittest.TestCase):
+    pass
+
+
 class TestDataTuple(unittest.TestCase):
 
     def test_tuple(self):
