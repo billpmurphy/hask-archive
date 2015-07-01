@@ -626,7 +626,7 @@ def some_function(x, y):
 ```
 
 
-#### Standard libraries
+### Standard libraries
 
 All of your favorite functions from `Prelude`, `Data.List`, `Data.Maybe`,
 `Data.Either`, `Data.Monoid`, and more are implemented too. Everything is
@@ -652,4 +652,20 @@ True
 L["be", "cool", "about", "fire", "safety"]
 ```
 
+Note that Hask also wraps some existing Python functions in TypedFunc objects,
+for easy of compatibity.
+
 That's all, folks!
+
+## Appendix
+
+Typeclasses and their member functions
+
+|Typeclass|Required functions|Optional functions|
+------------------------------------------------
+|`Show`|`show`||
+|`Read`|`read`||
+|`Eq`|`eq`|`ne`|
+|`Ord`|`lt`|`gt`, `le`, `ge'|
+|`Enum`|`toEnum`, `fromEnum`|`enumTo`, `enumFromTo`, `enumFromThen`, `enumFromThenTo`|
+
