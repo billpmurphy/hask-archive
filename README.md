@@ -659,7 +659,7 @@ That's all, folks!
 
 ## Appendix
 
-Typeclasses and their member functions
+**Table 1.** Overview of Hask typeclasses.
 
 | Typeclass | Superclasses | Required functions | Optional functions | Magic Methods |
 | --------- | ------------ | ------------------ | ------------------ | ------------- |
@@ -684,6 +684,20 @@ Typeclasses and their member functions
 | `RealFloat` | `Floating`, `RealFrac` |
 
 
+**Table 2.** Hask library structure.
 
-
-
+| File | Dependencies | Exported functions |
+| ---- | ------------ | ------------------ |
+| hask | | |
+| hask.Prelude
+| hask.Data.List
+|
+|
+|
+|
+| hask.lang |
+| hask.lang.hindley_milner
+| hask.lang.type_system
+| hask.lang.syntax
+| hask.lang.typeclasses
+| hask.lang.lazylist
