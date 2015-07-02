@@ -46,24 +46,34 @@ class List(collections.Sequence, Hask):
         return
 
     def __type__(self):
-        if self.__is_evaluated and len(self.__head) == 0:
-            if len(self) == 0:
+        if self.__is_evaluated:
+            if len(self.__head) == 0:
                 return ListType(TypeVariable())
             return ListType(typeof(self[0]))
         elif len(self.__head) == 0:
-            try:
-                return ListType(typeof(self.__next__()))
-            except StopIteration:
-                return ListType(TypeVariable())
+            self.__next__()
+            return self.__type__()
         return ListType(typeof(self[0]))
+
+    def __next__(self):
+        if self.__is_evaluated:
+            raise StopIteration
+        else:
+            try:
+                next_iter = next(self.__tail)
+                if len(self.__head) > 0:
+                    unify(typeof(self[0]), typeof(next_iter))
+                self.__head.append(next_iter)
+            except StopIteration as si:
+                self.__is_evaluated = True
+        return
 
     def __evaluate(self):
         """
         Evaluate the entire List.
         """
-        self.__head.extend(self.__tail)
-        self.__tail = itertools.chain([])
-        self.__is_evaluated = True
+        while not self.__is_evaluated:
+            self.__next__()
         return
 
     def __rxor__(self, item):
@@ -86,9 +96,8 @@ class List(collections.Sequence, Hask):
         return self
 
     def __str__(self):
-        if self.__is_evaluated:
-            return "L[%s]" % ", ".join(map(show, self.__head))
-        return "L[%s ...]" % ",".join(map(show, self.__head))
+        body = ", ".join((show(s) for s in self.__head))
+        return "L[{0}]" % body if self.__is_evaluated else "L[{0} ...]" % body
 
     def __eq__(self, other):
         # this is horrifically inefficient
@@ -98,17 +107,9 @@ class List(collections.Sequence, Hask):
         self.__evaluate()
         return len(self.__head)
 
-    def __next__(self):
-        try:
-            next_iter = next(self.__tail)
-        except StopIteration as si:
-            raise si
-        #unify(self, ListType(next_iter))
-        self.__head.append(next_iter)
-        return next_iter
-
     def __iter__(self):
         count = 0
+        # TODO: wrong
         for item in itertools.chain(self.__head, self.__tail):
             if count >= len(self.__head):
                 self.__head.append(item)
@@ -164,25 +165,19 @@ class List(collections.Sequence, Hask):
 Show.make_instance(List, show=List.__str__)
 Eq.make_instance(List, eq=List.__eq__)
 Read.make_instance(List, read=eval)
-#Foldable.make_instance(List, foldr=List.foldr)
-#Traversable.make_instance(List,
-#        iter=List.__iter__,
-#        getitem=List.__getitem__,
-#        len=List.__len__)
 
 
 #=============================================================================#
-# List comprehension
+# List comprehension syntax
 
 
 class __list_comprehension__(Syntax):
     """
-    Syntactic construct for Haskell-style list comprehensions and lazy list
-    creation.
+    L is the syntactic construct for Haskell-style list comprehensions and lazy
+    list creation.
 
     List comprehensions can be used with any instance of Enum, including the
     built-in types int, long, float, and char.
-
     There are four basic list comprehension patterns:
 
     >>> L[1, ...]
@@ -219,7 +214,7 @@ class __list_comprehension__(Syntax):
             elif len(lst) == 4 and lst[2] is Ellipsis:
                 return List(tail=enumFromThenTo(lst[0], lst[1], lst[3]))
 
-            self.raise_invalid()
+            self.raise_invalid("Invalid list comprehension: %s" % lst)
 
         elif hasattr(lst, "next") or hasattr(lst, "__next__"):
             return List(tail=lst)
@@ -227,4 +222,4 @@ class __list_comprehension__(Syntax):
         return List(head=lst)
 
 
-L = __list_comprehension__("Invalid list comprehension")
+L = __list_comprehension__("Invalid input to list constructor")

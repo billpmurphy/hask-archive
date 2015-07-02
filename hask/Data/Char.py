@@ -282,7 +282,9 @@ def digitToInt(s):
     unless its argument satisfies isHexDigit, but recognises both upper and
     lower-case hexadecimal digits (i.e. '0'..'9', 'a'..'f', 'A'..'F').
     """
-    raise NotImplementedError
+    if s not in "0123456789abcdefABCDEF":
+        raise ValueError("not a digit %s" % s)
+    return "0123456789abcdef".index(s.lower())
 
 
 @sig(H/ int >> str)
@@ -294,7 +296,9 @@ def intToDigit(s):
     This function fails on other inputs, and generates lower-case hexadecimal
     digits.
     """
-    raise NotImplementedError
+    if s > 15 or s < 0:
+        raise ValueError("not a digit %s" % s)
+    return str(s) if s < 10 else "abcdef"[s-10]
 
 
 #=============================================================================#

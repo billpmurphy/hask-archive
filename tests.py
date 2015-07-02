@@ -356,30 +356,36 @@ class TestHindleyMilner(unittest.TestCase):
                     Function(TypeOperator(int, []), TypeOperator(int, [])),
                     Function(TypeOperator(int, []), TypeOperator(int, []))))
 
-    def test_builtins(self):
+    def test_typecheck_builtins(self):
         """Make sure builtin types typecheck correctly"""
 
+        # 1 :: int
         self.unified(typeof(1), TypeOperator(int, []))
 
+        # Nothing :: Maybe a
         self.unified(
                 typeof(Nothing),
                 TypeOperator(Maybe, [TypeVariable()]))
 
+        # Just(1) :: Maybe int
         self.unified(
                 typeof(Just(1)),
                 TypeOperator(Maybe, [TypeOperator(int, [])]))
 
+        # Just(Just(Nothing)) :: Maybe (Maybe (Maybe a))
         self.unified(
                 typeof(Just(Just(Nothing))),
                 TypeOperator(Maybe,
                     [TypeOperator(Maybe,
                         [TypeOperator(Maybe, [TypeVariable()])])]))
 
+        # Right("error") :: Either a str
         self.unified(
                 typeof(Right("error")),
                 TypeOperator(Either, [TypeVariable(),
                     TypeOperator(str, [])]))
 
+        # Left(2.0) :: Either float a
         self.unified(
                 typeof(Left(2.0)),
                 TypeOperator(Either,
@@ -408,22 +414,20 @@ class TestTypeSystem(unittest.TestCase):
     def test_TypedFunc_builtin(self):
         """TypedFunc with builtin types"""
 
-        @sig(H/ int >> int)
-        def f(x):
-            return x + 2
-
-        @sig(H/ int >> int)
-        def g(x):
-            return x - 5
+        f = (lambda x: x + 2) ** (H/ int >> int)
+        g = (lambda x: x - 5) ** (H/ int >> int)
+        h = (lambda x: x * 2) ** (H/ int >> int)
+        i = (lambda x: str(x)) ** (H/ int >> str)
 
         # basic type checking
         self.assertEqual(2, f(g(5)))
+        self.assertEqual(2, (f * g)(5))
+        self.assertEqual(2, f * g % 5)
+        self.assertEqual(f(h(g(5))), (f * h * g)(5))
+        self.assertEqual((i * h * f)(9), "22")
         with self.assertRaises(te): f(4.0)
         with self.assertRaises(te): f("4")
         with self.assertRaises(te): f(1, 2)
-
-        self.assertEqual(2, (f * g)(5))
-        self.assertEqual(2, f * g % 5)
 
     def test_match(self):
         match_only = lambda v, p: pattern_match(v, p)[0]
@@ -461,15 +465,13 @@ class TestTypeSystem(unittest.TestCase):
                 pattern_match(Right(Just("a")), Right(Just(pb("a")))))
         self.assertEqual((False, {"a":1}),
                 pattern_match((2, 1), (3, pb("a"))))
+        self.assertEqual((True, {"a":1, "b":2, "_":"a"}),
+                pattern_match((1, "a", 2), (pb("a"), pb("_"), pb("b"))))
 
         with self.assertRaises(se):
             pattern_match((1, 2), (pb("c"), pb("a")), {"c":1})
         with self.assertRaises(se):
             pattern_match((1, 2), (pb("c"), pb("a")), {"a":1})
-
-        # putting it all together
-        self.assertEqual((True, {"a":1, "b":2, "_":"a"}),
-                pattern_match((1, "a", 2), (pb("a"), pb("_"), pb("b"))))
 
 
 class TestADTInternals_Enum(unittest.TestCase):
@@ -599,6 +601,11 @@ class TestADTInternals_Builtin(unittest.TestCase):
             Bounded.derive_instance(self.Type_Const)
 
 
+class TestADTInternals_Poly(unittest.TestCase):
+    pass
+
+
+
 class TestADTSyntax(unittest.TestCase):
 
     def test_data(self):
@@ -653,7 +660,7 @@ class TestBuiltins(unittest.TestCase):
         self.assertEqual(-1, pred(pred(pred(2))))
 
     def test_num(self):
-        self.assertTrue(has_instance(float, Num))
+        self.assertTrue(has_instance(int, Num))
         self.assertTrue(has_instance(float, Num))
 
 
@@ -661,7 +668,6 @@ class TestSyntax(unittest.TestCase):
 
     def test_syntax(self):
         s = Syntax("err")
-
         with self.assertRaises(se): len(s)
         with self.assertRaises(se): s[0]
         with self.assertRaises(se): s[1]
@@ -683,7 +689,6 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): ~s
         with self.assertRaises(se): +s
         with self.assertRaises(se): -s
-
         with self.assertRaises(se): s + 1
         with self.assertRaises(se): s - 1
         with self.assertRaises(se): s * 1
@@ -696,7 +701,6 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): s & 1
         with self.assertRaises(se): s | 1
         with self.assertRaises(se): s ^ 1
-
         with self.assertRaises(se): 1 + s
         with self.assertRaises(se): 1 - s
         with self.assertRaises(se): 1 * s
@@ -708,7 +712,6 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): 1 & s
         with self.assertRaises(se): 1 | s
         with self.assertRaises(se): 1 ^ s
-
         with self.assertRaises(se): s += 1
         with self.assertRaises(se): s -= 1
         with self.assertRaises(se): s *= 1
@@ -760,15 +763,18 @@ class TestSyntax(unittest.TestCase):
         self.assertFalse((5 <= __)(4))
 
         # double sections
-        # TODO: add partially applied double sections
         self.assertEqual(3, (__+__)(1, 2))
         self.assertEqual(1, (__-__)(2, 1))
         self.assertEqual(4, (__*__)(1, 4))
         self.assertEqual(3, (__/__)(12, 4))
+        self.assertEqual(3, (__+__)(1)(2))
+        self.assertEqual(1, (__-__)(2)(1))
+        self.assertEqual(4, (__*__)(1)(4))
+        self.assertEqual(3, (__/__)(12)(4))
 
         # sections composed with `fmap`
-        self.assertEqual(3, ((__+1) * (__+1) * (1+__))(0))
-        self.assertEqual(3, (__+1) * (__+1) * (1+__) % 0)
+        self.assertEqual(12, ((__*4) * (__+2) * (1+__))(0))
+        self.assertEqual(2, (__+1) * (__/2) * (2-__) % 0)
         self.assertEqual(4, (__ + 1) * (__ * 3) % 1)
 
     def test_guard(self):

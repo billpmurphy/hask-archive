@@ -29,5 +29,5 @@ instance(Functor, List).where(
 )
 
 instance(Functor, TypedFunc).where(
-    fmap = TypedFunc.__mul__
+    fmap = TypedFunc.__rmul__
 )

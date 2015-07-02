@@ -331,7 +331,7 @@ class TypedFunc(Hask):
         """
         return self.__call__(arg)
 
-    def __mul__(self, fn):
+    def __rmul__(self, fn):
         """
         (*) :: (b -> c) -> (a -> b) -> (a -> c)
 
