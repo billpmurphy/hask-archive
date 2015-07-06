@@ -1,5 +1,6 @@
-import types
 import functools
+import types
+import string
 from collections import namedtuple
 
 from hindley_milner import TypeVariable
@@ -226,7 +227,7 @@ def build_sig_arg(arg, var_dict):
         return arg
 
     # string representing type variable
-    elif isinstance(arg, str):
+    elif isinstance(arg, str) and all((l in string.lowercase for l in arg)):
         if arg not in var_dict:
             var_dict[arg] = TypeVariable()
         return var_dict[arg]

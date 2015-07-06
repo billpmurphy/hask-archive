@@ -610,6 +610,8 @@ class TestADTSyntax(unittest.TestCase):
 
     def test_data(self):
         # these are not syntactically valid
+        with self.assertRaises(se): data.N("!")
+        with self.assertRaises(se): data.N("A")
         with self.assertRaises(se): data.N("a", "a")
         with self.assertRaises(se): data.N(1, "b")
         with self.assertRaises(se): data.N("a")("b")
