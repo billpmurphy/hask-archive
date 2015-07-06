@@ -1,4 +1,5 @@
 import operator
+import string
 from collections import deque
 
 from type_system import typeof
@@ -374,6 +375,8 @@ class __data__(Syntax):
         super(__data__, self).__init__("Syntax error in `data`")
 
     def __getattr__(self, value):
+        if not value[0] in string.uppercase:
+            self.raise_invalid("Type constructor name must be capitalized")
         return __new_tcon_enum__(value)
 
 
@@ -423,6 +426,11 @@ class __new_tcon_enum__(__new_tcon__):
         # make sure all type params are strings
         if not all((type(arg) == str for arg in typeargs)):
             self.raise_invalid("Type parameters must be strings")
+
+        # make sure all type params are letters only
+        is_letters = lambda xs: all((x in string.lowercase for x in xs))
+        if not all((is_letters(arg) for arg in typeargs)):
+            self.raise_invalid("Type parameters must be lowercase letters")
 
         # all type parameters must have unique names
         if len(typeargs) != len(set(typeargs)):

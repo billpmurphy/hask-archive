@@ -96,8 +96,12 @@ class List(collections.Sequence, Hask):
         return self
 
     def __str__(self):
+        if len(self.__head) == 0 and self.__is_evaluated:
+            return "L[[]]"
+        elif len(self.__head) == 1 and self.__is_evaluated:
+            return "L[[%s]]" % show(self.__head[0])
         body = ", ".join((show(s) for s in self.__head))
-        return "L[{0}]" % body if self.__is_evaluated else "L[{0} ...]" % body
+        return "L[%s]" % body if self.__is_evaluated else "L[%s ...]" % body
 
     def __eq__(self, other):
         # this is horrifically inefficient
@@ -142,7 +146,7 @@ class List(collections.Sequence, Hask):
         if is_slice:
             istart, istop, istep = ix.indices(len(self.__head))
             indices = enumFromThenTo(istart, istart+istep, istop-istep)
-            return List([self.__head[idx] for idx in indices])
+            return List(head=[self.__head[idx] for idx in indices])
         return self.__head[ix]
 
     def fmap(self, fn):
@@ -174,7 +178,7 @@ Read.make_instance(List, read=eval)
 class __list_comprehension__(Syntax):
     """
     L is the syntactic construct for Haskell-style list comprehensions and lazy
-    list creation.
+    list creation. To create a new List, just wrap an interable in L[ ].
 
     List comprehensions can be used with any instance of Enum, including the
     built-in types int, long, float, and char.

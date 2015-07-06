@@ -78,6 +78,8 @@ class TypeMeta(type):
                 return self.__instances__[id(type(item))]
             elif isinstance(item, ADT):
                 return self.__instances__[id(item.__type_constructor__)]
+            elif isinstance(typeof(item), ListType):
+                return self.__instances__[id(type(item))]
             return self.__instances__[id(typeof(item))]
         except KeyError:
             raise TypeError("No instance for {0}".format(item))

@@ -72,14 +72,50 @@ Hask is a grab-bag of features that add up to one big pseudo-Haskell functional
 programming library. The rest of this README lays out the basics.
 
 I recommend playing around in the REPL while going through the examples. You
-can import all the language features and everything from the Prelude with `from
-hask import *`
+can import all the language features with `from hask import *`. To import the
+Prelude, use `from hask.Prelude import *`.
 
 
 ### The List type and list comprehensions
 
+To create a new list, or put an iterable inside `L[ ]`.
 
-As in Haskell, there are four basic type of list comprehensions:
+```python
+>>> L[1, 2, 3]
+L[1, 2, 3]
+
+>>> my_list = ["a", "b", "c"]
+>>> L[my_list]
+L['a', 'b', 'c']
+
+>>> L[(x**2 for xs in range(1, 11)]
+L[1 ... ]
+```
+
+To add elements to the front of a List, use `^`, the cons operator.  To combine
+two lists, use `+`, the concatenation operator.
+
+```
+>>> 1 ^ L[2, 3]
+L[1, 2, 3]
+
+>>> "goodnight" ^ ("sweet" ^ ("prince" ^ L[[]]))
+L["goodnight", "sweet", "price"]
+
+>>> "a" ^ L[1.0, 10.3]  # type error
+
+>>> L[1, 2] + L[3, 4]
+L[1, 2, 3, 4]
+```
+
+Lists are always evaluated lazily, and will only evaluate list elements as
+needed, so you can use infinite Lists or put never-ending generators inside of a `List`. (Of course, you can still blow up the interpreter if you try
+to evaluate the entirety of an infinite List, e.g. by trying to find the length
+of the List with `len`.)
+
+One way to create infinite lists is via list comprehensions. As in Haskell,
+there are four basic type of list comprehensions:
+
 
 ```python
 # list from 1 to infinity, counting by ones
@@ -95,31 +131,35 @@ L[1, ..., 20]
 L[1, 5, ..., 20]
 ```
 
-List comprehensions are also evaluated lazily, so you can use infinite lists in
-your programs without blowing up the interpreter, so long as you don't evaluate
-the entire list (e.g. by trying to find the length of the list with `len`).
+List comprehensions can be used on ints, longs, floats, one-character strings,
+or any other instance of the `Enum` typeclass (more on this later).
+
+Hask provides all of the Haskell functions for List manipulation (`take`,
+`drop`, `takeWhile`, etc.), or you can also use Python-style indexing.
+
 
 ```python
->>> from hask.Data.Char import chr, toUpper
+>>> L[1, ...]
+L[1 ...]
+
+
 >>> from hask.Data.List import take
->>> take(5, map_(toUpper * chr, L[1, ...]))
-L['A', 'B', 'C', 'D', 'E']
+>>> take(5, L["a", "b", ...])
+L['a', 'b', 'c', 'd', 'e']
 
 
-def naive_prime_sieve(n):
-    """Find the first n primes"""
-    primes = L[[]]
+>>> L[1,...][5:10]
+L[6, 7, 8, 9, 10]
 
-    for i in L[1, ...]:
-        if len(primes) == n:
-            break
 
-        for prime in primes:
-            if i % prime == 0:
-                break
-        else:
-            primes.append(i)
-    return primes
+>>> from hask.Data.List import map
+>>> from hask.Data.Char import chr
+>>> letters = map(chr, L[97, ...])
+>>> letters[:9]
+L['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
+
+
+>>> len(L[1, 3, ...])  # uh oh
 ```
 
 
@@ -128,7 +168,7 @@ def naive_prime_sieve(n):
 Hask allows you to define algebraic datatypes, which are immutable objects with
 a fixed number of typed, unnamed fields.
 
-Here is the definition for the `Maybe` type:
+Here is the definition for the infamous `Maybe` type:
 
 ```python
 from hask import data, d, deriving
@@ -152,11 +192,8 @@ should be separted by `|`. If your data constructor has no fields, you can omit
 the parens. For example:
 
 ```python
-FooBar, Foo, Bar, Baz =\
-    data.FooBar("a", "b") == d.Foo(int, int, str)
-                           | d.Bar
-                           | d.Baz("a", "b")
-                           & deriving (Show, Eq)
+FooBar, Foo, Bar =\
+    data.FooBar("a", "b") == d.Foo("a", "b", str) | d.Bar
 ```
 
 To automagically derive typeclass instances for the type, add `&
@@ -216,7 +253,10 @@ Either a (str, int)
 
 ### The type system and typed functions
 
-So what's up with those types?
+So what's up with those types? Hask operates its own shadow Hindley-Milner type
+system on top of Python's type system; `_t` is showing you the shadow type of a
+particular object.
+
 
 There are two ways to create `TypedFunc` objects:
 
@@ -229,8 +269,8 @@ def const(x, y):
 ```
 
 2) Use the `**` operator (similar to `::` in Haskell) to provide the type.
-Useful for giving turning functions or lambdas into `TypedFunc` objects in the
-REPL or wrapping already-defined functions.
+Useful for turning functions or lambdas into `TypedFunc` objects in the REPL,
+or wrapping already-defined Python functions.
 
 ```python
 def const(x, y):
@@ -261,8 +301,9 @@ Second, `TypedFunc` objects can be partially applied:
 >>> g(10, 2, 3)
 2
 
->>> a = g(12)
->>> a(2, 2)
+>>> part_g = g(12)
+
+>>> part_g(2, 2)
 3
 
 >>> g(20, 1)(4)
@@ -275,21 +316,15 @@ operators. `*` is the compose operator (equivalent to `(.)` in Haskell), so
 which applies a `TypedFunc` to one argument (equivalent to `($)` in Haskell).
 
 ```python
->>> f = (lambda x, y: x + " " + y) ** (H/ str >> str >> str)
-
->>> h = f("goodnight") * f("sweet")
->>> h("prince")
-'goodnight sweet prince'
-
->>> f("I") * f("am") * f("a") % "banana"
-'I am a banana'
 ```
+
+The convinience of this notation (when combined with partial application) cannot be overstated--you can get rid of a ton of nested parenthesis this way.
 
 The compose operation is also typed-checked, which makes it appealing to
 write programs in the Haskell style of chaining together lots of functions with
 composition and relying on the type system to catch programming errors.
 
-As you would expect, data constructors are also `TypedFunc` instances:
+As you would expect, data constructors are also just `TypedFunc` objects:
 
 ```python
 >>> Just * Just * Just * Just % 77
@@ -299,6 +334,16 @@ Just(Just(Just(Just(77))))
 The type signature syntax is very simple, and consists of a few basic
 primitives:
 
+| Primitive | Syntax/examples |
+| --------- | --------------- |
+| Type literal for Python builtin type or user-defined class | `int`, `float`, `set`, etc |
+| Type variable | `"a"`, `"b"`, `"zz"`, etc |
+| `List` of some type | `[int]`, `["a"]`, etc |
+| Tuple type | `(int, int)`, `("a", "b", "c")`, etc |
+| ADT with type parameters | `t(Maybe, "a")`, `t(Either, "a", str)`, etc |
+| Unit type (`None`) | `None` |
+| Untyped Python function | `func` |
+| Typeclass constraint | `H[(Eq, "a")]/`, `H[(Functor, "f"), (Show, "f")]/`, etc |
 
 Some examples:
 
@@ -337,6 +382,13 @@ def not_equals(x, y):
 @sig(H/ int >> int >> t(Maybe, int))
 def safe_div(x, y):
     return Nothing if y == 0 else Just(x/y)
+
+
+# type signature for a function that returns nothing
+@sig(H/ int >> None)
+def launch_missiles(num_missiles):
+    print "Launching {0} missiles! Bombs away!" % num_missiles
+    return
 ```
 
 It is also possible to create type synonyms using `t`. For example, check out the definition of `Rational`:
@@ -356,7 +408,6 @@ def addRational(rat1, rat2):
 
 ### Pattern matching
 
-You can also use pattern matching as you would in Haskell, to con
 
 Here is a function that uses pattern matching to compute the fibonacci sequence:
 
@@ -434,10 +485,11 @@ up.
 
 
 Typeclasses allow you to add additional functionality to your ADTs. Hask
-implements all of the major typeclasses from Haskell (see the appendix for a
-full list) and provides syntax for creating a new typeclass instance.  As an
-example, let's add a `Monad` instance for the `Maybe` type.  First, we need to
-add `Functor` and `Applicative` instances.
+implements all of the major typeclasses from Haskell (see the Appendix for a
+full list) and provides syntax for creating new typeclass instances.
+
+As an example, let's add a `Monad` instance for the `Maybe` type.  First, we
+need to add `Functor` and `Applicative` instances.
 
 
 ```python
@@ -472,22 +524,23 @@ instance of `Functor` can be used with the infix `fmap` operator, `*`. This is
 equivalent to `<$>` in Haskell. Rewriting our example from above:
 
 ```python
->>> (times2 * toFloat) * Just(25)
+>>> (toFloat * times2) * Just(25)
 Just(50.0)
 
->>> (times2 * toFloat) * Nothing
+>>> (toFloat * times2) * Nothing
 Nothing
 ```
 
-(Note that in this example we use `*` as both the function compose operator and
+Note that in this example we use `*` as both the function compose operator and
 as `fmap`, to lift functions into a `Maybe` value. If this seems confusing,
-remember that `fmap` for functions is just function composition!)
+remember that `fmap` for functions is just function composition!
 
 
 Now that we have made `Maybe` an instance of `Functor`, we can make it an
 instance of `Applicative` and then an instance of `Monad` by defining the
 appropriate function implementations. To implement `Applicative`, we just need
 to provide `pure`. To implement `Monad`, we need to provide `bind`.
+
 
 ```python
 >>> from hask import Applicative, Monad
@@ -506,8 +559,8 @@ to provide `pure`. To implement `Monad`, we need to provide `bind`.
 The `bind` function also has an infix form, which is `>>` in Hask.
 
 ```python
->>> f = (lambda x: Just(x + 10)) ** (H/ int >> int)
->>> g = (lambda x: Just(x+3) if x != Nothing else x) ** (H/ int >> t(Maybe, int))
+>>> f = (lambda x: Just(x + 10)) ** (H/ int >> t(Maybe, int))
+>>> g = (lambda x: Just(x + 3)) ** (H/ int >> t(Maybe, int))
 >>> h = (lambda _: Nothing) ** (H/ "a" >> t(Maybe, "a"))
 
 >>> Just(3) >> f >> g
@@ -546,7 +599,7 @@ instance(Eq, Person).where(
 False
 ```
 
-If you want instances of the`Show`, `Eq`, `Read`, `Ord`, and `Bounded`
+If you want instances of the `Show`, `Eq`, `Read`, `Ord`, and `Bounded`
 typeclasses for your ADTs, it is adviseable to use `deriving` to automagically
 generate instances rather than defining them manually.
 
@@ -568,7 +621,7 @@ just `TypedFunc` objects, so they are automagically curried and typechecked.
 >>> f(10)
 8172
 
->>> ((__+10) * (90/__)) * Just(20)
+>>> ((90/__) * (10+__)) * Just(20)
 Just(3)
 
 >>> from hask.Data.List import takeWhile
@@ -724,7 +777,8 @@ def some_function(x, y):
 All of your favorite functions from `Prelude`, `Data.List`, `Data.Maybe`,
 `Data.Either`, `Data.Monoid`, and more are implemented too. Everything is
 pretty well documented, so if you're not sure about some function or typeclass,
-use `help` liberally. Some highlights:
+use `help` liberally. See the Appendix below for a full list of modules. Some
+highlights:
 
 ```python
 >>> from Data.List import mapMaybe
@@ -738,7 +792,7 @@ True
 ```
 
 Hask also has wrappers some existing Python functions in TypedFunc objects, for
-easy of compatibity. (Eventually, Hask will have typed wrappers for much of the
+ease of compatibity. (Eventually, Hask will have typed wrappers for much of the
 Python standard library.)
 
 ```python
@@ -771,15 +825,15 @@ That's all, folks!
 | `Applicative` | `Functor` | `pure` | | |
 | `Monad` | `Applicative` | `bind` | | `>>` |
 | `Monoid` | | `mappend`, `mempty` |  `mconcat` | `+` |
-| `Foldable` | `Functor` |
-| `Traversable` |
-| `Num` | `Show`, `Eq` | | | `+`, `-`, `*`, `/` |
-| `Fractional` | `Num` |
-| `Floating` | `Fractional` |
+| `Foldable` | `Functor` | `foldr` | `fold`, `foldMap`, `foldr_`, `foldl`, `foldl_`, `foldr1`, `foldl1`, `toList`, `null`, `length`, `elem`, `maximum`, `minimum`, `sum`, `product` | `len` |
+| `Traversable` | `Foldable`, `Traversable` | `traverse` | `sequenceA`, `mapM`, `sequence` | |
+| `Num` | `Show`, `Eq` | `abs`, `signum`, `fromInteger`, `negate` | `+`, `-`, `*` |
 | `Real` | `Num`, `Ord` | `toRational` | |
-| `Integral` | `Real`, `Enum` | | |
-| `RealFrac` | `Real`, `Fractional` |
-| `RealFloat` | `Floating`, `RealFrac` |
+| `Integral` | `Real`, `Enum` | `quotRem`, `toInteger` | `quot`, `rem`, `div`, `mod`, `toInteger` | `/`, `%` |
+| `Fractional` | `Num` | `fromRational`, `recip` |  | `\` |
+| `Floating` | `Fractional` | `pi`, `exp`, `log`, `sin`, `cos`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `asinh`, `cosh`, `atanh` | |
+| `RealFrac` | `Real`, `Fractional` | `properFraction` `truncate`, `round`, `ceiling`, `floor` |
+| `RealFloat` | `Floating`, `RealFrac` | `floatRadix`, `floatDigits`, `floatRange`, `decodeFloat`, `encodeFloat`, `exponent`, `significand`, `scaleFloat`, `isNaN`, `isInfinite`, `isDenormalized`, `isNegativeZero`, `isIEEE`, `atan2` |
 
 
 **Table 2.** Hask library structure.
@@ -793,11 +847,11 @@ That's all, folks!
 | `hask.Data.List` | `hask.lang`
 | `hask.Data.String` | `hask.lang` | `words`, `unwords`, `lines`, `unlines` |
 | `hask.Data.Tuple` | `hask.lang` | `fst`, `snd`, `swap`, `curry`, `uncurry` |
-| 'hask.Data.Char` | `hask.lang` |
+| `hask.Data.Char` | `hask.lang` |
 | `hask.Data.Eq` | `hask.lang` | `Eq` (`==`, `!=`)
 | `hask.Data.Ord` | `hask.lang`, `hask.Data.Eq` |
 | `hask.Data.Functor` | `hask.lang` | `Functor` (`fmap`, `>>`) |
-| `hask.Data.Foldable` | `hask.lang`
+| `hask.Data.Foldable` | `hask.lang` |
 | `hask.Data.Traversable` | `hask.lang`
 | `hask.Data.Monoid` | `hask.lang`
 | `hask.Data.Ratio` | `hask.lang`

@@ -13,7 +13,6 @@ from hask import __
 from hask import data
 from hask import d
 from hask import deriving
-from hask import List
 from hask import L
 from hask import Ordering, LT, EQ, GT
 from hask import Maybe, Just, Nothing, in_maybe
@@ -54,6 +53,7 @@ from hask.lang.hindley_milner import Tuple
 from hask.lang.hindley_milner import analyze
 from hask.lang.hindley_milner import unify
 
+from hask.lang.lazylist import List
 
 te = TypeError
 se = SyntaxError
@@ -610,6 +610,8 @@ class TestADTSyntax(unittest.TestCase):
 
     def test_data(self):
         # these are not syntactically valid
+        with self.assertRaises(se): data.n
+        with self.assertRaises(se): data.n("a")
         with self.assertRaises(se): data.N("!")
         with self.assertRaises(se): data.N("A")
         with self.assertRaises(se): data.N("a", "a")
@@ -829,30 +831,6 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): ~guard(1)
         with self.assertRaises(se): otherwise >> "1" >> "2"
         with self.assertRaises(se): "1" >> otherwise
-
-    def test_list_comp(self):
-        # numeric lists
-        self.assertEqual(10, len(L[0, ...][:10]))
-        self.assertEqual(L[0, ...][:10], L[range(10)])
-        self.assertEqual(L[-10, ...][:10], L[range(-10, 0)])
-        self.assertEqual(11, len(L[-5, ..., 5]))
-        self.assertEqual(list(L[-5, ..., 5]), list(range(-5, 6)))
-        self.assertEqual(list(L[-5, -4, ..., 5]), list(range(-5, 6)))
-        self.assertEqual(list(L[-5, -3, ..., 5]), list(range(-5, 6, 2)))
-        self.assertEqual(L[1, 3, 5, 7], L[1, 3, ...][:4])
-        self.assertEqual(L[3, 5, 7], L[1, 3, ...][1:4])
-        self.assertEqual(L[5, 7], L[1, 3, ...][2:4])
-        self.assertEqual([], list(L[1, 3, ...][4:4]))
-        self.assertEqual([], list(L[1, 3, ...][5:4]))
-        self.assertEqual(L[1, 3, 5, 7], L[1, 3, ..., 7])
-        self.assertEqual(L[1, 3, 5, 7], L[1, 3, ..., 8])
-        self.assertEqual([], list(L[6, ..., 4]))
-        self.assertEqual([], list(L[2, 3, ..., 1]))
-
-        # character lists
-        self.assertEqual(10, len(L["a", ...][:10]))
-        self.assertEqual("abcdefghij", "".join(L["a", ...][:10]))
-        self.assertEqual(11, len(L["a", ..., "k"]))
 
     def test_caseof(self):
         # literal matching
@@ -1075,23 +1053,34 @@ class TestList(unittest.TestCase):
         #self.assertTrue(has_instance(List, Foldable))
         #self.assertTrue(has_instance(List, Traversable))
 
-    def test_cons(self):
-        self.assertEqual(L[[1]], 1 ^ L[[]])
-        self.assertEqual(L[1, 2, 3], 1 ^ (2 ^ L[[3]]))
-        with self.assertRaises(te): "a" ^ L[2, 4]
-
-    def test_extend(self):
-        self.assertEqual(L[1, 2, 3, 4], L[1, 2] + L[3, 4])
-        with self.assertRaises(te): L[1.0, 2.0] + L[3, 4]
+    def test_eq(self):
+        self.assertEqual(L[[]], L[[]])
 
     def test_show(self):
         from hask.Prelude import show
-        #self.assertEqual("L[1, 2]", show(L[1, 2]))
+        self.assertEqual("L[[]]", show(L[[]]))
+        self.assertEqual("L[[2.0]]", show(L[[2.0]]))
+        self.assertEqual("L[['a']]", show(L[['a']]))
+        self.assertEqual("L[1, 2]", show(L[1, 2]))
+
+    def test_cons(self):
+        self.assertEqual(L[[1]], 1 ^ L[[]])
+        self.assertEqual(L[1, 2, 3], 1 ^ (2 ^ L[[3]]))
+        self.assertEqual(L[True, False, True], True ^ (False ^ L[[True]]))
+        with self.assertRaises(te): "a" ^ L[2, 4]
+        with self.assertRaises(te): True ^ L[2, 4]
+
+    def test_extend(self):
+        self.assertEqual(L[1, 2, 3, 4, 5], L[1, 2] + L[3, 4] + L[[5]])
+        self.assertEqual(L[1, 2, 3, 4, 5], L[1, 2] + L[[]] + L[3, 4, 5])
+        with self.assertRaises(te): L[1.0, 2.0] + L[3, 4]
 
     def test_indexing(self):
         # TODO: add more corner cases
 
         ie = IndexError
+
+        # regular indexing
         self.assertEqual(3, L[range(10)][3])
         self.assertEqual(3, L[range(4)][-1])
         self.assertEqual(3, L[(i for i in range(10))][3])
@@ -1100,18 +1089,37 @@ class TestList(unittest.TestCase):
         self.assertEqual(2, L[[0, 1, 2, 3]][-2])
         self.assertEqual(1, L[(0, 1, 2, 3)][1])
         self.assertEqual(1, L[(0, 1, 2, 3)][-3])
+        with self.assertRaises(ie): L[((0, 1, 2))][3]
+        with self.assertRaises(ie): L[((0, 1, 2))][-4]
+        with self.assertRaises(ie): L[((i for i in range(3)))][3]
+        with self.assertRaises(ie): L[((i for i in range(3)))][-4]
 
-        with self.assertRaises(ie): List((0, 1, 2))[3]
-        with self.assertRaises(ie): List((0, 1, 2))[-4]
-        with self.assertRaises(ie): List((i for i in range(3)))[3]
-        with self.assertRaises(ie): List((i for i in range(3)))[-4]
+        # slice indexing
 
-    def test_eq(self):
-        self.assertEqual(list(range(10)), list(List(range(10))))
-        self.assertEqual(List(range(10)), List(range(10)))
-        self.assertEqual(L[range(10)], List(range(10)))
-        self.assertEqual(List(range(10)),
-                          List((i for i in range(10))))
+
+    def test_list_comp(self):
+        # numeric lists
+        self.assertEqual(10, len(L[0, ...][:10]))
+        self.assertEqual(L[0, ...][:10], L[range(10)])
+        self.assertEqual(L[-10, ...][:10], L[range(-10, 0)])
+        self.assertEqual(11, len(L[-5, ..., 5]))
+        self.assertEqual(list(L[-5, ..., 5]), list(range(-5, 6)))
+        self.assertEqual(list(L[-5, -4, ..., 5]), list(range(-5, 6)))
+        self.assertEqual(list(L[-5, -3, ..., 5]), list(range(-5, 6, 2)))
+        self.assertEqual(L[1, 3, 5, 7], L[1, 3, ...][:4])
+        self.assertEqual(L[3, 5, 7], L[1, 3, ...][1:4])
+        self.assertEqual(L[5, 7], L[1, 3, ...][2:4])
+        self.assertEqual([], list(L[1, 3, ...][4:4]))
+        self.assertEqual([], list(L[1, 3, ...][5:4]))
+        self.assertEqual(L[1, 3, 5, 7], L[1, 3, ..., 7])
+        self.assertEqual(L[1, 3, 5, 7], L[1, 3, ..., 8])
+        self.assertEqual([], list(L[6, ..., 4]))
+        self.assertEqual([], list(L[2, 3, ..., 1]))
+
+        # character lists
+        self.assertEqual(10, len(L["a", ...][:10]))
+        self.assertEqual("abcdefghij", "".join(L["a", ...][:10]))
+        self.assertEqual(11, len(L["a", ..., "k"]))
 
     def test_functor(self):
         test_f = lambda x: x ** 2 - 1
@@ -1327,9 +1335,11 @@ class TestPython(unittest.TestCase):
         # add more
         self.assertEqual(1, cmp(10)(9))
         self.assertEqual(divmod(5)(2), (2, 1))
+
         with self.assertRaises(te): oct(1.0)
         with self.assertRaises(te): hex(1.0)
         with self.assertRaises(te): hasattr(list)(len)
+        with self.assertRaises(te): getattr(list)(len)
 
 
 class Test_README_Examples(unittest.TestCase):
