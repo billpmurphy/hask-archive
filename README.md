@@ -78,7 +78,12 @@ Prelude, use `from hask.Prelude import *`.
 
 ### The List type and list comprehensions
 
-To create a new list, or put an iterable inside `L[ ]`.
+
+Hask provides the `List` type, a lazy and statically-typed list, similar to
+Haskell's standard list type.
+
+To create a new `List`, just put the elements inside `L[` and `]` brackets, or
+wrap an existing iterable inside `L[ ]`.
 
 ```python
 >>> L[1, 2, 3]
@@ -254,7 +259,7 @@ Either a (str, int)
 ### The type system and typed functions
 
 So what's up with those types? Hask operates its own shadow Hindley-Milner type
-system on top of Python's type system; `_t` is showing you the shadow type of a
+system on top of Python's type system; `_t` is showing you the Hask type of a
 particular object.
 
 
@@ -470,7 +475,7 @@ If you find pattern matching on ADTs too cumbersome, you can also use numeric
 indexing on ADT fields. An `IndexError` will be thrown if you mess something
 up.
 
-```
+```python
 >>> Just(20.0)[0]
 20.0
 
@@ -826,11 +831,11 @@ That's all, folks!
 | `Monad` | `Applicative` | `bind` | | `>>` |
 | `Monoid` | | `mappend`, `mempty` |  `mconcat` | `+` |
 | `Foldable` | `Functor` | `foldr` | `fold`, `foldMap`, `foldr_`, `foldl`, `foldl_`, `foldr1`, `foldl1`, `toList`, `null`, `length`, `elem`, `maximum`, `minimum`, `sum`, `product` | `len` |
-| `Traversable` | `Foldable`, `Traversable` | `traverse` | `sequenceA`, `mapM`, `sequence` | |
+| `Traversable` | `Foldable`, `Functor` | `traverse` | `sequenceA`, `mapM`, `sequence` | |
 | `Num` | `Show`, `Eq` | `abs`, `signum`, `fromInteger`, `negate` | `+`, `-`, `*` |
 | `Real` | `Num`, `Ord` | `toRational` | |
 | `Integral` | `Real`, `Enum` | `quotRem`, `toInteger` | `quot`, `rem`, `div`, `mod`, `toInteger` | `/`, `%` |
-| `Fractional` | `Num` | `fromRational`, `recip` |  | `\` |
+| `Fractional` | `Num` | `fromRational`, `recip` |  | `/` |
 | `Floating` | `Fractional` | `pi`, `exp`, `log`, `sin`, `cos`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `asinh`, `cosh`, `atanh` | |
 | `RealFrac` | `Real`, `Fractional` | `properFraction` `truncate`, `round`, `ceiling`, `floor` |
 | `RealFloat` | `Floating`, `RealFrac` | `floatRadix`, `floatDigits`, `floatRange`, `decodeFloat`, `encodeFloat`, `exponent`, `significand`, `scaleFloat`, `isNaN`, `isInfinite`, `isDenormalized`, `isNegativeZero`, `isIEEE`, `atan2` |
@@ -864,4 +869,4 @@ That's all, folks!
 | `hask.lang.type_system` | `hask.lang.hindley_milner`
 | `hask.lang.syntax` | `hask.lang.type_system`
 | `hask.lang.typeclasses` | `hask.lang.type_system`, `hask.lang.syntax`
-| hask.lang.lazylist | `hask.lang.type_system`, `hask.lang.hindley_milner`, `hask.lang.syntax`, `hask.lang.typeclasses |
+| `hask.lang.lazylist` | `hask.lang.type_system`, `hask.lang.hindley_milner`, `hask.lang.syntax`, `hask.lang.typeclasses` | `L` |

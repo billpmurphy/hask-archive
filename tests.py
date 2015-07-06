@@ -1055,6 +1055,11 @@ class TestList(unittest.TestCase):
 
     def test_eq(self):
         self.assertEqual(L[[]], L[[]])
+        self.assertEqual(L[1, 2], L[1, 2])
+        self.assertEqual(L[1, 2], L[[1, 2]])
+        self.assertNotEqual(L[1, 2], L[2, 2])
+
+        # with infinite lists
 
     def test_show(self):
         from hask.Prelude import show
@@ -1062,6 +1067,7 @@ class TestList(unittest.TestCase):
         self.assertEqual("L[[2.0]]", show(L[[2.0]]))
         self.assertEqual("L[['a']]", show(L[['a']]))
         self.assertEqual("L[1, 2]", show(L[1, 2]))
+        self.assertEqual("L[1, 2]", show(L[[1, 2]]))
 
     def test_cons(self):
         self.assertEqual(L[[1]], 1 ^ L[[]])
@@ -1071,13 +1077,13 @@ class TestList(unittest.TestCase):
         with self.assertRaises(te): True ^ L[2, 4]
 
     def test_extend(self):
+        self.assertEqual(L[1, 2, 3, 4], L[[1, 2]] + L[[3, 4]])
         self.assertEqual(L[1, 2, 3, 4, 5], L[1, 2] + L[3, 4] + L[[5]])
         self.assertEqual(L[1, 2, 3, 4, 5], L[1, 2] + L[[]] + L[3, 4, 5])
         with self.assertRaises(te): L[1.0, 2.0] + L[3, 4]
+        with self.assertRaises(te): L[1.0, 2.0] + [3, 4]
 
     def test_indexing(self):
-        # TODO: add more corner cases
-
         ie = IndexError
 
         # regular indexing

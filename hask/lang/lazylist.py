@@ -31,7 +31,9 @@ from syntax import Syntax
 
 class List(collections.Sequence, Hask):
     """
-    Efficient lazy sequence datatype.
+    Statically typed lazy sequence datatype.
+
+    See help(L)
     """
     def __init__(self, head=None, tail=None):
         self.__head = collections.deque()
@@ -91,8 +93,11 @@ class List(collections.Sequence, Hask):
         + is the list concatenation operator, equivalent to ++ in Haskell and +
         for Python lists
         """
-        unify(self.__type__(), other.__type__())
-        self.__tail = itertools.chain(self.__tail, other)
+        unify(self.__type__(), typeof(other))
+        if self.__is_evaluated and other.__is_evaluated:
+            self.__head.extend(other.__head)
+        else:
+            self.__tail = itertools.chain(self.__tail, iter(other))
         return self
 
     def __str__(self):
@@ -104,6 +109,9 @@ class List(collections.Sequence, Hask):
         return "L[%s]" % body if self.__is_evaluated else "L[%s ...]" % body
 
     def __eq__(self, other):
+        if self.__is_evaluated and other.__is_evaluated:
+            return self.__head == other.__head
+
         # this is horrifically inefficient
         return list(self) == list(other)
 
