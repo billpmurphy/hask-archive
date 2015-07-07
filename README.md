@@ -389,9 +389,9 @@ def map(f, xs):
 
 
 # type signature with an Eq constraint
-@sig(H[(Eq, "a")]/ "a" >> "a" >> bool)
-def not_equals(x, y):
-    return not (x == y)
+@sig(H[(Eq, "a")]/ "a" >> ["a"] >> bool)
+def not_in(y, xs):
+    return not any((x == y for x in xs))
 
 
 # type signature with a type constructor (Maybe) that has type arguments
@@ -404,7 +404,6 @@ def safe_div(x, y):
 @sig(H/ int >> None)
 def launch_missiles(num_missiles):
     print "Launching {0} missiles! Bombs away!" % num_missiles
-    return
 ```
 
 It is also possible to create type synonyms using `t`. For example, check out the definition of `Rational`:
@@ -445,9 +444,16 @@ def fib(x):
 Notice that in the above example, we are pattern matching on a recursive
 function without a hitch.
 
-You can also deconstruct an iterable using `^`, the cons operator. Here is a
-function that adds the first two elements of any iterable, returning `Nothing`
-if there are less than two elements:
+Pattern matching on iterables (`list`, `tuple`, `list`, etc.) is just as easy:
+
+```python
+```
+
+You can also deconstruct an iterable using `^`, the cons operator. The variable
+before the `^` is bound to the first element of the iterable, and the variable
+after the `^` is bound to the rest of the iterable. Here is a function that
+adds the first two elements of any iterable, returning `Nothing` if there are
+less than two elements:
 
 ```python
 @sig(H[(Num, "a")]/ ["a"] >> t(Maybe, "a"))
