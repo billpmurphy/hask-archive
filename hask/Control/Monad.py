@@ -1,7 +1,10 @@
+import itertools
+
 from ..lang import build_instance
 from ..lang import is_builtin
 from ..lang import List
 from ..lang import instance
+from ..Data.Functor import fmap
 from Applicative import Applicative
 
 
@@ -15,4 +18,6 @@ class Monad(Applicative):
         return
 
 
-instance(Monad, List).where(bind=List.bind)
+instance(Monad, List).where(
+    bind = lambda fn, x: L[itertools.chain.from_iterable(fmap(fn, x))]
+)

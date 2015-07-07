@@ -8,11 +8,16 @@ class Monoid(Typeclass):
     @classmethod
     def make_instance(typeclass, cls, mempty, mappend, mconcat=None):
         #TODO: mconcat
-        attrs = {"mempty":mempty, "mappend":mappend}
+        attrs = {"mempty":mempty, "mappend":mappend, "mconcat":mconcat}
         build_instance(Monoid, cls, attrs)
         return
 
 
 @sig(H/ "a" >> "a" >> "a")
 def mappend(x, y):
-    Monoid[x].mappend(x, y)
+    return Monoid[x].mappend(x, y)
+
+
+@sig(H[(Monoid, "m")]/ >> ["m"] >> "m")
+def mconcat(m):
+    return Monoid[x].mconcat(xs)

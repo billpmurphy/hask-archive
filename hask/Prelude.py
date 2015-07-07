@@ -48,8 +48,8 @@ from .lang.typeclasses import show
 
 from Data.Eq import Eq
 from Data.Ord import Ord
-from Data.Ord import max_
-from Data.Ord import min_
+from Data.Ord import max
+from Data.Ord import min
 from Data.Ord import compare
 
 from .lang.typeclasses import Enum
@@ -242,8 +242,8 @@ from .lang import undefined
 #=============================================================================#
 # List operations
 
-from Data.List import map_
-from Data.List import filter_
+from Data.List import map
+from Data.List import filter
 from Data.List import head
 from Data.List import last
 from Data.List import tail
@@ -263,9 +263,9 @@ from Data.Foldable import foldr1
 
 from Data.Foldable import and_
 from Data.Foldable import or_
-from Data.Foldable import any_
-from Data.Foldable import all_
-from Data.Foldable import sum_
+from Data.Foldable import any
+from Data.Foldable import all
+from Data.Foldable import sum
 from Data.Foldable import product
 from Data.Foldable import concat
 from Data.Foldable import concatMap
@@ -315,7 +315,7 @@ from Data.List import lookup
 #=============================================================================#
 ## Zipping and unzipping lists
 
-from Data.List import zip_
+from Data.List import zip
 from Data.List import zip3
 from Data.List import zipWith
 from Data.List import zipWith3

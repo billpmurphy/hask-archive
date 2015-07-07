@@ -1,8 +1,10 @@
+import itertools
 from ..lang import TypedFunc
 from ..lang import Typeclass
 from ..lang import is_builtin
 from ..lang import build_instance
 from ..lang import List
+from ..lang import L
 from ..lang import H
 from ..lang import sig
 from ..lang import t
@@ -25,7 +27,7 @@ def fmap(f, x):
 
 
 instance(Functor, List).where(
-    fmap = List.fmap
+    fmap = lambda fn, lst: L[itertools.imap(fn, iter(lst))]
 )
 
 instance(Functor, TypedFunc).where(

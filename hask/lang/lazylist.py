@@ -33,14 +33,17 @@ class List(collections.Sequence, Hask):
     """
     Statically typed lazy sequence datatype.
 
-    See help(L)
+    See help(L) for more information.
     """
     def __init__(self, head=None, tail=None):
         self.__head = []
         self.__tail = itertools.chain([])
         self.__is_evaluated = True
 
-        if head is not None:
+        if head is not None and len(head) > 0:
+            fst = head[0]
+            for fst, other in zip(itertools.repeat(fst), head):
+                unify(typeof(fst), typeof(other))
             self.__head.extend(head)
         if tail is not None:
             self.__tail = itertools.chain(self.__tail, tail)
@@ -52,12 +55,17 @@ class List(collections.Sequence, Hask):
             if len(self.__head) == 0:
                 return ListType(TypeVariable())
             return ListType(typeof(self[0]))
+
         elif len(self.__head) == 0:
             self.__next()
             return self.__type__()
+
         return ListType(typeof(self[0]))
 
     def __next(self):
+        """
+        Evaluate the next element of the tail, and add it to the head.
+        """
         if self.__is_evaluated:
             raise StopIteration
         else:
@@ -104,18 +112,21 @@ class List(collections.Sequence, Hask):
     def __str__(self):
         if len(self.__head) == 0 and self.__is_evaluated:
             return "L[[]]"
+
         elif len(self.__head) == 1 and self.__is_evaluated:
             return "L[[%s]]" % show(self.__head[0])
+
         body = ", ".join((show(s) for s in self.__head))
         return "L[%s]" % body if self.__is_evaluated else "L[%s ...]" % body
 
     def __eq__(self, other):
         if self.__is_evaluated and other.__is_evaluated:
             return self.__head == other.__head
+
         elif len(self.__head) >= len(other.__head):
             # check the evaluated heads
             heads = zip(self.__head[:len(other.__head)], other.__head)
-            if not all((h1 == h2 for h1, h2 in heads)):
+            if any((h1 != h2 for h1, h2 in heads)):
                 return False
 
             # evaluate the shorter-headed list until it is the same size
@@ -128,16 +139,18 @@ class List(collections.Sequence, Hask):
 
             # evaluate the tails, checking each time
             while not self.__is_evaluated or not other.__is_evaluated:
-                if self.__is_evaluated ^ other.__is_evaluated:
-                    print "self %s, other %s" % (self.__is_evaluated, other.__is_evaluated)
-                    print "uneven tails", self.__head, other.__head
-                    return False
                 self.__next()
                 other.__next()
                 if self.__head[-1] != other.__head[-1]:
                     return False
+
+
+
+
+
         elif len(other.__head) > len(self.__head):
             return other.__eq__(self)
+
         return True
 
     def __len__(self):
@@ -174,26 +187,10 @@ class List(collections.Sequence, Hask):
             return List(head=[self.__head[idx] for idx in indices])
         return self.__head[ix]
 
-    def fmap(self, fn):
-        return List(itertools.imap(fn, iter(self)))
-
-    def pure(self, x):
-        return List(head=[x])
-
-    def bind(self, fn):
-        return List(itertools.chain.from_iterable(self.fmap(fn)))
-
-    def foldr(self, fn, a):
-        # note that this is not lazy
-        for i in reversed(self):
-            a = fn(i, a)
-        return a
-
 
 ## Typeclass instances for list
 Show.make_instance(List, show=List.__str__)
 Eq.make_instance(List, eq=List.__eq__)
-Read.make_instance(List, read=eval)
 
 
 #=============================================================================#

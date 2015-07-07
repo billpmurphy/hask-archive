@@ -1,33 +1,24 @@
 import unittest
 
-from hask import H
-from hask import sig
-from hask import t
+from hask import H, sig, t
 from hask import p, m, caseof, IncompletePatternError
 from hask import has_instance
-from hask import guard
-from hask import c
-from hask import otherwise
-from hask import NoGuardMatchException
+from hask import guard, c, otherwise, NoGuardMatchException
 from hask import __
-from hask import data
-from hask import d
-from hask import deriving
+from hask import data, d, deriving
 from hask import L
 from hask import Ordering, LT, EQ, GT
 from hask import Maybe, Just, Nothing, in_maybe
 from hask import Either, Left, Right, in_either
-from hask import Typeclass
-from hask import Hask, Show, Eq, Ord, Bounded
-from hask import Num, Real, RealFrac, Fractional, Floating, RealFloat
-from hask import Enum, succ, pred
-from hask import Functor
-from hask import Applicative
-from hask import Monad
-from hask import Traversable
-from hask import Foldable
+from hask import Typeclass, Hask
+from hask import Read, Show, Eq, Ord, Bounded
+from hask import Num, Real, Integral, RealFrac, Fractional, Floating, RealFloat
+from hask import Functor, Applicative, Monad
+from hask import Foldable, Traversable
 
 from hask import Prelude
+from hask.Prelude import succ, pred
+
 
 # internals
 from hask.lang.syntax import Syntax
@@ -922,9 +913,9 @@ class TestSyntax(unittest.TestCase):
                 ~(caseof([3, 2, 1, 0])
                     | m(m.a ^ (m.b ^ m.c)) >> [p.a, p.b, p.c]
                     | m(m.x)               >> False))
-        self.assertEqual(L[3, 2, L[1, 0]],
+        self.assertEqual(L[3, 2, 1],
                 ~(caseof(L[3, 2, 1, 0])
-                    | m(m.a ^ (m.b ^ m.c)) >> L[p.a, p.b, p.c]
+                    | m(m.a ^ (m.b ^ m.c)) >> L[p.a, p.b, p.c[0]]
                     | m(m.x)               >> False))
 
         with self.assertRaises(se):
@@ -1072,12 +1063,12 @@ class TestList(unittest.TestCase):
         self.assertNotEqual(L[1, 2], L[[1]])
         self.assertNotEqual(L[1, 2], L[1, 2, 3])
         self.assertNotEqual(L[1, 2], L[2, 2])
+        with self.assertRaises(te): L["a", "b"] == L[1, 2]
 
         # with infinite lists
         self.assertNotEqual(L[1, ...], L[0,...])
         self.assertNotEqual(L[1, 3, ...], L[1, 4, ...])
-
-        with self.assertRaises(te): L["a", "b"] == L[1, 2]
+        self.assertNotEqual(L[1, 4], L[1, 4, ...])
         with self.assertRaises(te): L["a", "b"] == L[1, ...]
 
     def test_show(self):
@@ -1156,14 +1147,14 @@ class TestList(unittest.TestCase):
         self.assertTrue(4 not in L[1, 3, ..., 19])
 
     def test_functor(self):
-        from hask.Prelude import id
+        from hask.Prelude import id, fmap
         test_f = (lambda x: x ** 2 - 1) ** (H/ int >> int)
         test_g = (lambda y: y / 4 + 9) ** (H/ int >> int)
 
         # functor laws
-        #self.assertEqual(L[range(10)], id * L[range(10)])
-        #self.assertEqual(List(range(20)) * (test_f * test_g),
-        #                  (List(range(20)) * test_g * test_f))
+        self.assertEqual(L[range(10)], fmap(id, L[range(10)]))
+        self.assertEqual(fmap(test_f * test_g), L[range(20)],
+                         fmap(test_f, fmap(test_g, L[range(20)])))
 
         # `fmap` == `map` for Lists
         #self.assertEqual(map(test_f, list(List(range(9)))),
@@ -1173,10 +1164,14 @@ class TestList(unittest.TestCase):
         #self.assertEqual(map(test_f, range(9)),
         #                  list(List(range(9)) * test_f))
 
+    def test_monad(self):
+        pass
+
     def test_len(self):
         self.assertEqual(0, len(L[None]))
         self.assertEqual(1, len(L[None,]))
         self.assertEqual(3, len(L[1, 2, 3]))
+        self.assertEqual(20, len(L[0, ..., 19]))
 
 
 class TestDataList(unittest.TestCase):
@@ -1237,18 +1232,18 @@ class TestPrelude(unittest.TestCase):
         from hask.Prelude import lines, words, unlines, unwords
         from hask.Prelude import Maybe, Just, Nothing, maybe
         from hask.Prelude import Either, Left, Right, either
-        from hask.Prelude import Ordering, LT, EQ, GT, max_, min_, compare
+        from hask.Prelude import Ordering, LT, EQ, GT, max, min, compare
         from hask.Prelude import Num, abs_, negate, subtract
 
         # Data.List, Data.Foldable
-        from hask.Prelude import map_, filter_, head, last, tail, init, null
+        from hask.Prelude import map, filter, head, last, tail, init, null
         from hask.Prelude import length, reverse, foldl, foldl1, foldr
-        from hask.Prelude import foldr1, and_, or_, any_, all_, sum_, product
+        from hask.Prelude import foldr1, and_, or_, any, all, sum, product
         from hask.Prelude import concat, concatMap, maximum, minimum, scanl
         from hask.Prelude import scanl1, scanr, scanr1, iterate, repeat
         from hask.Prelude import replicate, cycle, take, drop, splitAt
         from hask.Prelude import takeWhile, dropWhile, span, break_, elem
-        from hask.Prelude import notElem, lookup, zip_, zip3, unzip, unzip3
+        from hask.Prelude import notElem, lookup, zip, zip3, unzip, unzip3
 
     def test_until(self):
         from hask.Prelude import until
@@ -1328,13 +1323,9 @@ class TestDataTuple(unittest.TestCase):
 class TestDataOrd(unittest.TestCase):
 
     def test_ord(self):
-        from hask.Data.Ord import max_ as hmax
-        from hask.Data.Ord import min_ as hmin
-        from hask.Data.Ord import compare, comparing
-        from hask.Data.Ord import comparing
-
-        self.assertEqual(hmax(1, 2), 2)
-        self.assertEqual(hmin(1, 2), 1)
+        from hask.Data.Ord import max, max, compare, comparing
+        self.assertEqual(max(1, 2), 2)
+        self.assertEqual(min(1, 2), 1)
         self.assertEqual(compare(1)(2), LT)
 
         from hask.Data.Tuple import fst, snd
@@ -1363,18 +1354,25 @@ class TestDataChar(unittest.TestCase):
 class TestPython(unittest.TestCase):
 
     def test_builtins(self):
-        from hask.Python.builtins import cmp, divmod, frozenset, getattr
-        from hask.Python.builtins import hasattr, hash, hex, len, oct, repr
-        from hask.Python.builtins import sorted
+        from hask.Python.builtins import callable, cmp, delattr, divmod
+        from hask.Python.builtins import frozenset, getattr, hasattr, hash
+        from hask.Python.builtins import hex, isinstance, issubclass, len, oct
+        from hask.Python.builtins import repr, setattr, sorted
+
+        class Example(object):
+            a = 1
+            pass
 
         # add more
         self.assertEqual(1, cmp(10)(9))
         self.assertEqual(divmod(5)(2), (2, 1))
 
+        with self.assertRaises(te): cmp(1, "a")
         with self.assertRaises(te): oct(1.0)
         with self.assertRaises(te): hex(1.0)
         with self.assertRaises(te): hasattr(list)(len)
         with self.assertRaises(te): getattr(list)(len)
+        with self.assertRaises(te): setattr(list)(len)
 
 
 class Test_README_Examples(unittest.TestCase):

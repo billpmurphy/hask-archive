@@ -60,6 +60,10 @@ def foldr1(f, b, xs):
     raise NotImplementedError()
 
 
+#=============================================================================#
+# Special folds
+
+
 @sig(H/ [["a"]] >> ["a"] )
 def concat(xss):
     """
@@ -89,7 +93,7 @@ def and_(xs):
     the list must be finite; False, however, results from a False value at a
     finite index of a finite or infinite list.
     """
-    return all(xs)
+    return False not in xs
 
 
 @sig(H/ [bool] >> bool)
@@ -101,39 +105,39 @@ def or_(xs):
     the list must be finite; True, however, results from a True value at a
     finite index of a finite or infinite list.
     """
-    return any(xs)
+    return True in xs
 
 
 @sig(H/ (H/ "a" >> bool) >> ["a"] >> bool)
-def any_(xs):
+def any(xs):
     """
-    any_ :: (a -> Bool) -> [a] -> Bool
+    any :: (a -> Bool) -> [a] -> Bool
 
     Applied to a predicate and a list, any determines if any element of the
     list satisfies the predicate. For the result to be False, the list must be
     finite; True, however, results from a True value for the predicate applied
     to an element at a finite index of a finite or infinite list.
     """
-    return any((p(x) for x in xs))
+    return True in ((p(x) for x in xs))
 
 
 @sig(H/ (H/ "a" >> bool) >> ["a"] >> bool)
-def all_(p, xs):
+def all(p, xs):
     """
-    all_ :: (a -> Bool) -> [a] -> Bool
+    all :: (a -> Bool) -> [a] -> Bool
 
     Applied to a predicate and a list, all determines if all elements of the
     list satisfy the predicate. For the result to be True, the list must be
     finite; False, however, results from a False value for the predicate
     applied to an element at a finite index of a finite or infinite list.
     """
-    return all((p(x) for x in xs))
+    return False not in ((p(x) for x in xs))
 
 
 @sig(H[(Num, "a")]/ ["a"] >> "a")
-def sum_(xs):
+def sum(xs):
     """
-    sum_ :: Num a => [a] -> a
+    sum :: Num a => [a] -> a
 
     The sum_ function computes the sum of a finite list of numbers.
     """
@@ -172,5 +176,3 @@ def maximum(xs):
     allows the programmer to supply their own comparison function.
     """
     return max(xs)
-
-

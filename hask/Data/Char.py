@@ -25,7 +25,7 @@ def isSpace(s):
     Returns True for any Unicode space character, and the control characters
     \t, \n, \r, \f, \v.
     """
-    raise NotImplementedError
+    return s in " \t\n\r\f\v"
 
 
 @sig(H/ str >> bool)
@@ -35,7 +35,7 @@ def isLower(s):
 
     Selects lower-case alphabetic Unicode characters (letters).
     """
-    raise NotImplementedError
+    return s.lower() == s
 
 
 @sig(H/ str >> bool)
@@ -47,7 +47,7 @@ def isUpper(s):
     Title case is used by a small number of letter ligatures like the
     single-character form of Lj.
     """
-    raise NotImplementedError
+    return s.upper() == s
 
 
 @sig(H/ str >> bool)
@@ -258,7 +258,7 @@ def toLower(s):
 
 
 @sig(H/ str >> str)
-def toLower(s):
+def toTitle(s):
     """
     toTitle :: str -> str
 
@@ -266,7 +266,7 @@ def toLower(s):
     any. (Title case differs from upper case only for a small number of
     ligature letters.) Any other character is returned unchanged.
     """
-    raise NotImplementedError
+    return toUpper(s)
 
 
 #=============================================================================#

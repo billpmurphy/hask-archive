@@ -18,7 +18,7 @@ data.Ordering == d.LT | d.EQ | d.GT & deriving(Show, Eq, Ord, Bounded)
 
 
 @sig(H[(Ord, "a")]/ "a" >> "a" >> "a")
-def max_(x, y):
+def max(x, y):
     """
     max :: a -> a -> a
 
@@ -28,7 +28,7 @@ def max_(x, y):
 
 
 @sig(H[(Ord, "a")]/ "a" >> "a" >> "a")
-def min_(x, y):
+def min(x, y):
     """
     min :: a -> a -> a
 
@@ -44,11 +44,7 @@ def compare(x, y):
 
     Comparison function.
     """
-    if x == y:
-        return EQ
-    elif x < y:
-        return LT
-    return GT
+    return EQ if x == y else (LT if x < y else GT)
 
 
 @sig(H[(Ord, "a")]/ (H/ "a" >> "b") >> "b" >> "b" >> Ordering)

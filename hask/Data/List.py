@@ -100,9 +100,9 @@ def length(xs):
 
 
 @sig(H/ (H/ "a" >> "b") >> ["a"] >> ["b"])
-def map_(f, xs):
+def map(f, xs):
     """
-    map_ :: (a -> b) -> [a] -> [b]
+    map :: (a -> b) -> [a] -> [b]
 
     map(f, xs) is the list obtained by applying f to each element of xs
     """
@@ -196,9 +196,9 @@ from Foldable import concat
 from Foldable import concatMap
 from Foldable import and_
 from Foldable import or_
-from Foldable import any_
-from Foldable import all_
-from Foldable import sum_
+from Foldable import any
+from Foldable import all
+from Foldable import sum
 from Foldable import product
 from Foldable import maximum
 from Foldable import minimum
@@ -592,7 +592,7 @@ def find(p, xs):
 
 
 @sig(H/ (H/ "a" >> bool) >> ["a"] >> ["a"])
-def filter_(f, xs):
+def filter(f, xs):
     """
     filter :: (a -> Bool) -> [a] -> [a]
 
@@ -678,7 +678,7 @@ def findIndicies(f, xs):
 #=============================================================================#
 # Zipping and unzipping lists
 
-def zip_(xs, ys):
+def zip(xs, ys):
     """
     """
     return L[zip(xs, ys)]

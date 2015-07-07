@@ -12,5 +12,5 @@ class Applicative(Functor):
 
 
 instance(Applicative, List).where(
-    pure = List.pure
+    pure = lambda x: L[[x]]
 )

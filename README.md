@@ -849,7 +849,7 @@ That's all, folks!
 | `Monoid` | | `mappend`, `mempty` |  `mconcat` | `+` |
 | `Foldable` | `Functor` | `foldr` | `fold`, `foldMap`, `foldr_`, `foldl`, `foldl_`, `foldr1`, `foldl1`, `toList`, `null`, `length`, `elem`, `maximum`, `minimum`, `sum`, `product` | `len` |
 | `Traversable` | `Foldable`, `Functor` | `traverse` | `sequenceA`, `mapM`, `sequence` | |
-| `Num` | `Show`, `Eq` | `abs`, `signum`, `fromInteger`, `negate` | `+`, `-`, `*` |
+| `Num` | `Show`, `Eq` | `abs`, `signum`, `fromInteger`, `negate` | | `+`, `-`, `*` |
 | `Real` | `Num`, `Ord` | `toRational` | |
 | `Integral` | `Real`, `Enum` | `quotRem`, `toInteger` | `quot`, `rem`, `div`, `mod`, `toInteger` | `/`, `%` |
 | `Fractional` | `Num` | `fromRational`, `recip` |  | `/` |
@@ -869,21 +869,21 @@ That's all, folks!
 | `hask.Data.List` | `hask.lang`
 | `hask.Data.String` | `hask.lang` | `words`, `unwords`, `lines`, `unlines` |
 | `hask.Data.Tuple` | `hask.lang` | `fst`, `snd`, `swap`, `curry`, `uncurry` |
-| `hask.Data.Char` | `hask.lang` |
+| `hask.Data.Char` | `hask.lang` | `isControl`, `isSpace`, `isLower`, `isUpper`, `isAlpha`, `isAlphaNum`, `isPrint`, `isDigit`, `isOctDigit`, `isHexDigit`, `isLetter`, `isMark`, `isNumber`, `isPunctuation`, `isSymbol`, `isSeparator`, `isAscii`, `isLatin1`, `isAsciiUpper`, `toLower`, `toUpper`, `toTitle`, `digitToInt`, `intToDigit`, `chr`, `ord` |
 | `hask.Data.Eq` | `hask.lang` | `Eq` (`==`, `!=`)
-| `hask.Data.Ord` | `hask.lang`, `hask.Data.Eq` |
-| `hask.Data.Functor` | `hask.lang` | `Functor` (`fmap`, `>>`) |
-| `hask.Data.Foldable` | `hask.lang` |
+| `hask.Data.Ord` | `hask.lang`, `hask.Data.Eq` | `Ord` (`>`, `<`, `>=`, `<=`), `Ordering` (`LT`, `EQ`, `GT`), `max`, `min`, `compare`, `comparing` |
+| `hask.Data.Functor` | `hask.lang` | `Functor` (`fmap`, `*`),  |
+| `hask.Data.Foldable` | `hask.lang` | `Foldable` (`foldr`, `foldl`, `foldl_`, `foldl1`, `foldl1_`, `foldr`, `foldr1`), `concat`, `concatMap`, `and_`, `or_`, `any`, `all`, `sum`, `product`, `minimum`, `maximum` |
 | `hask.Data.Traversable` | `hask.lang`
-| `hask.Data.Monoid` | `hask.lang`
-| `hask.Data.Ratio` | `hask.lang`
-| `hask.Data.Num` | `hask.lang`
-| `hask.Control.Applicative` | `hask.lang`
-| `hask.Control.Monad` | `hask.lang`
-| `hask.Python.builtins` | `hask.lang`
+| `hask.Data.Monoid` | `hask.lang` | `Monoid` (`mappend`, `mempty`, `mconcat`) |
+| `hask.Data.Ratio` | `hask.lang` | `Integral`, `Ratio` (`R`), `Rational`, `toRatio`, `toRational`, `numerator`, `denominator` |
+| `hask.Data.Num` | `hask.lang` |
+| `hask.Control.Applicative` | `hask.lang` | `Applicative` |
+| `hask.Control.Monad` | `hask.lang` |
+| `hask.Python.builtins` | `hask.lang` | `callable`, `cmp`, `delattr`, `divmod`, `frozenset`, `getattr`, `hasattr`, `hash`, `hex`, `isinstance`, `issubclass`, `len`, `oct`, `repr`, `setattr`, `sorted`, `unichr` |
 | `hask.lang` |
 | `hask.lang.hindley_milner` |
 | `hask.lang.type_system` | `hask.lang.hindley_milner`
 | `hask.lang.syntax` | `hask.lang.type_system`
 | `hask.lang.typeclasses` | `hask.lang.type_system`, `hask.lang.syntax`
-| `hask.lang.lazylist` | `hask.lang.type_system`, `hask.lang.hindley_milner`, `hask.lang.syntax`, `hask.lang.typeclasses` | `L` |
+| `hask.lang.lazylist` | `hask.lang.type_system`, `hask.lang.hindley_milner`, `hask.lang.syntax`, `hask.lang.typeclasses` | `L`, `List` |
