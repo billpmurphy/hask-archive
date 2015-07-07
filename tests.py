@@ -16,9 +16,6 @@ from hask import Num, Real, Integral, RealFrac, Fractional, Floating, RealFloat
 from hask import Functor, Applicative, Monad
 from hask import Foldable, Traversable
 
-from hask import Prelude
-from hask.Prelude import succ, pred
-
 
 # internals
 from hask.lang.syntax import Syntax
@@ -614,7 +611,6 @@ class TestADTInternals_Builtin(unittest.TestCase):
         self.assertNotEquals("M1(1)", str(self.M1(1)))
 
         Show.derive_instance(self.Type_Const)
-
         self.assertEqual("M1(1)", str(self.M1(1)))
         self.assertEqual("M2(1, \'a\')", str(self.M2(1, "a")))
         self.assertEqual("M3(1, 2, 3)", str(self.M3(1, 2, 3)))
@@ -702,20 +698,53 @@ class TestADTSyntax(unittest.TestCase):
         self.assertTrue(M3 == M3)
         self.assertFalse(M3 != M3)
 
+        A, B, C =\
+        data.A == d.B(str, str) | d.C(str) & deriving(Show, Eq)
+        self.assertTrue(has_instance(A, Show))
+        self.assertTrue(has_instance(A, Eq))
+        self.assertEqual("B('a', 'b')", str(B("a", "b")))
+        self.assertEqual("C('a')", str(C("a")))
+        self.assertEqual(B("a", "b"), B("a", "b"))
+        self.assertEqual(C("a"), C("a"))
+        self.assertNotEqual(B("a", "b"), B("a", "c"))
+        self.assertNotEqual(C("b"), C("c"))
+        self.assertNotEqual(C("b"), B("b", "c"))
+
+        A, B =\
+        data.A == d.B(str, str) & deriving(Show, Eq)
+        self.assertTrue(has_instance(A, Show))
+        self.assertTrue(has_instance(A, Eq))
+        self.assertEqual("B('a', 'b')", str(B("a", "b")))
+        self.assertEqual(B("a", "b"), B("a", "b"))
+        self.assertNotEqual(B("a", "b"), B("a", "c"))
+
 
 class TestBuiltins(unittest.TestCase):
 
+    def test_show(self):
+        from hask.Prelude import show
+        self.assertEqual('1', show(1))
+        self.assertEqual('a', show("a"))
+
     def test_enum(self):
+        from hask.Prelude import succ, pred
+
         self.assertEqual("b", succ("a"))
         self.assertEqual("a", pred("b"))
         self.assertEqual(2, succ(1))
+        self.assertEqual(2L, succ(1L))
         self.assertEqual(1, pred(2))
+        self.assertEqual(1L, pred(2L))
         self.assertEqual(4, succ(succ(succ(1))))
-        self.assertEqual(-1, pred(pred(pred(2))))
+        self.assertEqual(4L, succ(succ(succ(1L))))
+        self.assertEqual(-1L, pred(pred(pred(2L))))
+        self.assertEqual(-1L, pred(pred(pred(2L))))
 
-    def test_num(self):
+    def test_numerics(self):
         self.assertTrue(has_instance(int, Num))
+        self.assertTrue(has_instance(long, Num))
         self.assertTrue(has_instance(float, Num))
+        self.assertTrue(has_instance(complex, Num))
 
 
 class TestSyntax(unittest.TestCase):
@@ -1144,6 +1173,7 @@ class TestList(unittest.TestCase):
 
     def test_show(self):
         from hask.Prelude import show
+
         self.assertEqual("L[[]]", show(L[[]]))
         self.assertEqual("L[[2.0]]", show(L[[2.0]]))
         self.assertEqual("L[['a']]", show(L[['a']]))
@@ -1218,7 +1248,7 @@ class TestList(unittest.TestCase):
         self.assertTrue(4 not in L[1, 3, ..., 19])
 
     def test_functor(self):
-        from hask.Prelude import id, fmap
+        from hask.Prelude import id, map, fmap
         test_f = (lambda x: x ** 2 - 1) ** (H/ int >> int)
         test_g = (lambda y: y / 4 + 9) ** (H/ int >> int)
 
@@ -1226,14 +1256,6 @@ class TestList(unittest.TestCase):
         self.assertEqual(L[range(10)], fmap(id, L[range(10)]))
         self.assertEqual(fmap(test_f * test_g, L[range(20)]),
                          fmap(test_f, fmap(test_g, L[range(20)])))
-
-        # `fmap` == `map` for Lists
-        #self.assertEqual(map(test_f, list(List(range(9)))),
-        #                  list(List(range(9)) * test_f))
-        #self.assertEqual(map(test_f, List(range(9))),
-        #                  list(List(range(9)) * test_f))
-        #self.assertEqual(map(test_f, range(9)),
-        #                  list(List(range(9)) * test_f))
 
     def test_monad(self):
         pass
@@ -1337,11 +1359,7 @@ class TestPrelude(unittest.TestCase):
 class TestDataString(unittest.TestCase):
 
     def test_string(self):
-        from hask.Data.String import lines
-        from hask.Data.String import words
-        from hask.Data.String import unlines
-        from hask.Data.String import unwords
-
+        from hask.Data.String import lines, words, unlines, unwords
         self.assertEqual(lines("a\nb \n\nc"), L[["a", "b ", "", "c"]])
         self.assertEqual(lines(""), L[[]])
         self.assertEqual(unlines(L[["a", "b ", "", "c"]]), "a\nb \n\nc")
@@ -1353,8 +1371,12 @@ class TestDataString(unittest.TestCase):
 
 
 class TestDataChar(unittest.TestCase):
-    pass
 
+    def test_functions(self):
+        from hask.Data.Char import ord, chr
+
+        for i in range(500):
+            self.assertEqual(i, ord * chr % i)
 
 class TestDataTuple(unittest.TestCase):
 
@@ -1435,7 +1457,7 @@ class TestPython(unittest.TestCase):
             pass
 
         # add more
-        self.assertEqual(1, cmp(10)(9))
+        self.assertEqual(1, cmp(10) % 9)
         self.assertEqual(divmod(5)(2), (2, 1))
 
         with self.assertRaises(te): cmp(1, "a")
@@ -1474,7 +1496,6 @@ class Test_README_Examples(unittest.TestCase):
     def test_sections(self):
         f = (__ - 20) * (2 ** __) * (__ + 3)
         self.assertEqual(8172, f(10))
-        self.assertEqual(Just(20) * (__+10) * (90/__), Just(3))
         self.assertEqual("Hello world", (__+__)('Hello ', 'world'))
         self.assertEqual(1024, (__**__)(2)(10))
 

@@ -426,14 +426,9 @@ class __new_tcon__(Syntax):
         super(__new_tcon__, self).__init__("Syntax error in `data`")
 
     def __eq__(self, d):
-        # one data constructor, no derived typedclasses
+        # one data constructor, zero or more derived typeclasses
         if isinstance(d, __new_dcon__):
             return build_ADT(self.name, self.args, [(d.name, d.args)], ())
-
-        # one data constructor, one or more derived typeclasses
-        elif isinstance(d, __new_dcon_deriving__):
-            return build_ADT(self.name, self.args, [(d.name, d.args)],
-                             d.classes)
 
         # one or more data constructors, no derived typeclasses
         elif isinstance(d, __new_dcons__):

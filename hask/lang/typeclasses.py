@@ -38,17 +38,14 @@ class Show(Typeclass):
     @classmethod
     def derive_instance(typeclass, cls):
         def show(self):
-            if not isinstance(self, ADT):
-                return repr(self) if isinstance(self, str) else str(self)
-
             if len(self.__class__._fields) == 0:
                 return self.__class__.__name__
 
             nt_tup = nt_to_tuple(self)
             if len(nt_tup) == 1:
-                tuple_str = "(%s)" % show(nt_tup[0])
+                tuple_str = "(%s)" % Show[nt_tup[0]].show(nt_tup[0])
             else:
-                tuple_str = show(nt_tup)
+                tuple_str = Show[nt_tup].show(nt_tup)
 
             return "{0}{1}".format(self.__class__.__name__, tuple_str)
         Show.make_instance(cls, show=show)
@@ -235,7 +232,7 @@ def enumFromTo(start, end):
     return Enum[start].enumFromTo(start, end)
 
 
-instance(Show, str).where(show=str.__repr__)
+instance(Show, str).where(show=str.__str__)
 instance(Show, int).where(show=int.__str__)
 instance(Show, long).where(show=long.__str__)
 instance(Show, float).where(show=tuple.__str__)

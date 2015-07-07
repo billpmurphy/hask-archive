@@ -514,7 +514,10 @@ class PatternMatchBind(object):
 
 
 class PatternMatchListBind(object):
-    """Represents a """
+    """
+    Represents the head (first element) and tail (remaining elements) of a
+    pattern-matched list
+    """
     def __init__(self, head, tail):
         self.head = head
         self.tail = tail
