@@ -1,6 +1,6 @@
 import operator
 import string
-from collections import deque
+from collections import deque, defaultdict
 
 from type_system import typeof
 from type_system import Typeclass
@@ -15,6 +15,7 @@ from type_system import PatternMatchBind
 from type_system import PatternMatchListBind
 from type_system import pattern_match
 from type_system import Undefined
+from type_system import PyFunc
 
 
 #=============================================================================#
@@ -33,7 +34,14 @@ __magic_methods__ = ["__%s__" % s for s in set((
     "ixor", "nonzero"))]
 
 
-def wipe_attrs(cls, fn):
+def replace_magic_methods(cls, fn):
+    """
+    Replace the magic method of a class with some function or method.
+
+    Args:
+        cls: The class to modify
+        fn: The function to replace cls's magic methods with
+    """
     for attr in __magic_methods__:
         setattr(cls, attr, fn)
     return
@@ -65,7 +73,7 @@ class Syntax(object):
     __syntaxerr__ = lambda s, *a: s.raise_invalid()
 
 
-wipe_attrs(Syntax, Syntax.__syntaxerr__)
+replace_magic_methods(Syntax, Syntax.__syntaxerr__)
 
 
 #=============================================================================#
@@ -73,7 +81,15 @@ wipe_attrs(Syntax, Syntax.__syntaxerr__)
 
 
 class instance(Syntax):
+    """
+    Special syntax for defining typeclass instances.
 
+    Example usage:
+
+    instance(Functor, Maybe).where(
+        fmap = ...
+    )
+    """
     def __init__(self, typeclass, cls):
         if not issubclass(typeclass, Typeclass):
             raise TypeError("%s is not a typeclass" % typeclass)
@@ -94,13 +110,33 @@ class __constraints__(Syntax):
     """
     H/ creates a new function type signature.
 
-    Usage:
+    Example usage:
+
+        (H/ int >> int)
 
     See help(sig) for more information on type signature decorators.
     """
     def __init__(self, constraints=()):
-        self.constraints = constraints
+        self.constraints = defaultdict(lambda: [])
+        if len(constraints) > 0:
+            # multiple typeclass constraints
+            if isinstance(constraints[0], tuple):
+                for con in constraints:
+                    self.__add_constraint(con)
+            # only one typeclass constraint
+            else:
+                self.__add_constraint(constraints)
         super(__constraints__, self).__init__("Syntax error in type signature")
+        return
+
+    def __add_constraint(self, con):
+        if len(con) != 2 or not isinstance(con, tuple):
+            self.raise_invalid("Invalid typeclass constraint: %s" % con)
+        if not issubclass(con[0], Typeclass):
+            self.raise_invalid("%s is not a typeclass" % con[0])
+        if not isinstance(con[1], str):
+            self.raise_invalid("%s is not a type variable" % con[1])
+        self.constraints[con[1]].append(con[0])
         return
 
     def __getitem__(self, constraints):
@@ -127,7 +163,7 @@ class __signature__(Syntax):
 
 
 H = __constraints__()
-func = type(lambda x: x)
+func = PyFunc
 
 
 class sig(Syntax):
@@ -188,7 +224,7 @@ def typify(fn, hkt=None):
 class __undefined__(Undefined):
     pass
 
-wipe_attrs(__undefined__, lambda *a: __undefined__())
+replace_magic_methods(__undefined__, lambda *a: __undefined__())
 undefined = __undefined__()
 
 
@@ -358,6 +394,7 @@ class caseof(__unmatched_case__):
         MatchStack.push(value)
         return
 
+
 #=============================================================================#
 # ADT creation syntax ("data" expressions)
 
@@ -415,7 +452,6 @@ class __new_tcon_enum__(__new_tcon__):
     Examples:
 
     data.Either
-
     data.Ordering
     """
     def __call__(self, *typeargs):
@@ -441,8 +477,9 @@ class __new_tcon_enum__(__new_tcon__):
 
 class __new_tcon_hkt__(__new_tcon__):
     """
-    Example:
+    Examples:
 
+    data.Maybe("a")
     data.Either("a", "b")
     """
     pass

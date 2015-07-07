@@ -1,6 +1,6 @@
 import unittest
 
-from hask import H, sig, t
+from hask import H, sig, t, func
 from hask import p, m, caseof, IncompletePatternError
 from hask import has_instance
 from hask import guard, c, otherwise, NoGuardMatchException
@@ -299,22 +299,22 @@ class TestHindleyMilner(unittest.TestCase):
             pass
 
         # type variables
-        self.assertTrue(isinstance(build_sig_arg("a", {}), TypeVariable))
-        self.assertTrue(isinstance(build_sig_arg("abc", {}), TypeVariable))
+        self.assertTrue(isinstance(build_sig_arg("a", {}, {}), TypeVariable))
+        self.assertTrue(isinstance(build_sig_arg("abc", {}, {}), TypeVariable))
 
         # builtin/non-ADT types
-        self.unified(build_sig_arg(str, {}), TypeOperator(str, []))
-        self.unified(build_sig_arg(int, {}), TypeOperator(int, []))
-        self.unified(build_sig_arg(float, {}), TypeOperator(float, []))
-        self.unified(build_sig_arg(list, {}), TypeOperator(list, []))
-        self.unified(build_sig_arg(__test__, {}), TypeOperator(__test__, []))
+        self.unified(build_sig_arg(str, {}, {}), TypeOperator(str, []))
+        self.unified(build_sig_arg(int, {}, {}), TypeOperator(int, []))
+        self.unified(build_sig_arg(float, {}, {}), TypeOperator(float, []))
+        self.unified(build_sig_arg(list, {}, {}), TypeOperator(list, []))
+        self.unified(build_sig_arg(__test__, {}, {}), TypeOperator(__test__, []))
 
         # unit type (None)
-        self.unified(build_sig_arg(None, {}), TypeOperator(None, []))
+        self.unified(build_sig_arg(None, {}, {}), TypeOperator(None, []))
 
         # tuple
         self.unified(
-                build_sig_arg((int, int), {}),
+                build_sig_arg((int, int), {}, {}),
                 Tuple([TypeOperator(int, []), TypeOperator(int, [])]))
 
         # list
@@ -383,21 +383,21 @@ class TestHindleyMilner(unittest.TestCase):
                     [TypeOperator(float, []), TypeVariable()]))
 
     def test_builtin_HKT(self):
-        self.unified(typeof(1), build_sig_arg(t(int), {}))
-        self.unified(typeof(Nothing), build_sig_arg(t(Maybe, "a"), {}))
-        self.unified(typeof(Just(1)), build_sig_arg(t(Maybe, int), {}))
+        self.unified(typeof(1), build_sig_arg(t(int), {}, {}))
+        self.unified(typeof(Nothing), build_sig_arg(t(Maybe, "a"), {}, {}))
+        self.unified(typeof(Just(1)), build_sig_arg(t(Maybe, int), {}, {}))
 
         self.unified(
                 typeof(Just(Just(Nothing))),
-                build_sig_arg(t(Maybe, t(Maybe, t(Maybe, "a"))), {}))
+                build_sig_arg(t(Maybe, t(Maybe, t(Maybe, "a"))), {}, {}))
 
         self.unified(
                 typeof(Right("error")),
-                build_sig_arg(t(Either, str, "a"), {}))
+                build_sig_arg(t(Either, str, "a"), {}, {}))
 
         self.unified(
                 typeof(Left(2.0)),
-                build_sig_arg(t(Either, "a", int), {}))
+                build_sig_arg(t(Either, "a", int), {}, {}))
 
 
 class TestTypeSystem(unittest.TestCase):
@@ -416,9 +416,64 @@ class TestTypeSystem(unittest.TestCase):
         self.assertEqual(2, f * g % 5)
         self.assertEqual(f(h(g(5))), (f * h * g)(5))
         self.assertEqual((i * h * f)(9), "22")
+
         with self.assertRaises(te): f(4.0)
         with self.assertRaises(te): f("4")
         with self.assertRaises(te): f(1, 2)
+
+    def test_TypedFunc_var(self):
+        pass
+
+    def test_TypedFunc_list(self):
+        pass
+
+    def test_TypedFunc_None(self):
+        @sig(H/ None >> None)
+        def n_to_n(n):
+            return
+
+        self.assertIsNone(None, n_to_n % None)
+        self.assertIsNone(None, n_to_n * n_to_n % None)
+        with self.assertRaises(te): n_to_n(1)
+
+    def test_TypedFunc_func(self):
+        @sig(H/ func >> func)
+        def id_wrap(f):
+            return lambda x: f(x)
+
+        lam_test = lambda x: x + "!"
+
+        def f_test(x):
+            return x ** 2
+
+        class example(object):
+            def meth_test(self, x):
+                return (x, x)
+
+            @staticmethod
+            def stat_test(x):
+                return [x]
+
+        self.assertEqual(id_wrap(lam_test)("woot"), "woot!")
+        self.assertEqual(id_wrap(f_test)(2), 4)
+        self.assertEqual(id_wrap(example().meth_test)(2), (2, 2))
+        self.assertEqual(id_wrap(example.stat_test)(2), [2])
+
+        self.assertEqual((id_wrap * id_wrap % (lambda x: x+1))(9), 10)
+        with self.assertRaises(te): id_wrap(1)
+
+        @sig(H/ func >> func >> int >> int)
+        def composei(f, g, x):
+            return f(g(x))
+
+        self.assertEqual(composei(lambda x: x + 2)(lambda x: x * 3)(6), 20)
+
+    def test_TypedFunc_class(self):
+        @sig(H[(Eq, "a")]/ "a" >> "a")
+        def eq_id(a):
+            return a
+
+        #with self.assertRaises(te): eq_id(staticmethod(lambda x: x))
 
     def test_match(self):
         match_only = lambda v, p: pattern_match(v, p)[0]
@@ -590,6 +645,10 @@ class TestADTInternals_Builtin(unittest.TestCase):
 
 
 class TestADTInternals_Poly(unittest.TestCase):
+    """
+    Dummy type constructors and data constructors for an ADT with
+    polymorphic fields
+    """
     pass
 
 
@@ -943,9 +1002,15 @@ class TestMaybe(unittest.TestCase):
         self.assertFalse(has_instance(Maybe, Traversable))
 
         # show
+        from hask.Prelude import show
         self.assertEqual("Just(3)", str(Just(3)))
+        self.assertEqual("Just(3)", show(Just(3)))
+        self.assertEqual("Just('a')", str(Just("a")))
+        self.assertEqual("Just('a')", show(Just("a")))
         self.assertEqual("Just(Just(3))", str(Just(Just(3))))
+        self.assertEqual("Just(Just(3))", show(Just(Just(3))))
         self.assertEqual("Nothing", str(Nothing))
+        self.assertEqual("Nothing", show(Nothing))
 
         # eq
         self.assertEqual(Nothing, Nothing)
@@ -971,8 +1036,10 @@ class TestMaybe(unittest.TestCase):
 
         # functor (add more)
         plus1 = (lambda x: x + 1) ** (H/ int >> int)
-        self.assertEqual(Just(3), Just(2) * plus1)
-        self.assertEqual(Just("1"), Just(1) * str)
+        toStr = str ** (H/ int >> str)
+        self.assertEqual(Just(3), plus1 * Just(2))
+        self.assertEqual(Just("1"), toStr * Just(1))
+        self.assertEqual(Just("3"), (toStr * plus1) * Just(2))
 
         # monad (add more)
         self.assertEqual(Just("1"), Just(1) >> (lambda x: Just(str(x))))
@@ -1038,11 +1105,15 @@ class TestList(unittest.TestCase):
     def test_instances(self):
         self.assertTrue(has_instance(List, Show))
         self.assertTrue(has_instance(List, Eq))
+        self.assertTrue(has_instance(List, Ord))
         self.assertTrue(has_instance(List, Functor))
         self.assertTrue(has_instance(List, Applicative))
         self.assertTrue(has_instance(List, Monad))
         #self.assertTrue(has_instance(List, Foldable))
         #self.assertTrue(has_instance(List, Traversable))
+
+        self.assertFalse(has_instance(List, Typeclass))
+        self.assertFalse(has_instance(List, Num))
 
     def test_eq(self):
         self.assertEqual(L[[]], L[[]])
@@ -1153,7 +1224,7 @@ class TestList(unittest.TestCase):
 
         # functor laws
         self.assertEqual(L[range(10)], fmap(id, L[range(10)]))
-        self.assertEqual(fmap(test_f * test_g), L[range(20)],
+        self.assertEqual(fmap(test_f * test_g, L[range(20)]),
                          fmap(test_f, fmap(test_g, L[range(20)])))
 
         # `fmap` == `map` for Lists

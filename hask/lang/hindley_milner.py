@@ -129,7 +129,7 @@ class Constraint(TypeVariable):
     """
     def __init__(self, constraints):
         self.constraints = constraints
-        super(Constraint, self).__init__(self)
+        super(Constraint, self).__init__()
 
 
 class TypeOperator(object):

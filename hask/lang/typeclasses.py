@@ -1,6 +1,7 @@
 import operator
 
 from type_system import Typeclass
+from type_system import ADT
 from type_system import is_builtin
 from type_system import has_instance
 from type_system import nt_to_tuple
@@ -37,13 +38,18 @@ class Show(Typeclass):
     @classmethod
     def derive_instance(typeclass, cls):
         def show(self):
+            if not isinstance(self, ADT):
+                return repr(self) if isinstance(self, str) else str(self)
+
             if len(self.__class__._fields) == 0:
                 return self.__class__.__name__
+
             nt_tup = nt_to_tuple(self)
             if len(nt_tup) == 1:
-                tuple_str = "(%s)" % str(nt_tup[0])
+                tuple_str = "(%s)" % show(nt_tup[0])
             else:
-                tuple_str = str(nt_tup)
+                tuple_str = show(nt_tup)
+
             return "{0}{1}".format(self.__class__.__name__, tuple_str)
         Show.make_instance(cls, show=show)
         return

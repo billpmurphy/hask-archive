@@ -1,6 +1,15 @@
 __version__ = "0.0.1"
 
 
+# Make sure everything gets loaded correctly
+import Control.Applicative
+import Control.Monad
+import Python.builtins
+
+
+#=============================================================================#
+# Imports
+
 # Core language
 
 ## Typeclass instance declaration
@@ -27,6 +36,7 @@ from hask.lang import deriving
 from hask.lang import sig
 from hask.lang import H
 from hask.lang import t
+from hask.lang import func
 
 ## Pattern matching
 from hask.lang import caseof

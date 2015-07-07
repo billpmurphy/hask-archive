@@ -100,7 +100,7 @@ L[1 ... ]
 To add elements to the front of a List, use `^`, the cons operator.  To combine
 two lists, use `+`, the concatenation operator.
 
-```
+```python
 >>> 1 ^ L[2, 3]
 L[1, 2, 3]
 
@@ -352,14 +352,14 @@ primitives:
 
 | Primitive | Syntax/examples |
 | --------- | --------------- |
-| Type literal for Python builtin type or user-defined class | `int`, `float`, `set`, etc |
-| Type variable | `"a"`, `"b"`, `"zz"`, etc |
-| `List` of some type | `[int]`, `["a"]`, etc |
-| Tuple type | `(int, int)`, `("a", "b", "c")`, etc |
-| ADT with type parameters | `t(Maybe, "a")`, `t(Either, "a", str)`, etc |
+| Type literal for Python builtin type or user-defined class | `int`, `float`, `set`, `list` |
+| Type variable | `"a"`, `"b"`, `"zz"` |
+| `List` of some type | `[int]`, `["a"]`, [["a"]] |
+| Tuple type | `(int, int)`, `("a", "b", "c")`, (int, ("a", "b")) |
+| ADT with type parameters | `t(Maybe, "a")`, `t(Either, "a", str)` |
 | Unit type (`None`) | `None` |
 | Untyped Python function | `func` |
-| Typeclass constraint | `H[(Eq, "a")]/`, `H[(Functor, "f"), (Show, "f")]/`, etc |
+| Typeclass constraint | `H[(Eq, "a"), (Show, "b")]/`, `H[(Functor, "f"), (Show, "f")]/` |
 
 Some examples:
 
@@ -565,17 +565,17 @@ to provide `pure`. To implement `Monad`, we need to provide `bind`.
 
 
 ```python
->>> from hask import Applicative, Monad
+from hask import Applicative, Monad
 
->>> instance(Applicative, Maybe).where(
-...     pure = Just
-... )
+instance(Applicative, Maybe).where(
+    pure = Just
+)
 
->>> instance(Monad, Maybe).where(
-...     bind = lambda x, f: ~(caseof(x)
-...                             | m(Just(m.a)) >> f(p.a)
-...                             | m(Nothing)   >> Nothing)
-... )
+instance(Monad, Maybe).where(
+    bind = lambda x, f: ~(caseof(x)
+                            | m(Just(m.a)) >> f(p.a)
+                            | m(Nothing)   >> Nothing)
+)
 ```
 
 The `bind` function also has an infix form, which is `>>` in Hask.

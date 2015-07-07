@@ -139,14 +139,13 @@ class List(collections.Sequence, Hask):
 
             # evaluate the tails, checking each time
             while not self.__is_evaluated or not other.__is_evaluated:
-                self.__next()
-                other.__next()
-                if self.__head[-1] != other.__head[-1]:
+                if not self.__is_evaluated:
+                    self.__next()
+                if not other.__is_evaluated:
+                    other.__next()
+                if self.__head[-1] != other.__head[-1] or \
+                   len(self.__head) != len(other.__head):
                     return False
-
-
-
-
 
         elif len(other.__head) > len(self.__head):
             return other.__eq__(self)
@@ -191,6 +190,7 @@ class List(collections.Sequence, Hask):
 ## Typeclass instances for list
 Show.make_instance(List, show=List.__str__)
 Eq.make_instance(List, eq=List.__eq__)
+Ord.make_instance(List, lt=List.__lt__)
 
 
 #=============================================================================#

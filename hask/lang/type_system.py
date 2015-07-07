@@ -4,6 +4,7 @@ import string
 from collections import namedtuple
 
 from hindley_milner import TypeVariable
+from hindley_milner import Constraint
 from hindley_milner import TypeOperator
 from hindley_milner import Var
 from hindley_milner import App
@@ -30,6 +31,12 @@ __python_builtins__ = set((
     types.XRangeType, types.EllipsisType, types.TracebackType, types.FrameType,
     types.BufferType, types.DictProxyType, types.NotImplementedType,
     types.GetSetDescriptorType, types.MemberDescriptorType))
+
+
+__python_function_types__ = set((
+    types.FunctionType, types.LambdaType, types.MethodType,
+    types.UnboundMethodType, types.BuiltinFunctionType,
+    types.BuiltinMethodType))
 
 
 def is_builtin(cls):
@@ -152,6 +159,7 @@ def has_instance(cls, typeclass):
 #=============================================================================#
 # Static typing and type signatures
 
+
 class Hask(object):
     """
     Base class for objects within hask.
@@ -176,6 +184,14 @@ class Undefined(Hask):
         return TypeVariable()
 
 
+class PyFunc(object):
+    """
+    Singleton object that represents (any of the) Python function types in the
+    type system and in type signatures.
+    """
+    pass
+
+
 def typeof(obj):
     """
     Returns the type of an object within the internal type system.
@@ -195,6 +211,9 @@ def typeof(obj):
 
     elif obj is None:
         return TypeOperator(None, [])
+
+    elif type(obj) in __python_function_types__:
+        return TypeOperator(PyFunc, [])
 
     return TypeOperator(type(obj), [])
 
@@ -224,28 +243,41 @@ class TypeSignatureError(Exception):
     pass
 
 
-def build_sig_arg(arg, var_dict):
-    if isinstance(arg, TypeVariable) or isinstance(arg, TypeOperator):
-        return arg
+def build_sig_arg(arg, cons, var_dict):
+    """
+    Covert a single argument of a type signature into its internal type system
+    representation.
 
+    Args:
+        arg: The argument (a string, a Python type, etc) to convert
+        cons: a dictionary of typeclass constraints for the type signature
+        var_dict: a dictionary of bound type variables
+
+    Returns: A TypeVariable, Constraint, or TypeOperator representing the arg
+
+    Raises: TypeSignatureError, if the argument cannot be converted
+    """
     # string representing type variable
-    elif isinstance(arg, str) and all((l in string.lowercase for l in arg)):
+    if isinstance(arg, str) and all((l in string.lowercase for l in arg)):
         if arg not in var_dict:
-            var_dict[arg] = TypeVariable()
+            if arg in cons:
+                var_dict[arg] = Constraint(cons[arg])
+            else:
+                var_dict[arg] = TypeVariable()
         return var_dict[arg]
 
     # subsignature, e.g. H/ (H/ int >> int) >> int >> int
     elif isinstance(arg, TypeSignature):
-        return make_fn_type([build_sig_arg(i, var_dict) for i in arg.args])
+        return make_fn_type(build_sig(arg, var_dict))
 
     # HKT, e.g. t(Maybe "a") or t("m", "a", "b")
     elif isinstance(arg, TypeSignatureHKT):
         if type(arg.tcon) == str:
-            hkt = build_sig_arg(arg.tcon, var_dict)
+            hkt = build_sig_arg(arg.tcon, cons, var_dict)
         else:
             hkt = arg.tcon
-        return TypeOperator(hkt,
-                            [build_sig_arg(a, var_dict) for a in arg.params])
+        return TypeOperator(hkt, [build_sig_arg(a, cons, var_dict)
+                                  for a in arg.params])
 
     # None (the unit type)
     elif arg is None:
@@ -253,11 +285,11 @@ def build_sig_arg(arg, var_dict):
 
     # Tuples: ("a", "b"), (int, ("a", float)), etc.
     elif isinstance(arg, tuple):
-        return Tuple(map(lambda x: build_sig_arg(x, var_dict), arg))
+        return Tuple(map(lambda x: build_sig_arg(x, cons, var_dict), arg))
 
     # Lists: ["a"], [int], etc.
     elif isinstance(arg, list) and len(arg) == 1:
-        return ListType(build_sig_arg(arg[0], var_dict))
+        return ListType(build_sig_arg(arg[0], cons, var_dict))
 
     # any other type, builtin or user-defined
     elif isinstance(arg, type):
@@ -288,14 +320,24 @@ def build_sig(type_signature, var_dict=None):
     """
     Parse a TypeSignature object and convert it to the internal type system
     language.
+
+    Args:
+        type_signature: an instance of TypeSignature
+        var_dict: a dictionary of already-bound type variables, or None
+
+    Returns: A list of TypeVariable/TypeOperator objects, representing the
+             function type corresponding to the type signature
     """
     args = type_signature.args
+    cons = type_signature.constraints
     var_dict = {} if var_dict is None else var_dict
-    return [build_sig_arg(i, var_dict) for i in args]
+    return [build_sig_arg(i, cons, var_dict) for i in args]
 
 
 class TypedFunc(Hask):
-
+    """
+    Partially applied, statically typed function wrapper.
+    """
     def __init__(self, fn, fn_args, fn_type):
         self.__doc__ = fn.__doc__
         self.func = fn
@@ -341,7 +383,7 @@ class TypedFunc(Hask):
         * is the function compose operator, equivalent to . in Haskell
         """
         if not isinstance(fn, TypedFunc):
-            raise TypeError("Cannot compose non-TypedFunc with TypedFunc")
+            return fn.__mul__(self)
 
         env = {id(self):self.fn_type, id(fn):fn.fn_type}
         compose = Lam("arg", App(Var(id(self)), App(Var(id(fn)), Var("arg"))))
@@ -472,6 +514,7 @@ class PatternMatchBind(object):
 
 
 class PatternMatchListBind(object):
+    """Represents a """
     def __init__(self, head, tail):
         self.head = head
         self.tail = tail
