@@ -167,11 +167,22 @@ L['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
 >>> len(L[1, 3, ...])  # uh oh
 ```
 
+Otherwise, you can use `List` just like you would use a regular Python list.
+
+```python
+for i in L[0, ...]:
+    print i
+
+
+>>> 55 in L[1, 3, ...]
+True
+```
 
 ### Abstract Data Types
 
-Hask allows you to define algebraic datatypes, which are immutable objects with
-a fixed number of typed, unnamed fields.
+Hask allows you to define [algebraic
+datatypes](https://wiki.haskell.org/Algebraic_data_type), which are immutable
+objects with a fixed number of typed, unnamed fields.
 
 Here is the definition for the infamous `Maybe` type:
 

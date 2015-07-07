@@ -461,6 +461,8 @@ class __d__(Syntax):
         super(__d__, self).__init__("Syntax error in `d`")
 
     def __getattr__(self, value):
+        if not value[0] in string.uppercase:
+            self.raise_invalid("Data constructor name must be capitalized")
         return __new_dcon_enum__(value)
 
 

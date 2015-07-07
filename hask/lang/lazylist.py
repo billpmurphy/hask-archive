@@ -36,7 +36,7 @@ class List(collections.Sequence, Hask):
     See help(L)
     """
     def __init__(self, head=None, tail=None):
-        self.__head = collections.deque()
+        self.__head = []
         self.__tail = itertools.chain([])
         self.__is_evaluated = True
 
@@ -53,11 +53,11 @@ class List(collections.Sequence, Hask):
                 return ListType(TypeVariable())
             return ListType(typeof(self[0]))
         elif len(self.__head) == 0:
-            self.__next__()
+            self.__next()
             return self.__type__()
         return ListType(typeof(self[0]))
 
-    def __next__(self):
+    def __next(self):
         if self.__is_evaluated:
             raise StopIteration
         else:
@@ -75,7 +75,7 @@ class List(collections.Sequence, Hask):
         Evaluate the entire List.
         """
         while not self.__is_evaluated:
-            self.__next__()
+            self.__next()
         return
 
     def __rxor__(self, item):
@@ -83,8 +83,9 @@ class List(collections.Sequence, Hask):
         ^ is the cons operator (equivalent to : in Haskell)
         """
         unify(self.__type__(), ListType(typeof(item)))
-        self.__head.appendleft(item)
-        return self
+        if self.__is_evaluated:
+            return List(head=[item] + self.__head)
+        return List(head=[item] + self.__head, tail=self.__tail)
 
     def __add__(self, other):
         """
@@ -111,29 +112,45 @@ class List(collections.Sequence, Hask):
     def __eq__(self, other):
         if self.__is_evaluated and other.__is_evaluated:
             return self.__head == other.__head
+        elif len(self.__head) >= len(other.__head):
+            # check the evaluated heads
+            heads = zip(self.__head[:len(other.__head)], other.__head)
+            if not all((h1 == h2 for h1, h2 in heads)):
+                return False
 
-        # this is horrifically inefficient
-        return list(self) == list(other)
+            # evaluate the shorter-headed list until it is the same size
+            while len(self.__head) > len(other.__head):
+                if other.__is_evaluated:
+                    return False
+                other.__next()
+                if other.__head[-1] != self.__head[len(other.__head)-1]:
+                    return False
+
+            # evaluate the tails, checking each time
+            while not self.__is_evaluated or not other.__is_evaluated:
+                if self.__is_evaluated ^ other.__is_evaluated:
+                    print "self %s, other %s" % (self.__is_evaluated, other.__is_evaluated)
+                    print "uneven tails", self.__head, other.__head
+                    return False
+                self.__next()
+                other.__next()
+                if self.__head[-1] != other.__head[-1]:
+                    return False
+        elif len(other.__head) > len(self.__head):
+            return other.__eq__(self)
+        return True
 
     def __len__(self):
         self.__evaluate()
         return len(self.__head)
 
     def __iter__(self):
-        count = 0
-        # TODO: wrong
-        for item in itertools.chain(self.__head, self.__tail):
-            if count >= len(self.__head):
-                self.__head.append(item)
-            count += 1
+        for item in self.__head:
             yield item
 
-    def __contains__(self, item):
-        """Requires an Eq instance"""
-        for i in self:
-            if i == item:
-                return True
-        return False
+        for item in self.__tail:
+            self.__head.append(item)
+            yield item
 
     def __getitem__(self, ix):
         is_slice = isinstance(ix, slice)
@@ -145,7 +162,7 @@ class List(collections.Sequence, Hask):
         if i >= 0:
             while (i+1) > len(self.__head):
                 try:
-                    self.__next__()
+                    self.__next()
                 except (StopIteration, IndexError):
                     raise IndexError("List index out of range: %s" % i)
         else:

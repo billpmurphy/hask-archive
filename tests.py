@@ -446,7 +446,7 @@ class TestTypeSystem(unittest.TestCase):
         self.assertFalse(match_only(Right(2), Just(2)))
         self.assertFalse(match_only(Right(2), Left(2)))
 
-        # matches with wildcard
+        # matches with wildcard (i.e, discarded variable bind)
         self.assertTrue(match_only(1, pb("_")))
         self.assertTrue(match_only(Nothing, pb("_")))
         self.assertTrue(match_only(Just("whatever"), Just(pb("_"))))
@@ -467,7 +467,6 @@ class TestTypeSystem(unittest.TestCase):
                 pattern_match((2, 1), (3, pb("a"))))
         self.assertEqual((True, {"a":1, "b":2, "_":"a"}),
                 pattern_match((1, "a", 2), (pb("a"), pb("_"), pb("b"))))
-
         with self.assertRaises(se):
             pattern_match((1, 2), (pb("c"), pb("a")), {"c":1})
         with self.assertRaises(se):
@@ -557,7 +556,6 @@ class TestADTInternals_Builtin(unittest.TestCase):
         self.assertTrue(self.M1(1) == self.M1(1))
         self.assertTrue(self.M2(1, "b") == self.M2(1, "b"))
         self.assertTrue(self.M3(1, 2, 3) == self.M3(1, 2, 3))
-
         self.assertFalse(self.M1(1) != self.M1(1))
         self.assertFalse(self.M2(1, "b") != self.M2(1, "b"))
         self.assertFalse(self.M3(1, 2, 3) != self.M3(1, 2, 3))
@@ -589,7 +587,6 @@ class TestADTInternals_Builtin(unittest.TestCase):
         self.assertTrue(self.M1(2) <= self.M1(2))
         self.assertFalse(self.M1(3) < self.M1(2))
         self.assertFalse(self.M1(3) <= self.M1(2))
-
         self.assertTrue(self.M1(2) > self.M1(1))
         self.assertTrue(self.M1(2) >= self.M1(1))
         self.assertTrue(self.M1(2) >= self.M1(2))
@@ -621,11 +618,14 @@ class TestADTSyntax(unittest.TestCase):
 
         # these should all work fine
         self.assertIsNotNone(data.N)
+        self.assertIsNotNone(data.N1)
         self.assertIsNotNone(data.N("a"))
+        self.assertIsNotNone(data.N("azzz"))
         self.assertIsNotNone(data.N("a", "b"))
 
     def test_d(self):
         # these are not syntactically valid
+        with self.assertRaises(se): d.a
         with self.assertRaises(se): d.A | deriving(Eq)
         with self.assertRaises(se): deriving(Eq, Show) | d.B
 
@@ -1055,11 +1055,30 @@ class TestList(unittest.TestCase):
 
     def test_eq(self):
         self.assertEqual(L[[]], L[[]])
+        self.assertEqual(L[[1, 2]], L[[1, 2]])
         self.assertEqual(L[1, 2], L[1, 2])
         self.assertEqual(L[1, 2], L[[1, 2]])
+        self.assertEqual(L[range(10)], L[range(10)])
+        self.assertEqual(L[range(5)], L[0, 1, 2, 3, 4])
+        self.assertEqual(L[range(10)], L[xrange(10)])
+        self.assertEqual(L[xrange(10)], L[xrange(10)])
+        self.assertEqual(L[xrange(5)], L[0, 1, 2, 3, 4])
+        self.assertEqual(L[(i for i in range(5))], L[(i for i in range(5))])
+        self.assertEqual(L[(i for i in range(5))], L[0, 1, 2, 3, 4])
+        self.assertEqual(L[(i for i in [])], L[[]])
+        self.assertEqual(L[1, ..., 20], L[1, ..., 20])
+        self.assertEqual(L[1, 4, ..., 20], L[1, 4, ..., 20])
+        self.assertNotEqual(L[1, 2], L[[]])
+        self.assertNotEqual(L[1, 2], L[[1]])
+        self.assertNotEqual(L[1, 2], L[1, 2, 3])
         self.assertNotEqual(L[1, 2], L[2, 2])
 
         # with infinite lists
+        self.assertNotEqual(L[1, ...], L[0,...])
+        self.assertNotEqual(L[1, 3, ...], L[1, 4, ...])
+
+        with self.assertRaises(te): L["a", "b"] == L[1, 2]
+        with self.assertRaises(te): L["a", "b"] == L[1, ...]
 
     def test_show(self):
         from hask.Prelude import show
@@ -1127,12 +1146,22 @@ class TestList(unittest.TestCase):
         self.assertEqual("abcdefghij", "".join(L["a", ...][:10]))
         self.assertEqual(11, len(L["a", ..., "k"]))
 
+    def test_contains(self):
+        self.assertTrue(1 in L[2, 3, 1])
+        self.assertFalse(1 not in L[2, 3, 1])
+        self.assertTrue(4 not in L[2, 3, 1])
+        self.assertFalse(4 in L[2, 3, 1])
+        self.assertTrue(55 in L[1,...])
+        self.assertFalse(4 in L[1, 3, ..., 19])
+        self.assertTrue(4 not in L[1, 3, ..., 19])
+
     def test_functor(self):
-        test_f = lambda x: x ** 2 - 1
-        #test_g = F(lambda y: y / 4 + 9)
+        from hask.Prelude import id
+        test_f = (lambda x: x ** 2 - 1) ** (H/ int >> int)
+        test_g = (lambda y: y / 4 + 9) ** (H/ int >> int)
 
         # functor laws
-        #self.assertEqual(List(range(10)), List(range(10)) * hid)
+        #self.assertEqual(L[range(10)], id * L[range(10)])
         #self.assertEqual(List(range(20)) * (test_f * test_g),
         #                  (List(range(20)) * test_g * test_f))
 
