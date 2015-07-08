@@ -565,7 +565,9 @@ class TestADTInternals_Enum(unittest.TestCase):
         Ord.derive_instance(self.Type_Const)
 
         self.assertTrue(self.E1 < self.E2)
+        self.assertTrue(self.E1 <= self.E2)
         self.assertFalse(self.E1 > self.E2)
+        self.assertFalse(self.E1 >= self.E2)
 
     def test_derive_bounded_data(self):
         Bounded.derive_instance(self.Type_Const)
@@ -650,7 +652,6 @@ class TestADTInternals_Poly(unittest.TestCase):
     pass
 
 
-
 class TestADTSyntax(unittest.TestCase):
 
     def test_data(self):
@@ -675,7 +676,9 @@ class TestADTSyntax(unittest.TestCase):
         # these are not syntactically valid
         with self.assertRaises(se): d.a
         with self.assertRaises(se): d.A | deriving(Eq)
+        with self.assertRaises(te): deriving("a")
         with self.assertRaises(se): deriving(Eq, Show) | d.B
+        with self.assertRaises(se): deriving(Eq, Show) & d.B
 
         # these should all work fine
         self.assertIsNotNone(d.A)
@@ -691,14 +694,18 @@ class TestADTSyntax(unittest.TestCase):
 
     def test_holistic(self):
         T, M1, M2, M3 =\
-        data.T("a", "b") == d.M1("a") | d.M2("b") | d.M3 & deriving(Show, Eq)
+        data.T("a", "b") == d.M1("a") | d.M2("b") | d.M3 & deriving(Eq)
 
-        self.assertTrue(M1(20) == M1(20))
-        self.assertTrue(M1(20) != M1(21))
-        self.assertTrue(M2(20) == M2(20))
-        self.assertTrue(M2(20) != M2(21))
-        self.assertTrue(M3 == M3)
+        self.assertEqual(M1(20), M1(20))
+        self.assertEqual(M2(20), M2(20))
+        self.assertNotEqual(M1(20), M1(21))
+        self.assertNotEqual(M2(20), M2(21))
+        self.assertNotEqual(M1(2), M2(2))
+        self.assertNotEqual(M1(2), M2("a"))
+        self.assertNotEqual(M1(2), M3)
+        self.assertEqual(M3, M3)
         self.assertFalse(M3 != M3)
+        with self.assertRaises(te): M1("a") == M1(3.0)
 
         A, B, C =\
         data.A == d.B(str, str) | d.C(str) & deriving(Show, Eq)
@@ -711,6 +718,7 @@ class TestADTSyntax(unittest.TestCase):
         self.assertNotEqual(B("a", "b"), B("a", "c"))
         self.assertNotEqual(C("b"), C("c"))
         self.assertNotEqual(C("b"), B("b", "c"))
+        with self.assertRaises(te): M1("a") == C("a")
 
         A, B =\
         data.A == d.B(str, str) & deriving(Show, Eq)
@@ -719,6 +727,11 @@ class TestADTSyntax(unittest.TestCase):
         self.assertEqual("B('a', 'b')", str(B("a", "b")))
         self.assertEqual(B("a", "b"), B("a", "b"))
         self.assertNotEqual(B("a", "b"), B("a", "c"))
+
+        X, X1, X2, X3, X4, X5, X6 =\
+        data.X == d.X1 | d.X2 | d.X3 | d.X4 | d.X5 | d.X6 & deriving(Eq, Ord)
+        self.assertTrue(X1 < X2 < X3 < X4 < X5 < X6)
+        with self.assertRaises(te): X1 < A("a", "a")
 
 
 class TestBuiltins(unittest.TestCase):
@@ -730,7 +743,6 @@ class TestBuiltins(unittest.TestCase):
 
     def test_enum(self):
         from hask.Prelude import succ, pred
-
         self.assertEqual("b", succ("a"))
         self.assertEqual("a", pred("b"))
         self.assertEqual(2, succ(1))
