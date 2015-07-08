@@ -24,7 +24,7 @@ Maybe, Nothing, Just =\
         data.Maybe("a") == d.Nothing | d.Just("a") & deriving(Show, Eq, Ord)
 
 instance(Functor, Maybe).where(
-    fmap = lambda x, f: ~(caseof(x)
+    fmap = lambda f, x: ~(caseof(x)
                             | m(Just(m.a)) >> Just(f(p.a))
                             | m(Nothing)   >> Nothing)
 )
@@ -89,9 +89,9 @@ def fromJust(x):
 
 @sig(H/ ["a"] >> t(Maybe, "a"))
 def listToMaybe(a):
-    if len(a) > 0:
-        return Just(a[0])
-    return Nothing
+    return ~(caseof(a)
+                | m(m.a ^ m.b) >> Just(p.b)
+                | m(m.a)       >> Nothing)
 
 
 @sig(H/ t(Maybe, "a") >> ["a"])

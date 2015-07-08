@@ -1,6 +1,5 @@
 Remaining TODOs:
 * Change type inference ending so it understands polymorphic HKTs
-* Rewrite List type to work the way it should
 * Write rest of Data.List and Prelude, and document everything undocumented
 * Final refactor of everything
 * Write rest of README
