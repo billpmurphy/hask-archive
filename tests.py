@@ -724,7 +724,7 @@ class TestBuiltins(unittest.TestCase):
     def test_show(self):
         from hask.Prelude import show
         self.assertEqual('1', show(1))
-        self.assertEqual('a', show("a"))
+        self.assertEqual("'a'", show("a"))
 
     def test_enum(self):
         from hask.Prelude import succ, pred
@@ -1176,6 +1176,7 @@ class TestList(unittest.TestCase):
 
         self.assertEqual("L[[]]", show(L[[]]))
         self.assertEqual("L[[2.0]]", show(L[[2.0]]))
+        self.assertEqual("L['a', 'a']", show(L[['a', 'a']]))
         self.assertEqual("L[['a']]", show(L[['a']]))
         self.assertEqual("L[1, 2]", show(L[1, 2]))
         self.assertEqual("L[1, 2]", show(L[[1, 2]]))

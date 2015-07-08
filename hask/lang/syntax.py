@@ -428,13 +428,9 @@ class __new_tcon__(Syntax):
     def __eq__(self, d):
         # one data constructor, zero or more derived typeclasses
         if isinstance(d, __new_dcon__):
-            return build_ADT(self.name, self.args, [(d.name, d.args)], ())
+            return build_ADT(self.name, self.args, [(d.name, d.args)], d.classes)
 
-        # one or more data constructors, no derived typeclasses
-        elif isinstance(d, __new_dcons__):
-            return build_ADT(self.name, self.args, d.dcons, ())
-
-        # one or more data constructors, one or more derived typeclasses
+        # one or more data constructors, zero or more derived typeclasses
         elif isinstance(d, __new_dcons_deriving__):
             return build_ADT(self.name, self.args, d.dcons, d.classes)
 

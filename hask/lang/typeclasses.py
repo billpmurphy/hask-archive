@@ -232,7 +232,7 @@ def enumFromTo(start, end):
     return Enum[start].enumFromTo(start, end)
 
 
-instance(Show, str).where(show=str.__str__)
+instance(Show, str).where(show=str.__repr__)
 instance(Show, int).where(show=int.__str__)
 instance(Show, long).where(show=long.__str__)
 instance(Show, float).where(show=tuple.__str__)
