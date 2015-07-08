@@ -90,21 +90,21 @@ def fromJust(x):
 @sig(H/ ["a"] >> t(Maybe, "a"))
 def listToMaybe(a):
     return ~(caseof(a)
-                | m(m.a ^ m.b) >> Just(p.b)
+                | m(m.a ^ m.b) >> Just(p.a)
                 | m(m.a)       >> Nothing)
 
 
 @sig(H/ t(Maybe, "a") >> ["a"])
-def maybeToList(maybe_a):
+def maybeToList(a):
     """
     maybeToList :: Maybe a -> [a]
 
     The maybeToList function returns an empty list when given Nothing or a
     singleton list when not given Nothing.
     """
-    if isJust(maybe_a):
-        return L[[fromJust(maybe_a)]]
-    return L[[]]
+    return ~(caseof(a)
+                | m(Nothing)   >> L[[]]
+                | m(Just(m.x)) >> L[[p.x]])
 
 
 @sig(H/ [t(Maybe, "a")] >> ["a"])
@@ -115,10 +115,10 @@ def catMaybes(a):
     The catMaybes function takes a list of Maybes and returns a list of all the
     Just values.
     """
-    return L[(item for item in a if isJust(item))]
+    return L[(fromJust(item) for item in a if isJust(item))]
 
 
-@sig(H/ (H/ "a" >> (Maybe, "a")) >> ["a"] >> ["b"])
+@sig(H/ (H/ "a" >> t(Maybe, "b")) >> ["a"] >> ["b"])
 def mapMaybe(f, la):
     """
     mapMaybe :: (a -> Maybe b) -> [a] -> [b]

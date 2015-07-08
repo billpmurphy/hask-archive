@@ -1037,7 +1037,7 @@ class TestMaybe(unittest.TestCase):
         self.assertFalse(has_instance(Maybe, Foldable))
         self.assertFalse(has_instance(Maybe, Traversable))
 
-        # show
+    def test_show(self):
         from hask.Prelude import show
         self.assertEqual("Just(3)", str(Just(3)))
         self.assertEqual("Just(3)", show(Just(3)))
@@ -1048,7 +1048,7 @@ class TestMaybe(unittest.TestCase):
         self.assertEqual("Nothing", str(Nothing))
         self.assertEqual("Nothing", show(Nothing))
 
-        # eq
+    def test_eq(self):
         self.assertEqual(Nothing, Nothing)
         self.assertEqual(Just(3), Just(3))
         self.assertEqual(Just("3"), Just("3"))
@@ -1066,12 +1066,32 @@ class TestMaybe(unittest.TestCase):
         with self.assertRaises(te): Nothing == 1
         with self.assertRaises(te): Just(1) == 1
 
-        # ord
+    def test_ord(self):
         self.assertTrue(Nothing < Just(0))
         self.assertTrue(Nothing < Just("a"))
         self.assertTrue(Nothing < Just(-float("inf")))
+        self.assertTrue(Nothing <= Just(0))
+        self.assertTrue(Nothing <= Just("a"))
+        self.assertTrue(Nothing <= Just(-float("inf")))
+        self.assertTrue(Nothing >= Nothing and Nothing <= Nothing)
+        self.assertFalse(Nothing > Just(0))
+        self.assertFalse(Nothing > Just("a"))
+        self.assertFalse(Nothing > Just(-float("inf")))
+        self.assertFalse(Nothing >= Just(0))
+        self.assertFalse(Nothing >= Just("a"))
+        self.assertFalse(Nothing >= Just(-float("inf")))
+        self.assertFalse(Nothing > Nothing or Nothing < Nothing)
 
-        # functor
+        self.assertTrue(Just(1) > Just(0))
+        self.assertTrue(Just(Nothing) < Just(Just(1)))
+        self.assertTrue(Just(Nothing) < Just(Just(Nothing)))
+        self.assertTrue(Just(1) >= Just(0))
+        self.assertTrue(Just(Just(1)) >= Just(Nothing))
+        self.assertTrue(Just(Just(Nothing)) >= Just(Nothing))
+        self.assertTrue(Just(Just(Nothing)) >= Just(Just(Nothing)))
+
+
+    def test_functor(self):
         from hask.Prelude import id, fmap
         plus1 = (lambda x: x + 1) ** (H/ int >> int)
         toStr = str ** (H/ int >> str)
@@ -1089,7 +1109,7 @@ class TestMaybe(unittest.TestCase):
         self.assertEqual((toStr * (plus1 * Just(2))),
                          (toStr * plus1) * Just(2))
 
-        # monad (add more)
+    def test_monad(self):
         self.assertEqual(Just("1"), Just(1) >> (lambda x: Just(str(x))))
         self.assertEqual(Just(10), Just(1) >> (lambda x: Just(x * 10)))
 
@@ -1109,6 +1129,25 @@ class TestMaybe(unittest.TestCase):
         with self.assertRaises(ValueError): fromJust(Nothing)
 
         self.assertEqual(Nothing, listToMaybe(L[[]]))
+        self.assertEqual(Just("a"), listToMaybe(L[["a"]]))
+        self.assertEqual(Just("a"), listToMaybe(L["a", "b"]))
+        self.assertEqual(Just(1), listToMaybe(L[1, ...]))
+        self.assertEqual(L[[]], maybeToList(Nothing))
+        self.assertEqual(L[[1]], maybeToList(Just(1)))
+        self.assertEqual(L[[]], catMaybes(L[[]]))
+        self.assertEqual(L[[]], catMaybes(L[Nothing, Nothing]))
+        self.assertEqual(L[1, 2], catMaybes(L[Just(1), Just(2)]))
+        self.assertEqual(L[1, 2], catMaybes(L[Just(1), Nothing, Just(2)]))
+
+        from hask.Prelude import const
+        self.assertEqual(L[[]], mapMaybe(const(Nothing), L[1, 2]))
+        self.assertEqual(L[1, 2], mapMaybe(Just, L[1, 2]))
+        self.assertEqual(L[[]], mapMaybe(Just, L[[]]))
+
+        f = (lambda x: Just(x) if x > 3 else Nothing) \
+            ** (H/ int >> t(Maybe, int))
+        self.assertEqual(L[4, 5], mapMaybe(f, L[1, ..., 5]))
+        self.assertEqual(L[[]], mapMaybe(f, L[1, ..., 3]))
 
 
 class TestEither(unittest.TestCase):
