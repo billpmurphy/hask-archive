@@ -23,6 +23,7 @@ from typeclasses import Bounded
 from typeclasses import Read
 
 from syntax import Syntax
+from syntax import instance
 
 
 #=============================================================================#
@@ -119,23 +120,26 @@ class List(collections.Sequence, Hask):
         body = ", ".join((show(s) for s in self.__head))
         return "L[%s]" % body if self.__is_evaluated else "L[%s ...]" % body
 
-    def __eq__(self, other):
+    def __cmp__(self, other):
         if self.__is_evaluated and other.__is_evaluated:
-            return self.__head == other.__head
+            return cmp(self.__head, other.__head)
 
         elif len(self.__head) >= len(other.__head):
             # check the evaluated heads
             heads = zip(self.__head[:len(other.__head)], other.__head)
-            if any((h1 != h2 for h1, h2 in heads)):
-                return False
+            heads_comp = ((cmp(h1, h2) for h1, h2 in heads))
+            for comp in heads_comp:
+                if comp != 0:
+                    return comp
 
             # evaluate the shorter-headed list until it is the same size
             while len(self.__head) > len(other.__head):
                 if other.__is_evaluated:
-                    return False
+                    return 1
                 other.__next()
-                if other.__head[-1] != self.__head[len(other.__head)-1]:
-                    return False
+                comp = cmp(other.__head[-1], self.__head[len(other.__head)-1])
+                if comp != 0:
+                    return comp
 
             # evaluate the tails, checking each time
             while not self.__is_evaluated or not other.__is_evaluated:
@@ -143,14 +147,37 @@ class List(collections.Sequence, Hask):
                     self.__next()
                 if not other.__is_evaluated:
                     other.__next()
-                if self.__head[-1] != other.__head[-1] or \
-                   len(self.__head) != len(other.__head):
-                    return False
+
+                len_comp = cmp(len(self.__head), len(other.__head))
+                if len_comp != 0:
+                    return len_comp
+
+                if len(self.__head) > 0:
+                    value_comp = cmp(self.__head[-1], other.__head[-1])
+                    if value_comp != 0:
+                        return value_comp
 
         elif len(other.__head) > len(self.__head):
-            return other.__eq__(self)
+            return other.__cmp__(self)
 
-        return True
+        return 0
+
+    def __eq__(self, other):
+        return self.__cmp__(other) == 0
+
+    def __lt__(self, other):
+        return self.__cmp__(other) == -1
+
+    def __gt__(self, other):
+        return self.__cmp__(other) == 1
+
+    def __le__(self, other):
+        comp = self.__cmp__(other)
+        return comp in (-1, 0)
+
+    def __ge__(self, other):
+        comp = self.__cmp__(other)
+        return comp in (1, 0)
 
     def __len__(self):
         self.__evaluate()
@@ -187,11 +214,21 @@ class List(collections.Sequence, Hask):
         return self.__head[ix]
 
 
-## Typeclass instances for list
-Show.make_instance(List, show=List.__str__)
-Eq.make_instance(List, eq=List.__eq__)
-Ord.make_instance(List, lt=List.__lt__)
+## Basic typeclass instances for list
+instance(Show, List).where(
+    show = List.__str__
+)
 
+instance(Eq, List).where(
+    eq = List.__eq__
+)
+
+instance(Ord, List).where(
+   lt = List.__lt__,
+   gt = List.__gt__,
+   le = List.__le__,
+   ge = List.__ge__
+)
 
 #=============================================================================#
 # List comprehension syntax

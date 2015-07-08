@@ -16,10 +16,7 @@ from hask import Num, Real, Integral, RealFrac, Fractional, Floating, RealFloat
 from hask import Functor, Applicative, Monad
 from hask import Foldable, Traversable
 
-
 # internals
-from hask.lang.syntax import Syntax
-
 from hask.lang.type_system import make_fn_type
 from hask.lang.type_system import build_sig_arg
 from hask.lang.type_system import build_sig
@@ -292,7 +289,7 @@ class TestHindleyMilner(unittest.TestCase):
         """Test type signature building internals - make sure that types are
            translated in a reasonable way"""
 
-        class __test__(object):
+        class example(object):
             pass
 
         # type variables
@@ -304,7 +301,8 @@ class TestHindleyMilner(unittest.TestCase):
         self.unified(build_sig_arg(int, {}, {}), TypeOperator(int, []))
         self.unified(build_sig_arg(float, {}, {}), TypeOperator(float, []))
         self.unified(build_sig_arg(list, {}, {}), TypeOperator(list, []))
-        self.unified(build_sig_arg(__test__, {}, {}), TypeOperator(__test__, []))
+        self.unified(build_sig_arg(set, {}, {}), TypeOperator(set, []))
+        self.unified(build_sig_arg(example, {}, {}), TypeOperator(example, []))
 
         # unit type (None)
         self.unified(build_sig_arg(None, {}, {}), TypeOperator(None, []))
@@ -313,10 +311,30 @@ class TestHindleyMilner(unittest.TestCase):
         self.unified(
                 build_sig_arg((int, int), {}, {}),
                 Tuple([TypeOperator(int, []), TypeOperator(int, [])]))
+        self.unified(
+                build_sig_arg((None, (None, int)), {}, {}),
+                Tuple([TypeOperator(None, []),
+                       Tuple([TypeOperator(None, []), TypeOperator(int, [])])]))
+        a = TypeVariable()
+        self.unified(
+                build_sig_arg(("a", "a", "a"), {}, {}),
+                Tuple([a, a, a]))
 
         # list
 
         # adts
+        self.unified(typeof(Nothing), build_sig_arg(t(Maybe, "a"), {}, {}))
+        self.unified(typeof(Just(1)), build_sig_arg(t(Maybe, int), {}, {}))
+        self.unified(
+                typeof(Just(Just(Nothing))),
+                build_sig_arg(t(Maybe, t(Maybe, t(Maybe, "a"))), {}, {}))
+        self.unified(
+                typeof(Right("error")),
+                build_sig_arg(t(Either, str, "a"), {}, {}))
+        self.unified(
+                typeof(Left(2.0)),
+                build_sig_arg(t(Either, "a", int), {}, {}))
+
 
     def test_signature_build(self):
         """Make sure type signatures are built correctly"""
@@ -379,22 +397,6 @@ class TestHindleyMilner(unittest.TestCase):
                 TypeOperator(Either,
                     [TypeOperator(float, []), TypeVariable()]))
 
-    def test_builtin_HKT(self):
-        self.unified(typeof(1), build_sig_arg(t(int), {}, {}))
-        self.unified(typeof(Nothing), build_sig_arg(t(Maybe, "a"), {}, {}))
-        self.unified(typeof(Just(1)), build_sig_arg(t(Maybe, int), {}, {}))
-
-        self.unified(
-                typeof(Just(Just(Nothing))),
-                build_sig_arg(t(Maybe, t(Maybe, t(Maybe, "a"))), {}, {}))
-
-        self.unified(
-                typeof(Right("error")),
-                build_sig_arg(t(Either, str, "a"), {}, {}))
-
-        self.unified(
-                typeof(Left(2.0)),
-                build_sig_arg(t(Either, "a", int), {}, {}))
 
 
 class TestTypeSystem(unittest.TestCase):
@@ -750,6 +752,7 @@ class TestBuiltins(unittest.TestCase):
 class TestSyntax(unittest.TestCase):
 
     def test_syntax(self):
+        from hask.lang.syntax import Syntax
         s = Syntax("err")
         with self.assertRaises(se): len(s)
         with self.assertRaises(se): s[0]
