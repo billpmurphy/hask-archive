@@ -81,13 +81,13 @@ class TypeMeta(type):
 
     def __getitem__(self, item):
         try:
-            if is_builtin(type(item)):
-                return self.__instances__[id(type(item))]
-            elif isinstance(item, ADT):
+            if isinstance(item, ADT):
                 return self.__instances__[id(item.__type_constructor__)]
             elif isinstance(typeof(item), ListType):
                 return self.__instances__[id(type(item))]
-            return self.__instances__[id(typeof(item))]
+            elif isinstance(item, Hask):
+                return self.__instances__[id(typeof(item))]
+            return self.__instances__[id(type(item))]
         except KeyError:
             raise TypeError("No instance for {0}".format(item))
 

@@ -53,6 +53,7 @@ from hask.lang import sig
 from hask.lang import H
 from hask.lang import t
 from hask.lang import func
+from hask.lang import TypeSignatureError
 
 ## Pattern matching
 from hask.lang import caseof

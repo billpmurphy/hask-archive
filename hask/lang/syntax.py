@@ -204,7 +204,7 @@ class sig(Syntax):
 
 
 def t(type_constructor, *params):
-    if isinstance(type_constructor, ADT) and \
+    if issubclass(type_constructor, ADT) and \
        len(type_constructor.__params__) != len(params):
             raise TypeError("Incorrect number of type parameters to %s" % \
                             type_constructor.__name__)

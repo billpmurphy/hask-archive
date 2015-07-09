@@ -177,7 +177,7 @@ for i in L[0, ...]:
 True
 ```
 
-### Abstract Data Types
+### Algebraic Data Types
 
 Hask allows you to define [algebraic
 datatypes](https://wiki.haskell.org/Algebraic_data_type), which are immutable
@@ -273,8 +273,8 @@ Either a (str, int)
 ### The type system and typed functions
 
 So what's up with those types? Hask operates its own shadow Hindley-Milner type
-system on top of Python's type system; `_t` is showing you the Hask type of a
-particular object.
+system on top of Python's type system; `_t` shows the Hask type of a particular
+object.
 
 
 There are two ways to create `TypedFunc` objects:
@@ -434,8 +434,7 @@ def fib(x):
     return ~(caseof(x)
                 | m(0)   >> 1
                 | m(1)   >> 1
-                | m(m.n) >> fib(p.n - 1) + fib(p.n - 2)
-            )
+                | m(m.n) >> fib(p.n - 1) + fib(p.n - 2))
 
 >>> fib(1)
 1
@@ -444,15 +443,10 @@ def fib(x):
 13
 ```
 
-Notice that in the above example, we are pattern matching on a recursive
-function without a hitch.
+As the above example shows, you can combine pattern matching and recursive
+functions without a hitch.
 
-Pattern matching on iterables (`list`, `tuple`, `list`, etc.) is just as easy:
-
-```python
-```
-
-You can also deconstruct an iterable using `^`, the cons operator. The variable
+You can also deconstruct an iterable using `^` (the cons operator). The variable
 before the `^` is bound to the first element of the iterable, and the variable
 after the `^` is bound to the rest of the iterable. Here is a function that
 adds the first two elements of any iterable, returning `Nothing` if there are
@@ -462,8 +456,8 @@ less than two elements:
 @sig(H[(Num, "a")]/ ["a"] >> t(Maybe, "a"))
 def add_first_two(x):
     return ~(caseof(lst)
-                | m(m.x ^ (m.y ^ m.z)) >> Just(p.y + .py)
-                | m(m.x)               >> Nothing
+                | m(m.x ^ (m.y ^ m.z)) >> Just(p.x + p.y)
+                | m(m.x)               >> Nothing)
 
 
 >>> add_first_two([1, 2, 3, 4, 5])
@@ -837,8 +831,21 @@ Python standard library.)
 '0x8'
 ```
 
+### Internals
+
+If you want to poke around behind the curtain, here are some useful starting
+points:
+
+* `typeof(obj)` returns an object's type in Hask's type system
+* `has_instance(some_type, typeclass)` tests for typeclass membership
+* `nt_to_tuple` converts instances of `namedtuple` (including Hask ADTs) into
+  regular tuples
+* `typify` converts a Python function into a `TypedFunc` object
+
 
 That's all, folks!
+
+
 
 
 ## Appendix
