@@ -1,11 +1,11 @@
 import unittest
 
-from hask import H, sig, t, func
+from hask import H, sig, t, func, TypeSignatureError
 from hask import p, m, caseof, IncompletePatternError
 from hask import has_instance
 from hask import guard, c, otherwise, NoGuardMatchException
 from hask import __
-from hask import data, d, deriving
+from hask import data, d, deriving, instance
 from hask import L
 from hask import Ordering, LT, EQ, GT
 from hask import Maybe, Just, Nothing, in_maybe
@@ -42,6 +42,7 @@ from hask.lang.lazylist import List
 
 te = TypeError
 se = SyntaxError
+ve = ValueError
 
 
 class TestHindleyMilner(unittest.TestCase):
@@ -664,6 +665,8 @@ class TestADTSyntax(unittest.TestCase):
         with self.assertRaises(se): data.N(1, "b")
         with self.assertRaises(se): data.N("a")("b")
         with self.assertRaises(se): data.N()
+        with self.assertRaises(se): data.N == d
+        with self.assertRaises(se): data.N == 1
 
         # these should all work fine
         self.assertIsNotNone(data.N)
@@ -676,9 +679,13 @@ class TestADTSyntax(unittest.TestCase):
         # these are not syntactically valid
         with self.assertRaises(se): d.a
         with self.assertRaises(se): d.A | deriving(Eq)
+        with self.assertRaises(se): d.A | d
+        with self.assertRaises(se): d.A | "a"
         with self.assertRaises(te): deriving("a")
         with self.assertRaises(se): deriving(Eq, Show) | d.B
         with self.assertRaises(se): deriving(Eq, Show) & d.B
+        with self.assertRaises(se): d.A("a", "b") & deriving
+        with self.assertRaises(se): d.A("a", "b") & Show
 
         # these should all work fine
         self.assertIsNotNone(d.A)
@@ -692,7 +699,8 @@ class TestADTSyntax(unittest.TestCase):
         self.assertIsNotNone(d.A("a", "b") & deriving(Eq, Show))
         self.assertIsNotNone(d.A("a") | d.B("b") & deriving(Eq, Show))
 
-    def test_holistic(self):
+    def test_adts(self):
+        """Assorted ADT tests"""
         T, M1, M2, M3 =\
         data.T("a", "b") == d.M1("a") | d.M2("b") | d.M3 & deriving(Eq)
 
@@ -732,6 +740,8 @@ class TestADTSyntax(unittest.TestCase):
         data.X == d.X1 | d.X2 | d.X3 | d.X4 | d.X5 | d.X6 & deriving(Eq, Ord)
         self.assertTrue(X1 < X2 < X3 < X4 < X5 < X6)
         with self.assertRaises(te): X1 < A("a", "a")
+
+        with self.assertRaises(te): data.X == d.A | d.B & deriving(Show, 1)
 
 
 class TestBuiltins(unittest.TestCase):
@@ -895,6 +905,7 @@ class TestSyntax(unittest.TestCase):
             | c(lambda x: x == 1) >> "foo"
             | otherwise           >> "Err"))
 
+        with self.assertRaises(ve): ~(guard(2) | c(1) >> 1)
         with self.assertRaises(me): ~(guard(1) | c(lambda x: x == 2) >> 1)
 
         # syntax checks
@@ -1034,10 +1045,89 @@ class TestSyntax(unittest.TestCase):
                 | m(m.a ^ m.b ^ m.c) >> True
                 | m(m.x)             >> False)
 
+    def test_type_sig(self):
+        tse = TypeSignatureError
+        x = lambda x: x
+        with self.assertRaises(tse): x ** (H/ int >> 1)
+        with self.assertRaises(tse): x ** (H/ int >> [int, int])
+        with self.assertRaises(tse): x ** (H/ int >> [])
+        with self.assertRaises(tse): x ** (H/ int >> "AAA")
+
+        with self.assertRaises(te): t(Maybe, "a", "b")
+        with self.assertRaises(te): t(Either, "a")
+        with self.assertRaises(te): t(Ordering, "a")
+
+        with self.assertRaises(se): sig(sig(H/ int >> int))
+        with self.assertRaises(se): sig(H)
+
+        with self.assertRaises(se): H[Eq, "a"]
+        with self.assertRaises(se): H[Eq, "a", "b"]
+        with self.assertRaises(se): H[("a", Eq)]
+        with self.assertRaises(se): H[(Eq, "a", "b")]
+        with self.assertRaises(se): H[(Eq, 1)]
+        with self.assertRaises(se): H[(Maybe, 1)]
+
+
+class TestTypeclass(unittest.TestCase):
+
+    def test_typeclasses(self):
+        A, B =\
+                data.A == d.B & deriving(Show, Eq)
+        self.assertTrue(has_instance(A, Show))
+        self.assertTrue(has_instance(A, Eq))
+        self.assertFalse(has_instance(A, Ord))
+        with self.assertRaises(te): Ord[B]
+        with self.assertRaises(te):
+            A, B = data.A == d.B & deriving(Show, Ord)
+
+        class example(object):
+            def __str__(self):
+                return "example()"
+
+        instance(Show, example).where(show=example.__str__)
+
+        from hask.Prelude import show
+        self.assertEqual("example()", show(example()))
+
+
+
+class TestOrdering(unittest.TestCase):
+
+    def test_ordering(self):
+        from hask.Data.Ord import Ordering, LT, EQ, GT
+        self.assertTrue(has_instance(Ordering, Read))
+        self.assertTrue(has_instance(Ordering, Show))
+        self.assertTrue(has_instance(Ordering, Eq))
+        self.assertTrue(has_instance(Ordering, Ord))
+        self.assertTrue(has_instance(Ordering, Bounded))
+
+        from hask.Prelude import show
+        self.assertEqual("LT", show(LT))
+        self.assertEqual("EQ", show(EQ))
+        self.assertEqual("GT", show(GT))
+
+        self.assertTrue(EQ == EQ and not EQ != EQ)
+        self.assertTrue(LT == LT and not LT != LT)
+        self.assertTrue(GT == GT and not GT != GT)
+        self.assertFalse(LT == EQ)
+        self.assertFalse(LT == GT)
+        self.assertFalse(EQ == GT)
+        self.assertTrue(LT < EQ < GT)
+        self.assertTrue(LT <= EQ < GT)
+        self.assertTrue(LT < EQ <= GT)
+        self.assertTrue(LT <= EQ <= GT)
+        self.assertFalse(LT > EQ or EQ > GT)
+        self.assertFalse(LT >= EQ or EQ > GT)
+        self.assertFalse(LT > EQ or EQ >= GT)
+        self.assertFalse(LT >= EQ or EQ >= GT)
+
+        with self.assertRaises(te): EQ + EQ
+
 
 class TestMaybe(unittest.TestCase):
 
     def test_instances(self):
+        self.assertTrue(has_instance(Maybe, Read))
         self.assertTrue(has_instance(Maybe, Show))
         self.assertTrue(has_instance(Maybe, Eq))
         self.assertTrue(has_instance(Maybe, Functor))
@@ -1074,6 +1164,7 @@ class TestMaybe(unittest.TestCase):
         self.assertFalse(Nothing == Nothing and Nothing != Nothing)
         self.assertFalse(Just(1) == Just(1) and Just(1) != Just(1))
         with self.assertRaises(te): Just(1) == Just("1")
+        with self.assertRaises(te): Just(1) == Just(1L)
         with self.assertRaises(te): Nothing == None
         with self.assertRaises(te): Nothing == 1
         with self.assertRaises(te): Just(1) == 1
@@ -1125,6 +1216,17 @@ class TestMaybe(unittest.TestCase):
         self.assertEqual(Just("1"), Just(1) >> (lambda x: Just(str(x))))
         self.assertEqual(Just(10), Just(1) >> (lambda x: Just(x * 10)))
 
+        @sig(H[(Num, "a")]/ "a" >> "a" >> t(Maybe, "a"))
+        def safediv(x, y):
+            return Just(x/y) if y != 0 else Nothing
+
+        from hask.Prelude import flip
+        s = flip(safediv)
+        self.assertEqual(Just(3), Just(9) >> s(3))
+        self.assertEqual(Just(1), Just(9) >> s(3) >> s(3))
+        self.assertEqual(Nothing, Just(9) >> s(0) >> s(3))
+
+
     def test_functions(self):
         from hask.Data.Maybe import maybe, isJust, isNothing, fromJust
         from hask.Data.Maybe import listToMaybe, maybeToList, catMaybes
@@ -1165,6 +1267,7 @@ class TestMaybe(unittest.TestCase):
 class TestEither(unittest.TestCase):
 
     def test_instances(self):
+        self.assertTrue(has_instance(Either, Read))
         self.assertTrue(has_instance(Either, Show))
         self.assertTrue(has_instance(Either, Eq))
         self.assertTrue(has_instance(Either, Functor))
@@ -1476,11 +1579,16 @@ class TestDataString(unittest.TestCase):
 
 class TestDataChar(unittest.TestCase):
 
-    def test_functions(self):
+    def test_char(self):
         from hask.Data.Char import ord, chr
 
-        for i in range(500):
+        self.assertEqual("a", chr(97))
+        with self.assertRaises(te): ord(97)
+        with self.assertRaises(te): chr("a")
+        with self.assertRaises(te): chr * chr
+        for i in range(256):
             self.assertEqual(i, ord * chr % i)
+
 
 class TestDataTuple(unittest.TestCase):
 
@@ -1535,17 +1643,6 @@ class TestDataRatio(unittest.TestCase):
     def test_ratio(self):
         from hask.Data.Ratio import Ratio, R, Rational, toRatio, toRational
         from hask.Data.Ratio import numerator, denominator
-
-
-class TestDataChar(unittest.TestCase):
-
-    def test_char(self):
-        from hask.Data.Char import chr, ord
-        self.assertEqual("a", chr(97))
-        self.assertEqual("a", chr * ord % "a")
-        with self.assertRaises(te): ord(97)
-        with self.assertRaises(te): chr("a")
-        with self.assertRaises(te): chr * chr
 
 
 class TestPython(unittest.TestCase):

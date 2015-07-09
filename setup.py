@@ -6,7 +6,8 @@ try:
 except ImportError:
     from distutils.core import setup
 
-des = "We put a Haskell in your Python so you can Haskell while you Python."
+
+des = "Haskell language features and standard library ported to Python"
 setup(
         name = 'hask',
         version = hask.__version__,
@@ -14,7 +15,7 @@ setup(
         long_description = open('README.md').read(),
         author='Bill Murphy',
         author_email='billpmurphy92@gmail.com',
-        url='https://github.com/billpmurphy/pythaskell',
+        url='https://github.com/billpmurphy/hask',
         packages=['hask'],
         package_data={'': ['LICENSE', 'README.md']},
         include_package_data=True,
