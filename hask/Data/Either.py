@@ -25,7 +25,7 @@ data.Either("a", "b") == d.Left("a") | d.Right("b") & deriving(Show, Eq, Ord)
 
 
 instance(Functor, Either).where(
-    fmap = lambda v, f: ~(caseof(v)
+    fmap = lambda f, v: ~(caseof(v)
                             | m(Left(m.e))  >> Left(p.e)
                             | m(Right(m.a)) >> Right(f(p.a)))
 )

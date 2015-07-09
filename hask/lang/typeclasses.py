@@ -135,6 +135,8 @@ class Ord(Eq):
             Compare the data constructor and all of the fields of two ADTs.
             """
             if self.__ADT_slot__ == other.__ADT_slot__:
+                if len(nt_to_tuple(self)) == 0:
+                    return fn((), ())
                 zipped_fields = zip(nt_to_tuple(self), nt_to_tuple(other))
                 return all((fn(a, b) for a, b in zipped_fields))
             return fn(self.__ADT_slot__, other.__ADT_slot__)

@@ -376,14 +376,14 @@ class TypedFunc(Hask):
         """
         return self.__call__(arg)
 
-    def __rmul__(self, fn):
+    def __mul__(self, fn):
         """
         (*) :: (b -> c) -> (a -> b) -> (a -> c)
 
         * is the function compose operator, equivalent to . in Haskell
         """
         if not isinstance(fn, TypedFunc):
-            return fn.__mul__(self)
+            return fn.__rmul__(self)
 
         env = {id(self):self.fn_type, id(fn):fn.fn_type}
         compose = Lam("arg", App(Var(id(self)), App(Var(id(fn)), Var("arg"))))

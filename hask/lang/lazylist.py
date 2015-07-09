@@ -193,7 +193,10 @@ class List(collections.Sequence, Hask):
 
     def __getitem__(self, ix):
         is_slice = isinstance(ix, slice)
-        i = ix.stop if is_slice else ix
+        if is_slice:
+            i = ix.start if ix.stop is None else ix.stop
+        else:
+            i = ix
 
         # make sure that the list is evaluated enough to do the indexing, but
         # not any more than necessary
@@ -202,16 +205,16 @@ class List(collections.Sequence, Hask):
             while (i+1) > len(self.__head):
                 try:
                     self.__next()
-                except (StopIteration, IndexError):
-                    raise IndexError("List index out of range: %s" % i)
+                except StopIteration:
+                    break
         else:
             self.__evaluate()
 
         if is_slice:
-            istart, istop, istep = ix.indices(len(self.__head))
-            indices = enumFromThenTo(istart, istart+istep, istop-istep)
-            return List(head=[self.__head[idx] for idx in indices])
-        return self.__head[ix]
+            if ix.stop is None:
+                return List(head=self.__head[ix], tail=self.__tail)
+            return List(head=self.__head[ix])
+        return self.__head[i]
 
 
 ## Basic typeclass instances for list
