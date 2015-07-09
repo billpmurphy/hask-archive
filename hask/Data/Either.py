@@ -1,3 +1,4 @@
+from ..lang import Read
 from ..lang import Show
 from ..lang import sig
 from ..lang import H
@@ -19,9 +20,10 @@ from ..Control.Applicative import Applicative
 from ..Control.Monad import Monad
 
 
-# data Either a b = Left b | Right a deriving(Show, Eq, Ord)
+# data Either a b = Left b | Right a deriving(Read, Show, Eq, Ord)
 Either, Left, Right =\
-data.Either("a", "b") == d.Left("a") | d.Right("b") & deriving(Show, Eq, Ord)
+data.Either("a", "b") == d.Left("a") | d.Right("b") \
+                       & deriving(Read, Show, Eq, Ord)
 
 
 instance(Functor, Either).where(

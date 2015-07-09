@@ -22,6 +22,11 @@ class Read(Typeclass):
         build_instance(Read, cls, {"read":read})
         return
 
+    @classmethod
+    def derive_instance(typeclass, cls):
+        Read.make_instance(cls, read=eval)
+        return
+
 
 class Show(Typeclass):
     @classmethod

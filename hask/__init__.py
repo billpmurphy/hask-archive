@@ -1,15 +1,31 @@
 __version__ = "0.0.1"
 
 
-# Make sure everything gets loaded correctly
+#=============================================================================#
+# Module imports
+
+
+import lang
+import Data.Char
+import Data.Either
+import Data.Eq
+import Data.Foldable
+import Data.Functor
+import Data.List
+import Data.Maybe
+import Data.Monoid
+import Data.Num
+import Data.Ord
+import Data.Ratio
+import Data.String
+import Data.Traversable
+import Data.Tuple
 import Control.Applicative
 import Control.Monad
 import Python.builtins
 
 
 #=============================================================================#
-# Imports
-
 # Core language
 
 ## Typeclass instance declaration

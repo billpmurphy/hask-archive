@@ -56,9 +56,9 @@ To run the tests: `python tests.py`.
 
 ## Why did you make this?
 
-My goal was to cram as much of Haskell into Python as possible while still
-being 100% compatible with the rest of the language, just to see if any useful
-ideas came out of the result. Also, it was fun!
+I wanted to cram as much of Haskell into Python as possible while still being
+100% compatible with the rest of Python, just to see if any useful ideas came
+out of the result. Also, it was fun!
 
 Contributions, forks, and extensions to this experiment are always welcome!
 Feel free to submit a pull request, open an issue, or email me. In the spirit
@@ -216,11 +216,15 @@ deriving(...typeclasses...)` after the data constructor declarations.
 Currently, the only typeclasses that can be derived are `Eq`, `Show`, `Read`,
 `Ord`, and `Bounded`.
 
-Putting it all together, here is the definition of `Either`:
+Putting it all together, here are the definitions of `Either` and `Ordering`:
 
 ```python
 Either, Left, Right =\
     data.Either("a", "b") == d.Left("a") | d.Right("b") & deriving(Read, Show, Eq)
+
+
+Ordering, LT, EQ, GT =\
+    data.Ordering == d.LT | d.EQ | d.GT & deriving(Read, Show, Eq, Ord, Bounded)
 ```
 
 We can now use the data constructors defined in a `data` statement to create
@@ -580,17 +584,24 @@ instance(Monad, Maybe).where(
 The `bind` function also has an infix form, which is `>>` in Hask.
 
 ```python
->>> f = (lambda x: Just(x + 10)) ** (H/ int >> t(Maybe, int))
->>> g = (lambda x: Just(x + 3)) ** (H/ int >> t(Maybe, int))
->>> h = (lambda _: Nothing) ** (H/ "a" >> t(Maybe, "a"))
+@sig(H/ int >> int >> t(Maybe, int))
+def safe_div(x, y):
+    return Nothing if y == 0 else Just(x/y)
 
->>> Just(3) >> f >> g
-Just(16)
 
->>> Nothing >> f >> g
-Nothing
+>>> from hask.Prelude import flip
+>>> divBy = flip(safe_div)
 
->>> Just(3) >> f >> h >> g
+
+>>> Just(9) >> divBy(3)
+Just(3)
+
+
+>>> Just(12) >> divBy(2) >> divBy(2) >> divBy(3)
+Just(1)
+
+
+>>> Just(12) >> divBy(0) >> divBy(6)
 Nothing
 ```
 
@@ -880,9 +891,4 @@ That's all, folks!
 | `hask.Control.Applicative` | `hask.lang` | `Applicative` |
 | `hask.Control.Monad` | `hask.lang` |
 | `hask.Python.builtins` | `hask.lang` | `callable`, `cmp`, `delattr`, `divmod`, `frozenset`, `getattr`, `hasattr`, `hash`, `hex`, `isinstance`, `issubclass`, `len`, `oct`, `repr`, `setattr`, `sorted`, `unichr` |
-| `hask.lang` |
-| `hask.lang.hindley_milner` |
-| `hask.lang.type_system` | `hask.lang.hindley_milner`
-| `hask.lang.syntax` | `hask.lang.type_system`
-| `hask.lang.typeclasses` | `hask.lang.type_system`, `hask.lang.syntax`
-| `hask.lang.lazylist` | `hask.lang.type_system`, `hask.lang.hindley_milner`, `hask.lang.syntax`, `hask.lang.typeclasses` | `L`, `List` |
+| `hask.lang` | `Show` (`show`), `Read`, `Eq`, `Ord`, `Enum`, `Bounded`, `typeof`, `is_builtin`, `has_instance`, `nt_to_tuple`, `build_instance`, `Typeclass`, `Hask`, `TypedFunc`, `TypeSignatureError`, `undefined`, `caseof`, `m`, `p`, `IncompletePattnerError`, `data`, `d`, `deriving`, `H`, `sig`, `t`, `func`, `typify`, `NoGuardMatchException`, `guard`, `c`, `otherwise`, `instance`, `__`, `_t`, `_q`, `_i`, `List`, `L` |

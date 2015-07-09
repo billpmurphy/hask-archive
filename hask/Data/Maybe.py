@@ -1,4 +1,5 @@
-from ..lang import Read, Show
+from ..lang import Read
+from ..lang import Show
 from ..lang import L
 from ..lang import H
 from ..lang import sig
@@ -21,7 +22,7 @@ from ..Control.Monad import Monad
 
 # data Maybe a = Nothing | Just a deriving(Show, Eq, Ord)
 Maybe, Nothing, Just =\
-        data.Maybe("a") == d.Nothing | d.Just("a") & deriving(Show, Eq, Ord)
+    data.Maybe("a") == d.Nothing | d.Just("a") & deriving(Read, Show, Eq, Ord)
 
 instance(Functor, Maybe).where(
     fmap = lambda f, x: ~(caseof(x)

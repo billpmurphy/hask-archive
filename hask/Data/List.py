@@ -5,6 +5,7 @@ from ..lang import H
 from ..lang import sig
 from ..lang import t
 from ..lang import L
+from ..lang import __
 
 from Foldable import Foldable
 from Eq import Eq
@@ -154,7 +155,7 @@ def transpose(xs):
 
     The transpose function transposes the rows and columns of its argument.
     """
-    return L[[L[x] for x in zip(*xs)]]
+    return L[[L[x] for x in itertools.izip(*xs)]]
 
 
 @sig(H/ ["a"] >> [["a"]] )
@@ -452,7 +453,7 @@ def group(xs):
     It is a special case of groupBy, which allows the programmer to supply
     their own equality test.
     """
-    raise NotImplementedError()
+    return groupBy(xs, (__==__))
 
 
 @sig(H/ ["a"] >> [["a"]])
@@ -678,15 +679,16 @@ def findIndicies(f, xs):
 #=============================================================================#
 # Zipping and unzipping lists
 
+
 def zip(xs, ys):
     """
     """
-    return L[zip(xs, ys)]
+    return L[itertools.izip(xs, ys)]
 
 def zip3(a, b, c):
     """
     """
-    return L[zip(a, b, c)]
+    return L[itertools.izip(a, b, c)]
 
 def zip4(a, b, c, d):
     """
@@ -773,6 +775,7 @@ def unzip7(xs):
 # Special lists
 ## Functions on strings
 
+
 from String import lines
 from String import words
 from String import unlines
@@ -783,7 +786,7 @@ from String import unwords
 ## "Set" operations
 
 def nub(xs):
-    return
+    return L[(i for i in set(xs))]
 
 
 def delete(a, xs):
@@ -900,6 +903,7 @@ def groupBy(f, xs):
 
 #=============================================================================#
 ### User-supplied comparison (replacing an Ord context)
+
 
 @sig(H/ (H/ "a" >> "a" >> Ordering) >> ["a"] >> ["a"])
 def sortBy(f, xs):

@@ -14,6 +14,7 @@ from type_system import build_instance
 from type_system import Typeclass
 from type_system import Hask
 from type_system import TypedFunc
+from type_system import TypeSignatureError
 
 from syntax import undefined
 from syntax import caseof

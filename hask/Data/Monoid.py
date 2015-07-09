@@ -18,6 +18,6 @@ def mappend(x, y):
     return Monoid[x].mappend(x, y)
 
 
-@sig(H[(Monoid, "m")]/ >> ["m"] >> "m")
+@sig(H[(Monoid, "m")]/ ["m"] >> "m")
 def mconcat(m):
     return Monoid[x].mconcat(xs)
