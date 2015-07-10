@@ -139,9 +139,9 @@ def sum(xs):
     """
     sum :: Num a => [a] -> a
 
-    The sum_ function computes the sum of a finite list of numbers.
+    The sum function computes the sum of a finite list of numbers.
     """
-    return sum(xs)
+    return functools.reduce(operator.add, xs)
 
 
 @sig(H[(Num, "a")]/ ["a"] >> "a")

@@ -45,6 +45,7 @@ se = SyntaxError
 ve = ValueError
 
 
+
 class TestHindleyMilner(unittest.TestCase):
     """Test the internals of the Hindley-Milner type inference engine"""
 
@@ -473,7 +474,9 @@ class TestTypeSystem(unittest.TestCase):
         def eq_id(a):
             return a
 
+        self.assertEqual(1, eq_id(1))
         #with self.assertRaises(te): eq_id(staticmethod(lambda x: x))
+
 
     def test_match(self):
         match_only = lambda v, p: pattern_match(v, p)[0]
@@ -513,6 +516,7 @@ class TestTypeSystem(unittest.TestCase):
                 pattern_match((2, 1), (3, pb("a"))))
         self.assertEqual((True, {"a":1, "b":2, "_":"a"}),
                 pattern_match((1, "a", 2), (pb("a"), pb("_"), pb("b"))))
+
         with self.assertRaises(se):
             pattern_match((1, 2), (pb("c"), pb("a")), {"c":1})
         with self.assertRaises(se):
@@ -938,6 +942,7 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): "1" >> otherwise
 
     def test_caseof(self):
+
         # literal matching
         self.assertEqual(1,
                 ~(caseof("a")
@@ -1061,7 +1066,9 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): sig(H)
 
         with self.assertRaises(se): H[Eq, "a", "b"]
+        with self.assertRaises(se): H[(Eq, Eq)]
         with self.assertRaises(se): H[("a", Eq)]
+        with self.assertRaises(se): H[("a", "a")]
         with self.assertRaises(se): H[(Eq, "a", "b")]
         with self.assertRaises(se): H[(Eq, 1)]
         with self.assertRaises(se): H[(Maybe, 1)]
@@ -1185,23 +1192,55 @@ class TestMaybe(unittest.TestCase):
         self.assertFalse(Nothing > Nothing or Nothing < Nothing)
 
         self.assertTrue(Just(1) > Just(0))
-        self.assertTrue(Just(Nothing) < Just(Just(1)))
-        self.assertTrue(Just(Nothing) < Just(Just(Nothing)))
+        self.assertTrue(Just(Just(1)) > Just(Nothing))
+        self.assertTrue(Just(Just(Nothing)) > Just(Nothing))
         self.assertTrue(Just(1) >= Just(0))
+        self.assertTrue(Just(1) >= Just(1))
         self.assertTrue(Just(Just(1)) >= Just(Nothing))
         self.assertTrue(Just(Just(Nothing)) >= Just(Nothing))
         self.assertTrue(Just(Just(Nothing)) >= Just(Just(Nothing)))
+        self.assertFalse(Just(0) > Just(1))
+        self.assertFalse(Just(Nothing) > Just(Just(1)))
+        self.assertFalse(Just(Nothing) > Just(Just(Nothing)))
+        self.assertFalse(Just(0) >= Just(1))
+        self.assertFalse(Just(Nothing) >= Just(Just(1)))
+        self.assertFalse(Just(Nothing) >= Just(Just(Nothing)))
 
+        self.assertTrue(Just(0) < Just(1))
+        self.assertTrue(Just(Nothing) < Just(Just(1)))
+        self.assertTrue(Just(Nothing) < Just(Just(Nothing)))
+        self.assertTrue(Just(0) <= Just(1))
+        self.assertTrue(Just(Nothing) <= Just(Just(1)))
+        self.assertTrue(Just(Nothing) <= Just(Just(Nothing)))
+        self.assertFalse(Just(1) < Just(0))
+        self.assertFalse(Just(Just(1)) < Just(Nothing))
+        self.assertFalse(Just(Just(Nothing)) < Just(Nothing))
+        self.assertFalse(Just(1) <= Just(0))
+        self.assertTrue(Just(1) <= Just(1))
+        self.assertFalse(Just(Just(1)) <= Just(Nothing))
+        self.assertFalse(Just(Just(Nothing)) <= Just(Nothing))
+        self.assertTrue(Just(Just(Nothing)) <= Just(Just(Nothing)))
+
+        with self.assertRaises(te): Just(1) > Just(1L)
+        with self.assertRaises(te): Just(1) >= Just(1L)
+        with self.assertRaises(te): Just(1) < Just(1L)
+        with self.assertRaises(te): Just(1) <= Just(1L)
+        with self.assertRaises(te): Just(1) > Just(Just(1))
+        with self.assertRaises(te): Just(1) >= Just(Just(1))
+        with self.assertRaises(te): Just(1) < Just(Just(1))
+        with self.assertRaises(te): Just(1) <= Just(Just(1))
 
     def test_functor(self):
         from hask.Prelude import id, fmap
         plus1 = (lambda x: x + 1) ** (H/ int >> int)
         toStr = str ** (H/ int >> str)
 
+        self.assertEqual(Just(Just(2)), fmap(Just, Just(2)))
         self.assertEqual(Just(3), plus1 * Just(2))
         self.assertEqual(Just("1"), toStr * Just(1))
         self.assertEqual(Just("3"), (toStr * plus1) * Just(2))
 
+        # functor laws
         self.assertEqual(fmap(id, Just(4)), Just(4))
         self.assertEqual(fmap(id, Nothing), Nothing)
         self.assertEqual(id * Just(4), Just(4))
@@ -1224,7 +1263,17 @@ class TestMaybe(unittest.TestCase):
         self.assertEqual(Just(3), Just(9) >> s(3))
         self.assertEqual(Just(1), Just(9) >> s(3) >> s(3))
         self.assertEqual(Nothing, Just(9) >> s(0) >> s(3))
+        self.assertEqual(Nothing, Nothing >> s(3) >> s(3))
 
+        # monad laws
+        s_composed = (lambda x: s(3, x) >> s(3)) ** (H/ int >> t(Maybe, int))
+        self.assertEqual(Just(2), Just(2) >> Just)
+        self.assertEqual(Nothing, Nothing >> Just)
+        self.assertEqual(Just(4) >> s(2), s(2, 4))
+        self.assertEqual(Just(1), (Just(9) >> s(3)) >> s(3))
+        self.assertEqual(Just(1), Just(9) >> s_composed)
+        self.assertEqual(Nothing, (Nothing >> s(3)) >> s(3))
+        self.assertEqual(Nothing, Nothing >> s_composed)
 
     def test_functions(self):
         from hask.Data.Maybe import maybe, isJust, isNothing, fromJust
@@ -1241,6 +1290,8 @@ class TestMaybe(unittest.TestCase):
         self.assertEqual(fromJust(Just(Nothing)), Nothing)
         with self.assertRaises(ValueError): fromJust(Nothing)
 
+        self.assertEqual(2, maybe(0, (__+1), Just(1)))
+        self.assertEqual(0, maybe(0, (__+1)) % Nothing)
         self.assertEqual(Nothing, listToMaybe(L[[]]))
         self.assertEqual(Just("a"), listToMaybe(L[["a"]]))
         self.assertEqual(Just("a"), listToMaybe(L["a", "b"]))
@@ -1277,6 +1328,121 @@ class TestEither(unittest.TestCase):
         self.assertFalse(has_instance(Either, Num))
         self.assertFalse(has_instance(Either, Foldable))
         self.assertFalse(has_instance(Either, Traversable))
+
+    def test_show(self):
+        from hask.Prelude import show
+        self.assertEqual("Left(1)", str(Left(1)))
+        self.assertEqual("Left('1')", str(Left("1")))
+        self.assertEqual("Right(1)", str(Right(1)))
+        self.assertEqual("Right('1')", str(Right("1")))
+        self.assertEqual("Right(Left('1'))", str(Right(Left("1"))))
+        self.assertEqual("Left(1)", show(Left(1)))
+        self.assertEqual("Left('1')", show(Left("1")))
+        self.assertEqual("Right(1)", show(Right(1)))
+        self.assertEqual("Right('1')", show(Right("1")))
+        self.assertEqual("Right(Left('1'))", show(Right(Left("1"))))
+
+    def test_eq(self):
+        self.assertTrue(Left(1) == Left(1))
+        self.assertTrue(Right(1) == Right(1))
+        self.assertFalse(Left(1) == Left(2))
+        self.assertFalse(Right(1) == Right(2))
+        self.assertFalse(Left(1) == Right(1))
+        self.assertFalse(Left("a") == Right(1))
+        self.assertFalse(Left(1) != Left(1))
+        self.assertFalse(Right(1) != Right(1))
+        self.assertTrue(Left(1) != Left(2))
+        self.assertTrue(Right(1) != Right(2))
+        self.assertTrue(Left(1) != Right(1))
+        self.assertTrue(Left("a") != Right(1))
+
+    def test_ord(self):
+        self.assertTrue(Left(20) < Right(0))
+        self.assertTrue(Left(20) < Right("a"))
+        self.assertTrue(Left(2) < Left(3))
+        self.assertTrue(Right(2) < Right(3))
+        self.assertTrue(Left(20) <= Right(0))
+        self.assertTrue(Left(20) <= Right("a"))
+        self.assertTrue(Left(2) <= Left(3))
+        self.assertTrue(Right(2) <= Right(3))
+        self.assertFalse(Right(0) < Left(20))
+        self.assertFalse(Right("a") < Left(20))
+        self.assertFalse(Left(3) < Left(2))
+        self.assertFalse(Right(3) < Right(2))
+        self.assertFalse(Right(2) <= Left(20))
+        self.assertFalse(Right("a") <= Left(20))
+        self.assertFalse(Left(3) <= Left(2))
+        self.assertFalse(Right(3) <= Right(2))
+
+        self.assertTrue(Right(0) > Left(20))
+        self.assertTrue(Right("a") > Left(20))
+        self.assertTrue(Left(3) > Left(2))
+        self.assertTrue(Right(3) > Right(2))
+        self.assertTrue(Right(2) >= Left(20))
+        self.assertTrue(Right("a") >= Left(20))
+        self.assertTrue(Left(3) >= Left(2))
+        self.assertTrue(Right(3) >= Right(2))
+        self.assertFalse(Left(20) > Right(0))
+        self.assertFalse(Left(20) > Right("a"))
+        self.assertFalse(Left(2) > Left(3))
+        self.assertFalse(Right(2) > Right(3))
+        self.assertFalse(Left(20) >= Right(0))
+        self.assertFalse(Left(20) >= Right("a"))
+        self.assertFalse(Left(2) >= Left(3))
+        self.assertFalse(Right(2) >= Right(3))
+
+        self.assertTrue(Left(2L) <= Left(2L))
+        self.assertTrue(Right(2) <= Right(2))
+        self.assertTrue(Left(2L) >= Left(2L))
+        self.assertTrue(Right(2) >= Right(2))
+
+    def test_functor(self):
+        from hask.Prelude import id, flip, fmap, const
+        self.assertEqual(Left(7), fmap(__+1, Left(7)))
+        self.assertEqual(Left("a"), fmap(__+1, Left("a")))
+        self.assertEqual(Right(8), fmap(__+1, Right(7)))
+        with self.assertRaises(te): fmap(__+1, Right("a"))
+        self.assertEqual(Right(Left(1)), fmap(const(Left(1)), Right("a")))
+        self.assertEqual(Left("a"), fmap(const(Left(1)), Left("a")))
+
+        f = (lambda x: x + "!") ** (H/ str >> str)
+        g = (lambda x: x + "?") ** (H/ str >> str)
+        self.assertEqual(Right("b?!"), (f * g) * Right("b"))
+        self.assertEqual(Right("b?!"), f * g * Right("b"))
+        self.assertEqual(Left("b"), (f * g) * Left("b"))
+        self.assertEqual(Left("b"), f * g * Left("b"))
+
+        # functor laws
+        self.assertEqual(Left(7), fmap(id, Left(7)))
+        self.assertEqual(Right(7), fmap(id, Right(7)))
+        self.assertEqual(Right("a?!"), fmap(f * g, Right("a")))
+        self.assertEqual(Left("a"), fmap(f * g, Left("a")))
+        self.assertEqual(Right("a?!"), fmap(f, fmap(g, Right("a"))))
+        self.assertEqual(Left("a"), fmap(f, fmap(g, Left("a"))))
+
+    def test_monad(self):
+        from hask.Prelude import flip
+
+        @sig(H/ int >> int >> t(Either, str, int))
+        def sub_whole(x, y):
+            return Right(x-y) if (x-y) >= 0 else Left("err")
+
+        sub = flip(sub_whole)
+
+        self.assertEqual(Right(2), Right(4) >> sub(2))
+        self.assertEqual(Right(0), Right(4) >> sub(2) >> sub(2))
+        self.assertEqual(Left("err"), Right(4) >> sub(10))
+        self.assertEqual(Left("0"), Left("0") >> sub_whole(1))
+
+        # monad laws
+        sub_composed = (lambda x: sub_whole(4, x) >> sub(2))
+        self.assertEqual(Right(7), Right(7) >> Right)
+        self.assertEqual(Left(7), Left(7) >> Right)
+        self.assertEqual(Right(1), (Right(5) >> sub(1)) >> sub(3))
+        self.assertEqual(Left("e"), (Left("e") >> sub(1)) >> sub(3))
+        self.assertEqual(Left("err"), (Right(5) >> sub(10)) >> sub(3))
+        self.assertEqual(Right(0), Right(2) >> sub_composed)
+        self.assertEqual(Left("e"), Left("e") >> sub_composed)
 
     def test_functions(self):
         from hask.Data.Either import either
@@ -1355,8 +1521,12 @@ class TestList(unittest.TestCase):
         with self.assertRaises(te): L["a", "b"] == L[1, ...]
 
     def test_ord(self):
+        self.assertTrue(L[[]] < L[2, 1])
         self.assertTrue(L[1, 2] < L[2, 1])
-        self.assertTrue(L[1, 2] <= L[2, 1])
+        self.assertTrue(L[1, 2] < L[2, 1, 3])
+        self.assertTrue(L[1, 2] < L[2, ...])
+
+
 
     def test_show(self):
         from hask.Prelude import show
@@ -1380,6 +1550,7 @@ class TestList(unittest.TestCase):
         self.assertEqual(L[1, 2, 3, 4], L[[1, 2]] + L[[3, 4]])
         self.assertEqual(L[1, 2, 3, 4, 5], L[1, 2] + L[3, 4] + L[[5]])
         self.assertEqual(L[1, 2, 3, 4, 5], L[1, 2] + L[[]] + L[3, 4, 5])
+        self.assertEqual(L[1, ..., 10], (L[1, ...] + L[0, ...])[:10])
         with self.assertRaises(te): L[1.0, 2.0] + L[3, 4]
         with self.assertRaises(te): L[1.0, 2.0] + [3, 4]
         with self.assertRaises(te): L[(i for i in "abc")] + L[1, 2]
@@ -1454,13 +1625,21 @@ class TestList(unittest.TestCase):
 
     def test_functor(self):
         from hask.Prelude import id, map, fmap
-        test_f = (lambda x: x ** 2 - 1) ** (H/ int >> int)
-        test_g = (lambda y: y / 4 + 9) ** (H/ int >> int)
+        f = (lambda x: x ** 2 - 1) ** (H/ int >> int)
+        g = (lambda y: y / 4 + 9) ** (H/ int >> int)
+
+        self.assertEqual(L[0, 3, 8, 15], fmap(f, L[1, ..., 4]))
+        self.assertEqual(L[0, 3, 8, 15], fmap(f, L[1, ...])[:4])
+        self.assertEqual(L[0, 3, 8, 15], f * L[1, ..., 4])
+        self.assertEqual(L[0, 3, 8, 15], (f * L[1, ...])[:4])
 
         # functor laws
         self.assertEqual(L[range(10)], fmap(id, L[range(10)]))
-        self.assertEqual(fmap(test_f * test_g, L[range(20)]),
-                         fmap(test_f, fmap(test_g, L[range(20)])))
+        self.assertEqual(L[range(10)], fmap(id, L[0, ...][:10]))
+        self.assertEqual(fmap(f * g, L[range(20)]),
+                         fmap(f, fmap(g, L[range(20)])))
+        self.assertEqual(fmap(f * g, L[7, ...])[:20],
+                         fmap(f, fmap(g, L[7, ...]))[:20])
 
     def test_monad(self):
         pass
@@ -1476,24 +1655,48 @@ class TestList(unittest.TestCase):
 class TestDataList(unittest.TestCase):
 
     def test_basic_functions(self):
-        pass
+        from hask.Data.List import head, last, tail, init, uncons, null, length
+
+        self.assertEqual(4, head(L[4, 2]))
+        self.assertEqual(1, head(L[1, ...]))
+        with self.assertRaises(IndexError): head(L[[]])
+
+        with self.assertRaises(IndexError): tail(L[[]])
+
+        with self.assertRaises(IndexError): init(L[[]])
+        self.assertTrue(null(L[[]]))
+        self.assertFalse(null(L[[1]]))
+        self.assertFalse(null(L[1, ...]))
+        self.assertEqual(20, length(L[0, ..., 19]))
+        self.assertEqual(0, length(L[[]]))
 
     def test_list_transformations(self):
-        pass
+        from hask.Data.List import map, reverse, intersperse, intercalate
+        from hask.Data.List import transpose, subsequences, permutations
+
+        self.assertEqual(L[1, 2, 1], intersperse(2, L[1, 1]))
+        self.assertEqual(L[[]], intersperse(2, L[[]]))
 
     def test_reducing_lists(self):
-        pass
+        from hask.Data.List import foldl, foldl_, foldl_, foldr, foldr1, concat
+        from hask.Data.List import concatMap, and_, or_, any, all, sum, product
+        from hask.Data.List import maximum, minimum
 
     def test_building_lists(self):
-        pass
+        from hask.Data.List import scanl, scanl1, scanr, scanr1, mapAccumL
+        from hask.Data.List import mapAccumR, iterate, repeat, replicate, cycle
+        from hask.Data.List import unfoldr
 
-    def test_infinite_lists(self):
         plus_one = (lambda x: x + 1) ** (H/ int >> int)
-        #self.assertEquals(iterate(plus_one, 0)[:10], L[range(10)])
+        self.assertEquals(iterate(plus_one, 0)[:10], L[range(10)])
+        self.assertEquals(iterate(__+1, 0)[:10], L[range(10)])
 
     def test_sublists(self):
-        from hask.Data.List import isPrefixOf, isSuffixOf, isInfixOf
-        from hask.Data.List import isSubsequenceOf
+        from hask.Data.List import take, drop, splitAt, takeWhile, dropWhile
+        from hask.Data.List import dropWhileEnd, span, break_, stripPrefix
+        from hask.Data.List import group, inits, tails, isPrefixOf, isSuffixOf
+        from hask.Data.List import isInfixOf, isSubsequenceOf
+
         self.assertTrue(isPrefixOf(L["a", "b"], L["a", "b", "c"]))
         self.assertFalse(isPrefixOf(L["a", "b"], L["d", "a", "b", "c"]))
         self.assertTrue(isSuffixOf(L["b", "c"], L["a", "b", "c"]))
@@ -1503,22 +1706,31 @@ class TestDataList(unittest.TestCase):
         self.assertFalse(isInfixOf(L[1, 2], L[2, 3, 1, 4]))
 
     def test_searching_lists(self):
-        pass
+        from hask.Data.List import elem, notElem, lookup, find, filter
+        from hask.Data.List import partition
 
     def test_indexing_lists(self):
-        pass
+        from hask.Data.List import elemIndex, elemIndices, findIndex
+        from hask.Data.List import findIndicies
 
     def test_zipping_lists(self):
-        pass
+        from hask.Data.List import zip, zip3, zip4, zip5, zip6, zip7, zipWith
+        from hask.Data.List import zipWith3, zipWith4, zipWith5, zipWith6
+        from hask.Data.List import zipWith7, unzip, unzip3, unzip4, unzip5
+        from hask.Data.List import unzip5, unzip6
 
     def test_set_operations(self):
-        pass
+        from hask.Data.List import nub, delete, diff, union, intersect
 
     def test_ordered_lists(self):
-        pass
+        from hask.Data.List import sort, sortOn, insert
 
     def test_generalized_functions(self):
-        pass
+        from hask.Data.List import nubBy, deleteBy, deleteFirstBy, unionBy
+        from hask.Data.List import intersectBy, groupBy, sortBy, insertBy
+        from hask.Data.List import maximumBy, minimumBy, genericLength
+        from hask.Data.List import genericTake, genericDrop, genericSplitAt
+        from hask.Data.List import genericIndex, genericReplicate
 
 
 class TestPrelude(unittest.TestCase):
@@ -1557,7 +1769,6 @@ class TestPrelude(unittest.TestCase):
         msg = "OUT OF CHEESE ERROR"
         try:
             error(msg)
-            self.assertTrue(False)
         except Exception as e:
             self.assertEqual(msg, e.message)
 

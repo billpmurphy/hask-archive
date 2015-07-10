@@ -6,6 +6,9 @@ from ..lang import sig
 from ..lang import t
 from ..lang import L
 from ..lang import __
+from ..lang import caseof
+from ..lang import m
+from ..lang import p
 
 from Foldable import Foldable
 from Eq import Eq
@@ -48,7 +51,9 @@ def tail(xs):
 
     Extract the elements after the head of a list, which must be non-empty.
     """
-    return L[(x for x in xs[1:])]
+    if null(xs):
+        raise IndexError("empty list")
+    return xs[1:]
 
 
 @sig(H/ ["a"] >> ["a"] )
@@ -59,7 +64,9 @@ def init(xs):
     Return all the elements of a list except the last one. The list must be
     non-empty.
     """
-    return L[(x for x in xs[:-1])]
+    if null(xs):
+        raise IndexError("empty list")
+    return xs[:-1]
 
 
 @sig(H/ ["a"] >> t(Maybe, ("a", ["a"])))
@@ -71,7 +78,7 @@ def uncons(xs):
     Nothing. If the list is non-empty, returns Just((x, xs)), where x is the
     head of the list and xs its tail.
     """
-    return Just((xs[0], xs[1:])) if xs else Nothing
+    return Just((head(xs), tail(xs))) if not null(xs) else Nothing
 
 
 @sig(H/ ["a"] >> bool)
@@ -81,7 +88,9 @@ def null(xs):
 
     Test whether the structure is empty.
     """
-    return bool(xs)
+    return ~(caseof(xs)
+                | m(m.y ^ m.ys) >> False
+                | m(m.ys)       >> True)
 
 
 @sig(H/ ["a"] >> int )
@@ -93,7 +102,7 @@ def length(xs):
     implementation is optimized for structures that are similar to cons-lists,
     because there is no general way to do better.
     """
-    return len(x)
+    return len(xs)
 
 
 #=============================================================================#
@@ -133,6 +142,9 @@ def intersperse(x, xs):
             yield y
             yield x
         yield last(xs)
+
+    if null(xs):
+        return xs
     return L[__intersperse(x, xs)]
 
 
@@ -155,7 +167,7 @@ def transpose(xs):
 
     The transpose function transposes the rows and columns of its argument.
     """
-    return L[[L[x] for x in itertools.izip(*xs)]]
+    return L[(L[x] for x in itertools.izip(*xs))]
 
 
 @sig(H/ ["a"] >> [["a"]] )

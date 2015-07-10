@@ -1,3 +1,4 @@
+import inspect
 import operator
 import string
 from collections import deque, defaultdict
@@ -90,10 +91,10 @@ class instance(Syntax):
         fmap = ...
     )
     """
-    def __init__(self, typeclass, cls):
-        if not issubclass(typeclass, Typeclass):
-            raise TypeError("%s is not a typeclass" % typeclass)
-        self.typeclass = typeclass
+    def __init__(self, typecls, cls):
+        if not (inspect.isclass(typecls) and issubclass(typecls, Typeclass)):
+            raise TypeError("%s is not a typeclass" % typecls)
+        self.typeclass = typecls
         self.cls = cls
         return
 
@@ -131,11 +132,14 @@ class __constraints__(Syntax):
 
     def __add_constraint(self, con):
         if len(con) != 2 or not isinstance(con, tuple):
-            self.raise_invalid("Invalid typeclass constraint: %s" % con)
-        if not issubclass(con[0], Typeclass):
-            self.raise_invalid("%s is not a typeclass" % con[0])
+            self.raise_invalid("Invalid typeclass constraint: %s" % str(con))
+
         if not isinstance(con[1], str):
             self.raise_invalid("%s is not a type variable" % con[1])
+
+        if not (inspect.isclass(con[0]) and issubclass(con[0], Typeclass)):
+            self.raise_invalid("%s is not a typeclass" % con[0])
+
         self.constraints[con[1]].append(con[0])
         return
 
@@ -231,6 +235,7 @@ undefined = __undefined__()
 #=============================================================================#
 # Pattern matching
 
+# Constructs for pattern matching.
 # Note that the approach implemented here uses lots of global state and is
 # pretty much the opposite of "functional" or "thread-safe."
 
@@ -247,7 +252,7 @@ class MatchStackFrame(object):
 
 
 class MatchStack(object):
-    """Stack for pattern matching locally bound variables"""
+    """Stack for storing locally bound variables from matches"""
     __stack__ = deque()
 
     @classmethod
