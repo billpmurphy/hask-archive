@@ -1,3 +1,6 @@
+import functools
+import operator
+
 from ..lang import sig
 from ..lang import H
 from ..lang import t
@@ -141,7 +144,7 @@ def sum(xs):
 
     The sum function computes the sum of a finite list of numbers.
     """
-    return functools.reduce(operator.add, xs)
+    return functools.reduce(operator.add, xs, 0)
 
 
 @sig(H[(Num, "a")]/ ["a"] >> "a")
@@ -151,7 +154,7 @@ def product(xs):
 
     The product function computes the product of a finite list of numbers.
     """
-    return functools.reduce(operator.mul, xs)
+    return functools.reduce(operator.mul, xs, 1)
 
 
 @sig(H[(Ord, "a")]/ ["a"] >> "a")

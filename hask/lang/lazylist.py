@@ -259,10 +259,7 @@ class __list_comprehension__(Syntax):
     # list from 1 to 20 (inclusive), counting by fours
     """
     def __getitem__(self, lst):
-        if isinstance(lst, List):
-            return lst
-
-        elif isinstance(lst, tuple) and len(lst) < 5 and \
+        if isinstance(lst, tuple) and len(lst) < 5 and \
                 any((Ellipsis is x for x in lst)):
             # L[x, ...]
             if len(lst) == 2 and lst[1] is Ellipsis:
@@ -280,7 +277,7 @@ class __list_comprehension__(Syntax):
             elif len(lst) == 4 and lst[2] is Ellipsis:
                 return List(tail=enumFromThenTo(lst[0], lst[1], lst[3]))
 
-            self.raise_invalid("Invalid list comprehension: %s" % lst)
+            self.raise_invalid("Invalid list comprehension: %s" % str(lst))
 
         elif hasattr(lst, "next") or hasattr(lst, "__next__"):
             return List(tail=lst)

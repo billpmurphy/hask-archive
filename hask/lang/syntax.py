@@ -424,6 +424,7 @@ class __data__(Syntax):
 
 class __new_tcon__(Syntax):
     """
+    Base class for syntax classes related to creating new type constructors.
     """
     def __init__(self, name, args=()):
         self.name = name
@@ -592,6 +593,15 @@ class __section__(Syntax):
     """
     Special syntax for operator sections.
 
+    Example usage:
+        (__+1)
+
+        (6/__)
+
+        (__*__)
+
+    Operators supported:
+    + - * / // divmod ** >> << | & ^ == != > >= < <=
     """
     def __init__(self, syntax_err_msg):
         super(__section__, self).__init__(syntax_err_msg)

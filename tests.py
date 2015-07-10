@@ -1540,6 +1540,7 @@ class TestList(unittest.TestCase):
     def test_cons(self):
         self.assertEqual(L[[1]], 1 ^ L[[]])
         self.assertEqual(L[1, 2, 3], 1 ^ (2 ^ L[[3]]))
+        self.assertEqual(L[0, 1, 2], (0 ^ L[1, ...])[:3])
         self.assertEqual(L[True, False, True], True ^ (False ^ L[[True]]))
         with self.assertRaises(te): "a" ^ L[2, 4]
         with self.assertRaises(te): True ^ L[2, 4]
@@ -1614,6 +1615,10 @@ class TestList(unittest.TestCase):
         self.assertEqual("abcdefghij", "".join(L["a", ...][:10]))
         self.assertEqual(11, len(L["a", ..., "k"]))
 
+        with self.assertRaises(se): L[1, 2, 3, ...]
+        with self.assertRaises(se): L[..., 2]
+        with self.assertRaises(se): L[1, ..., 10, 11]
+
     def test_contains(self):
         self.assertTrue(1 in L[2, 3, 1])
         self.assertFalse(1 not in L[2, 3, 1])
@@ -1681,6 +1686,13 @@ class TestDataList(unittest.TestCase):
         from hask.Data.List import foldl, foldl_, foldl_, foldr, foldr1, concat
         from hask.Data.List import concatMap, and_, or_, any, all, sum, product
         from hask.Data.List import maximum, minimum
+
+        self.assertEqual(55, sum(L[1, ..., 10]))
+        self.assertEqual(55L, sum(L[1L, ..., 10L]))
+        self.assertEqual(0, sum(L[[]]))
+        self.assertEqual(3628800, product(L[1, ..., 10]))
+        self.assertEqual(3628800L, product(L[1L, ..., 10L]))
+        self.assertEqual(1, product(L[[]]))
 
     def test_building_lists(self):
         from hask.Data.List import scanl, scanl1, scanr, scanr1, mapAccumL
