@@ -1060,7 +1060,6 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): sig(sig(H/ int >> int))
         with self.assertRaises(se): sig(H)
 
-        with self.assertRaises(se): H[Eq, "a"]
         with self.assertRaises(se): H[Eq, "a", "b"]
         with self.assertRaises(se): H[("a", Eq)]
         with self.assertRaises(se): H[(Eq, "a", "b")]
