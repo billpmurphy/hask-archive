@@ -208,7 +208,8 @@ class sig(Syntax):
 
 
 def t(type_constructor, *params):
-    if issubclass(type_constructor, ADT) and \
+    if inspect.isclass(type_constructor) and \
+       issubclass(type_constructor, ADT) and \
        len(type_constructor.__params__) != len(params):
             raise TypeError("Incorrect number of type parameters to %s" % \
                             type_constructor.__name__)
@@ -216,6 +217,9 @@ def t(type_constructor, *params):
 
 
 def typify(fn, hkt=None):
+    """
+    Convert an untyped Python function to a TypeFunc.
+    """
     args = [chr(i) for i in range(97, 98 + fn.func_code.co_argcount)]
     if hkt is not None:
         args[-1] = hkt(args[-1])
@@ -226,6 +230,13 @@ def typify(fn, hkt=None):
 # Undefined values
 
 class __undefined__(Undefined):
+    """
+    Undefined value with special syntactic powers. Whenever you try to use one
+    if its magic methods, it returns undefined. Used to prevent overzealous
+    evaluation in pattern matching.
+
+    Its type unifies with any other type.
+    """
     pass
 
 replace_magic_methods(__undefined__, lambda *a: __undefined__())

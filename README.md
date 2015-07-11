@@ -1,5 +1,5 @@
 Remaining TODOs:
-* Change type inference ending so it understands polymorphic HKTs
+* Make bind type correctly
 * Write rest of Data.List and Prelude, and document everything undocumented
 * Final refactor of everything
 * Write rest of README
@@ -759,12 +759,12 @@ returning `Nothing` if the attempt was unsuccessful:
 
 ```python
 >>> cheese = 10
->>> cheese_left = maybe_eat(cheese) >> maybe_eat >> maybe_eat
+>>> cheese_left = chese >> maybe_eat >> maybe_eat >> maybe_eat
 >>> cheese_left
 Just(7)
 
 >>> cheese = 1
->>> cheese_left = maybe_eat(cheese) >> maybe_eat >> maybe_eat
+>>> cheese_left = chese >> maybe_eat >> maybe_eat >> maybe_eat
 >>> cheese_left
 Nothing
 ```

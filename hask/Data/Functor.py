@@ -14,14 +14,15 @@ from ..lang import instance
 class Functor(Typeclass):
     @classmethod
     def make_instance(typeclass, cls, fmap):
-        #fmap = fmap ** (H/ (H/ "a" >> "b") >> t("f", "a") >> t("f", "b"))
+        fmap = fmap ** \
+            (H[(Functor, "f")]/ (H/ "a" >> "b") >> t("f", "a") >> t("f", "b"))
         if not is_builtin(cls):
             cls.__rmul__ = lambda x, f: fmap(f, x)
         build_instance(Functor, cls, {"fmap":fmap})
         return
 
 
-#@sig(H[(Functor, "f")]/ (H/ "a" >> "b") >> t("f", "a") >> t("f", "b"))
+@sig(H[(Functor, "f")]/ (H/ "a" >> "b") >> t("f", "a") >> t("f", "b"))
 def fmap(f, x):
     return Functor[x].fmap(f, x)
 

@@ -143,7 +143,7 @@ class TypeOperator(object):
         num_types = len(self.types)
         if num_types == 0:
             return show_type(self.name)
-        return "{0} {1}".format(show_type(self.name),
+        return "({0} {1})".format(show_type(self.name),
                                 ' '.join(map(show_type, self.types)))
 
 
@@ -283,9 +283,35 @@ def fresh(t, non_generic):
     return freshrec(t)
 
 
+def unify_var(v1, t2):
+    """
+    Unify the two type variable v1 and the type t2. Makes their types the same.
+    Note: Must be called with v1 and t2 pre-pruned
+
+    Args:
+        v1: The type variable to be made equivalent
+        t2: The second type to be be equivalent
+
+    Returns:
+        None
+
+    Raises:
+        TypeError: Raised if the types cannot be unified.
+    """
+    if v1 != t2:
+        if occursInType(v1, t2):
+            raise TypeError("recursive unification")
+        v1.instance = t2
+    return
+
+
 def unify(t1, t2):
     """
     Unify the two types t1 and t2. Makes the types t1 and t2 the same.
+
+    Note that the current method of unifying higher-kinded types does not
+    properly handle kind, i.e. it will happily unify `f a` and `g b c`.
+    This will be fixed in future versions.
 
     Args:
         t1: The first type to be made equivalent
@@ -300,14 +326,17 @@ def unify(t1, t2):
     a = prune(t1)
     b = prune(t2)
     if isinstance(a, TypeVariable):
-        if a != b:
-            if occursInType(a, b):
-                raise TypeError("recursive unification")
-            a.instance = b
+        unify_var(a, b)
     elif isinstance(a, TypeOperator) and isinstance(b, TypeVariable):
-        unify(b, a)
+        unify_var(b, a)
     elif isinstance(a, TypeOperator) and isinstance(b, TypeOperator):
-        if (a.name != b.name or len(a.types) != len(b.types)):
+        if isinstance(a.name, TypeVariable):
+            a.name = b.name
+            a.types = b.types
+            unify(a, b)
+        elif isinstance(b.name, TypeVariable):
+            unify(b, a)
+        elif (a.name != b.name or len(a.types) != len(b.types)):
             raise TypeError("Type mismatch: {0} != {1}".format(str(a), str(b)))
         for p, q in zip(a.types, b.types):
             unify(p, q)

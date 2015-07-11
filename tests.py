@@ -232,6 +232,20 @@ class TestHindleyMilner(unittest.TestCase):
             App(App(self.compose, Var("id")), Var("id")),
             Function(d, d))
 
+        # composing `id` with `times 4`
+        # ((. id) (* 2)) :: (int -> int)
+        self.typecheck(
+            App(App(self.compose, Var("id")),
+                                  App(Var("times"), Var("4"))),
+            Function(self.Integer, self.Integer))
+
+        # composing `times 4` with `id`
+        # ((. (* 2)) id) :: (int -> int)
+        self.typecheck(
+            App(App(self.compose, App(Var("times"), Var("4"))),
+                                  Var("id")),
+            Function(self.Integer, self.Integer))
+
         # basic closure
         #((\x -> (\y -> ((* x) y))) 1) :: (Integer -> Integer)
         self.typecheck(
@@ -1200,6 +1214,7 @@ class TestMaybe(unittest.TestCase):
         self.assertTrue(Just(Just(Nothing)) >= Just(Nothing))
         self.assertTrue(Just(Just(Nothing)) >= Just(Just(Nothing)))
         self.assertFalse(Just(0) > Just(1))
+        self.assertFalse(Just(0) > Just(0))
         self.assertFalse(Just(Nothing) > Just(Just(1)))
         self.assertFalse(Just(Nothing) > Just(Just(Nothing)))
         self.assertFalse(Just(0) >= Just(1))
@@ -1213,6 +1228,7 @@ class TestMaybe(unittest.TestCase):
         self.assertTrue(Just(Nothing) <= Just(Just(1)))
         self.assertTrue(Just(Nothing) <= Just(Just(Nothing)))
         self.assertFalse(Just(1) < Just(0))
+        self.assertFalse(Just(1) < Just(1))
         self.assertFalse(Just(Just(1)) < Just(Nothing))
         self.assertFalse(Just(Just(Nothing)) < Just(Nothing))
         self.assertFalse(Just(1) <= Just(0))
@@ -1391,6 +1407,10 @@ class TestEither(unittest.TestCase):
         self.assertFalse(Left(2) >= Left(3))
         self.assertFalse(Right(2) >= Right(3))
 
+        self.assertFalse(Right(3) > Right(3))
+        self.assertFalse(Left(3) > Left(3))
+        self.assertFalse(Right(3) < Right(3))
+        self.assertFalse(Left(3) < Left(3))
         self.assertTrue(Left(2L) <= Left(2L))
         self.assertTrue(Right(2) <= Right(2))
         self.assertTrue(Left(2L) >= Left(2L))
@@ -1525,8 +1545,49 @@ class TestList(unittest.TestCase):
         self.assertTrue(L[1, 2] < L[2, 1])
         self.assertTrue(L[1, 2] < L[2, 1, 3])
         self.assertTrue(L[1, 2] < L[2, ...])
+        self.assertFalse(L[2, 1] < L[[]])
+        self.assertFalse(L[2, 1] < L[1, 2])
+        self.assertFalse(L[2, 1] < L[1, 1, 1])
+        self.assertFalse(L[2, 1] < L[1, ...])
+        self.assertTrue(L[[]] <= L[2, 1])
+        self.assertTrue(L[1, 2] <= L[2, 1])
+        self.assertTrue(L[1, 2] <= L[2, 1, 3])
+        self.assertTrue(L[1, 2] <= L[2, ...])
+        self.assertFalse(L[2, 1] <= L[[]])
+        self.assertFalse(L[2, 1] <= L[1, 2])
+        self.assertFalse(L[2, 1] <= L[1, 1, 1])
+        self.assertFalse(L[2, 1] <= L[1, ...])
 
+        self.assertFalse(L[[]] > L[2, 1])
+        self.assertFalse(L[1, 2] > L[2, 1])
+        self.assertFalse(L[1, 2] > L[2, 1, 3])
+        self.assertFalse(L[1, 2] > L[2, ...])
+        self.assertTrue(L[2, 1] > L[[]])
+        self.assertTrue(L[2, 1] > L[1, 2])
+        self.assertTrue(L[2, 1] > L[1, 1, 1])
+        self.assertTrue(L[2, 1] > L[1, ...])
+        self.assertFalse(L[[]] >= L[2, 1])
+        self.assertFalse(L[1, 2] >= L[2, 1])
+        self.assertFalse(L[1, 2] >= L[2, 1, 3])
+        self.assertFalse(L[1, 2] >= L[2, ...])
+        self.assertTrue(L[2, 1] >= L[[]])
+        self.assertTrue(L[2, 1] >= L[1, 2])
+        self.assertTrue(L[2, 1] >= L[1, 1, 1])
+        self.assertTrue(L[2, 1] >= L[1, ...])
 
+        self.assertFalse(L[1, 2] < L[1, 2])
+        self.assertFalse(L[1, 2] > L[1, 2])
+        self.assertTrue(L[1, 2] <= L[1, 2])
+        self.assertTrue(L[1, 2] <= L[1, 2])
+
+        with self.assertRaises(te): L[1, 2] > L[1.0, 2.0]
+        with self.assertRaises(te): L[1, 2] > L[1.0, 2.0, ...]
+        with self.assertRaises(te): L[1, 2] < L[1.0, 2.0]
+        with self.assertRaises(te): L[1, 2] < L[1.0, 2.0, ...]
+        with self.assertRaises(te): L[1, 2] >= L[1.0, 2.0]
+        with self.assertRaises(te): L[1, 2] >= L[1.0, 2.0, ...]
+        with self.assertRaises(te): L[1, 2] <= L[1.0, 2.0]
+        with self.assertRaises(te): L[1, 2] <= L[1.0, 2.0, ...]
 
     def test_show(self):
         from hask.Prelude import show
@@ -1956,8 +2017,9 @@ class Test_README_Examples(unittest.TestCase):
         maybe_eat = in_maybe(eat_cheese)
         self.assertEqual(maybe_eat(1), Just(0))
         self.assertEqual(maybe_eat(0), Nothing)
-        self.assertEqual(Just(7), maybe_eat(10) >> maybe_eat >> maybe_eat)
-        self.assertEqual(Nothing, maybe_eat(1) >> maybe_eat >> maybe_eat)
+        self.assertEqual(Just(6), Just(7) >> maybe_eat)
+        self.assertEqual(Just(7), Just(10) >> maybe_eat >> maybe_eat >> maybe_eat)
+        self.assertEqual(Nothing, Just(1) >> maybe_eat >> maybe_eat >> maybe_eat)
 
         either_eat = in_either(eat_cheese)
         self.assertEqual(either_eat(10), Right(9))
