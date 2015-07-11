@@ -217,9 +217,6 @@ class Enum(Typeclass):
 def toEnum(a):
     return Enum[a].toEnum(a)
 
-def fromEnum(a):
-    return Enum[a].fromEnum(a)
-
 def succ(a):
     return Enum[a].succ(a)
 

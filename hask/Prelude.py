@@ -53,7 +53,6 @@ from Data.Ord import min
 from Data.Ord import compare
 
 from .lang.typeclasses import Enum
-from .lang.typeclasses import fromEnum
 from .lang.typeclasses import toEnum
 from .lang.typeclasses import succ
 from .lang.typeclasses import pred

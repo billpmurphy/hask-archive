@@ -155,7 +155,7 @@ class Integral(Real, Enum):
 @sig(H[(Integral, "a")]/ "a" >> "a" >> t(Ratio, "a"))
 def toRatio(num, denom):
     frac = fractions.Fraction(num, denom)
-    return R(frac.numerator, frac.deominator)
+    return R(frac.numerator, frac.denominator)
 
 
 

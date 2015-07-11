@@ -770,7 +770,8 @@ class TestBuiltins(unittest.TestCase):
         self.assertEqual("'a'", show("a"))
 
     def test_enum(self):
-        from hask.Prelude import succ, pred
+        from hask.Prelude import toEnum, succ, pred
+        self.assertEqual(1, toEnum(1))
         self.assertEqual("b", succ("a"))
         self.assertEqual("a", pred("b"))
         self.assertEqual(2, succ(1))
@@ -1924,8 +1925,9 @@ class TestDataOrd(unittest.TestCase):
 class TestDataRatio(unittest.TestCase):
 
     def test_ratio(self):
-        from hask.Data.Ratio import Ratio, R, Rational, toRatio, toRational
-        from hask.Data.Ratio import numerator, denominator
+        from hask.Data.Ratio import R, numerator, denominator
+        self.assertEqual(1, numerator % R(1, 2))
+        self.assertEqual(2, denominator % R(1, 2))
 
 
 class TestPython(unittest.TestCase):
