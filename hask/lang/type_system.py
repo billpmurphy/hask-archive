@@ -4,7 +4,6 @@ import string
 from collections import namedtuple
 
 from hindley_milner import TypeVariable
-from hindley_milner import Constraint
 from hindley_milner import TypeOperator
 from hindley_milner import Var
 from hindley_milner import App
@@ -253,7 +252,7 @@ def build_sig_arg(arg, cons, var_dict):
         cons: a dictionary of typeclass constraints for the type signature
         var_dict: a dictionary of bound type variables
 
-    Returns: A TypeVariable, Constraint, or TypeOperator representing the arg
+    Returns: A TypeVariable or TypeOperator representing the arg
 
     Raises: TypeSignatureError, if the argument cannot be converted
     """
@@ -261,7 +260,7 @@ def build_sig_arg(arg, cons, var_dict):
     if isinstance(arg, str) and all((l in string.lowercase for l in arg)):
         if arg not in var_dict:
             if arg in cons:
-                var_dict[arg] = Constraint(cons[arg])
+                var_dict[arg] = TypeVariable(constraints=cons[arg])
             else:
                 var_dict[arg] = TypeVariable()
         return var_dict[arg]

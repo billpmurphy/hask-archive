@@ -95,11 +95,12 @@ class TypeVariable(object):
     next_variable_id = 0
     next_var_name = 'a'
 
-    def __init__(self):
+    def __init__(self, constraints=()):
         self.id = TypeVariable.next_variable_id
         TypeVariable.next_variable_id += 1
         self.instance = None
         self.__name = None
+        self.constraints = constraints
 
     def __getName(self):
         """
@@ -120,16 +121,6 @@ class TypeVariable(object):
 
     def __repr__(self):
         return "TypeVariable(id = {0})".format(self.id)
-
-
-class Constraint(TypeVariable):
-    """
-    A type variable standing in for an ordinary type, with typeclass
-    constraints.
-    """
-    def __init__(self, constraints):
-        self.constraints = constraints
-        super(Constraint, self).__init__()
 
 
 class TypeOperator(object):
@@ -285,7 +276,8 @@ def fresh(t, non_generic):
 
 def unify_var(v1, t2):
     """
-    Unify the two type variable v1 and the type t2. Makes their types the same.
+    Unify the two type variable v1 and the type t2. Makes their types the same
+    and unifies typeclass constraints.
     Note: Must be called with v1 and t2 pre-pruned
 
     Args:
@@ -299,6 +291,12 @@ def unify_var(v1, t2):
         TypeError: Raised if the types cannot be unified.
     """
     if v1 != t2:
+        if isinstance(t2, TypeVariable):
+            # unify typeclass constraints
+            union = tuple(set(v1.constraints + t2.constraints))
+            v1.constraints = union
+            t2.constraints = union
+
         if occursInType(v1, t2):
             raise TypeError("recursive unification")
         v1.instance = t2
@@ -311,7 +309,8 @@ def unify(t1, t2):
 
     Note that the current method of unifying higher-kinded types does not
     properly handle kind, i.e. it will happily unify `f a` and `g b c`.
-    This will be fixed in future versions.
+    This is due to the way that typeclasses are implemented, and will be fixed
+    in future versions.
 
     Args:
         t1: The first type to be made equivalent
@@ -330,12 +329,15 @@ def unify(t1, t2):
     elif isinstance(a, TypeOperator) and isinstance(b, TypeVariable):
         unify_var(b, a)
     elif isinstance(a, TypeOperator) and isinstance(b, TypeOperator):
+        # Unify polymorphic higher-kinded type
         if isinstance(a.name, TypeVariable):
             a.name = b.name
             a.types = b.types
             unify(a, b)
         elif isinstance(b.name, TypeVariable):
             unify(b, a)
+
+        # Unify concrete higher-kinded type
         elif (a.name != b.name or len(a.types) != len(b.types)):
             raise TypeError("Type mismatch: {0} != {1}".format(str(a), str(b)))
         for p, q in zip(a.types, b.types):

@@ -1,27 +1,15 @@
 from ..lang import build_instance
+from ..Control.Applicative import Applicative
+from ..Control.Monad import Monad
 from Foldable import Foldable
 from Functor import Functor
 
 
 class Traversable(Foldable, Functor):
     @classmethod
-    def make_instance(typeclass, cls, iter, getitem=None, len=None):
-        def default_len(self):
-            count = 0
-            for _ in iter(self):
-                count += 1
-            return count
-
-        def default_getitem(self, i):
-            return list(iter(self))[i]
-
-        len = default_len if len is None else len
-        getitem = default_getitem if getitem is None else getitem
-
-        attrs = {"iter":iter, "getitem":getitem, "len":len}
+    def make_instance(typeclass, cls, traverse, sequenceA=None, mapM=None,
+                      sequence=None):
+        attrs = {"traverse":traverse, "sequenceA":sequenceA, "mapM":mapM,
+                 "sequence":sequence}
         build_instance(Traversable, cls, attrs)
         return
-
-    @staticmethod
-    def length(a):
-        return len(a)

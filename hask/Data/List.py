@@ -692,93 +692,171 @@ def findIndicies(f, xs):
 # Zipping and unzipping lists
 
 
+@sig(H/ ["a"] >> ["b"] >> [("a", "b")])
 def zip(xs, ys):
     """
+    zip :: [a] -> [b] -> [(a, b)]
+
+    zip takes two lists and returns a list of corresponding pairs. If one input
+    list is short, excess elements of the longer list are discarded.
     """
     return L[itertools.izip(xs, ys)]
 
 def zip3(a, b, c):
     """
+    zip3 :: [a] -> [b] -> [c] -> [(a, b, c)]
+
+    zip3 takes three lists and returns a list of triples, analogous to zip.
     """
     return L[itertools.izip(a, b, c)]
 
 def zip4(a, b, c, d):
     """
+    zip4 :: [a] -> [b] -> [c] -> [d] -> [(a, b, c, d)]
+
+    The zip4 function takes four lists and returns a list of quadruples,
+    analogous to zip.
     """
-    raise NotImplementedError()
+    return L[itertools.izip(a, b, c, d)]
 
 def zip5(a, b, c, d, e):
     """
+    zip5 :: [a] -> [b] -> [c] -> [d] -> [e] -> [(a, b, c, d, e)]
+
+    The zip5 function takes five lists and returns a list of five-tuples,
+    analogous to zip.
     """
-    raise NotImplementedError()
+    return L[itertools.izip(a, b, c, d, e)]
 
 def zip6(a, b, c, d, e, f):
     """
+    zip6 :: [a] -> [b] -> [c] -> [d] -> [e] -> [f] -> [(a, b, c, d, e, f)]
+
+    The zip6 function takes six lists and returns a list of six-tuples,
+    analogous to zip.
     """
-    raise NotImplementedError()
+    return L[itertools.izip(a, b, c, d, e, f)]
 
 def zip7(a, b, c, d, e, f, g):
     """
+    zip7 :: [a] -> [b] -> [c] -> [d] -> [e] -> [f] -> [g] -> [(a, b, c, d, e, f, g)]
+
+    The zip7 function takes seven lists and returns a list of seven-tuples,
+    analogous to zip.
     """
-    raise NotImplementedError()
+    return L[itertools.izip(a, b, c, d, e, f, g)]
 
 def zipWith(fn, xs, ys):
     """
+    zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+
+    zipWith generalises zip by zipping with the function given as the first
+    argument, instead of a tupling function. For example, zipWith (+) is
+    applied to two lists to produce the list of corresponding sums.
     """
     raise NotImplementedError()
 
 def zipWith3(fn, a, b, c):
     """
+    zipWith3 :: (a -> b -> c -> d) -> [a] -> [b] -> [c] -> [d]
+
+    The zipWith3 function takes a function which combines three elements, as
+    well as three lists and returns a list of their point-wise combination,
+    analogous to zipWith.
     """
     raise NotImplementedError()
 
 def zipWith4(fn, a, b, c, d):
     """
+    zipWith4 :: (a -> b -> c -> d -> e) -> [a] -> [b] -> [c] -> [d] -> [e]
+
+    The zipWith4 function takes a function which combines four elements, as
+    well as four lists and returns a list of their point-wise combination,
+    analogous to zipWith.
     """
     raise NotImplementedError()
 
 def zipWith5(fn, a, b, c, d, e):
     """
+    zipWith5 :: (a -> b -> c -> d -> e -> f) -> [a] -> [b] -> [c] -> [d] -> [e] -> [f]
+
+    The zipWith5 function takes a function which combines five elements, as
+    well as five lists and returns a list of their point-wise combination,
+    analogous to zipWith.
     """
     raise NotImplementedError()
 
 def zipWith6(fn, a, b, c, d, e, f):
     """
+    zipWith6 :: (a -> b -> c -> d -> e -> f -> g) -> [a] -> [b] -> [c] -> [d] -> [e] -> [f] -> [g]
+
+    The zipWith6 function takes a function which combines six elements, as well
+    as six lists and returns a list of their point-wise combination, analogous
+    to zipWith.
     """
     raise NotImplementedError()
 
 def zipWith7(fn, a, b, c, d, e, f):
     """
+    zipWith7 :: (a -> b -> c -> d -> e -> f -> g -> h) -> [a] -> [b] -> [c] -> [d] -> [e] -> [f] -> [g] -> [h]
+
+    The zipWith7 function takes a function which combines seven elements, as
+    well as seven lists and returns a list of their point-wise combination,
+    analogous to zipWith.
     """
     raise NotImplementedError()
 
 def unzip(xs):
     """
+    unzip :: [(a, b)] -> ([a], [b])
+
+    unzip transforms a list of pairs into a list of first components and a list
+    of second components.
     """
     raise NotImplementedError()
 
 def unzip3(xs):
     """
+    unzip3 :: [(a, b, c)] -> ([a], [b], [c])
+
+    The unzip3 function takes a list of triples and returns three lists,
+    analogous to unzip.
     """
     raise NotImplementedError()
 
 def unzip4(xs):
     """
+    unzip4 :: [(a, b, c, d)] -> ([a], [b], [c], [d])
+
+    The unzip4 function takes a list of quadruples and returns four lists,
+    analogous to unzip.
     """
     raise NotImplementedError()
 
 def unzip5(xs):
     """
+    unzip5 :: [(a, b, c, d, e)] -> ([a], [b], [c], [d], [e])
+
+    The unzip5 function takes a list of five-tuples and returns five lists,
+    analogous to unzip.
     """
     raise NotImplementedError()
 
 def unzip6(xs):
     """
+    unzip6 :: [(a, b, c, d, e, f)] -> ([a], [b], [c], [d], [e], [f])
+
+    The unzip6 function takes a list of six-tuples and returns six lists,
+    analogous to unzip.
     """
     raise NotImplementedError()
 
 def unzip7(xs):
     """
+    unzip7 :: [(a, b, c, d, e, f, g)] -> ([a], [b], [c], [d], [e], [f], [g])
+
+    The unzip7 function takes a list of seven-tuples and returns seven lists,
+    analogous to unzip.
     """
     raise NotImplementedError()
 
@@ -797,23 +875,66 @@ from String import unwords
 #=============================================================================#
 ## "Set" operations
 
+@sig(H[(Eq, "a")]/ ["a"] >> ["a"])
 def nub(xs):
+    """
+    nub :: Eq a => [a] -> [a]
+
+    The nub function removes duplicate elements from a list. In particular, it
+    keeps only the first occurrence of each element. (The name nub means
+    `essence'.) It is a special case of nubBy, which allows the programmer to
+    supply their own equality test.
+    """
     return L[(i for i in set(xs))]
 
 
-def delete(a, xs):
+@sig(H[(Eq, "a")]/ "a" >> ["a"] >> ["a"])
+def delete(x, xs):
+    """
+    delete :: Eq a => a -> [a] -> [a]
+
+    delete(x) removes the first occurrence of x from its list argument.
+
+    It is a special case of deleteBy, which allows the programmer to supply
+    their own equality test.
+    """
     raise NotImplementedError()
 
 
+@sig(H[(Eq, "a")]/ ["a"] >> ["a"] >> ["a"])
 def diff(xs, ys):
+    """
+    diff :: :: Eq a => [a] -> [a] -> [a]
+
+    """
     raise NotImplementedError()
 
 
+@sig(H[(Eq, "a")]/ ["a"] >> ["a"] >> ["a"])
 def union(xs, ys):
+    """
+    union :: Eq a => [a] -> [a] -> [a]
+
+    The union function returns the list union of the two lists.
+
+    Duplicates, and elements of the first list, are removed from the the second
+    list, but if the first list contains duplicates, so will the result. It is
+    a special case of unionBy, which allows the programmer to supply their own
+    equality test.
+    """
     raise NotImplementedError()
 
 
+@sig(H[(Eq, "a")]/ ["a"] >> ["a"] >> ["a"])
 def intersect(xs, ys):
+    """
+    intersect :: Eq a => [a] -> [a] -> [a]
+
+    The intersect function takes the list intersection of two lists.  It is a
+    special case of intersectBy, which allows the programmer to supply their
+    own equality test. If the element is found in both the first and the second
+    list, the element from the first list will be used.
+    """
     raise NotImplementedError()
 
 
@@ -823,11 +944,27 @@ def intersect(xs, ys):
 
 @sig(H[(Ord, "a")]/ ["a"] >> ["a"])
 def sort(xs):
-    raise NotImplementedError()
+    """
+    sort :: Ord a => [a] -> [a]
+
+    The sort function implements a stable sorting algorithm. It is a special
+    case of sortBy, which allows the programmer to supply their own comparison
+    function.
+
+    Note: Current implementation is not lazy
+    """
+    return L[sorted(xs)]
 
 
 @sig(H[(Ord, "b")]/ (H/ "a" >> "b") >> ["a"] >> ["a"])
 def sortOn(f, xs):
+    """
+    sortOn :: Ord b => (a -> b) -> [a] -> [a]
+
+    Sort a list by comparing the results of a key function applied to each element.
+
+    Note: Current implementation is not lazy
+    """
     return L[sorted(xs, key=f)]
 
 
@@ -855,6 +992,7 @@ def insert(x, xs):
 ### User-supplied equality (replacing an Eq context)
 
 
+@sig(H/ (H/ "a" >> "a" >> bool) >> ["a"] >> ["a"])
 def nubBy(f, xs):
     """
     nubBy :: (a -> a -> Bool) -> [a] -> [a]
@@ -865,6 +1003,7 @@ def nubBy(f, xs):
     raise NotImplementedError()
 
 
+@sig(H/ (H/ "a" >> "a" >> bool) >> "a" >> ["a"] >> ["a"])
 def deleteBy(f, xs):
     """
     deleteBy :: (a -> a -> Bool) -> a -> [a] -> [a]
@@ -875,6 +1014,7 @@ def deleteBy(f, xs):
     raise NotImplementedError()
 
 
+@sig(H/ (H/ "a" >> "a" >> bool) >> ["a"] >> ["a"] >> ["a"])
 def deleteFirstBy(f, xs, ys):
     """
     deleteFirstsBy :: (a -> a -> Bool) -> [a] -> [a] -> [a]
@@ -886,6 +1026,7 @@ def deleteFirstBy(f, xs, ys):
     raise NotImplementedError()
 
 
+@sig(H/ (H/ "a" >> "a" >> bool) >> ["a"] >> ["a"] >> ["a"])
 def unionBy(f, xs, ys):
     """
     unionBy :: (a -> a -> Bool) -> [a] -> [a] -> [a]
@@ -895,6 +1036,7 @@ def unionBy(f, xs, ys):
     raise NotImplementedError()
 
 
+@sig(H/ (H/ "a" >> "a" >> bool) >> ["a"] >> ["a"] >> ["a"])
 def intersectBy(f, xs, ys):
     """
     intersectBy :: (a -> a -> Bool) -> [a] -> [a] -> [a]
@@ -904,6 +1046,7 @@ def intersectBy(f, xs, ys):
     raise NotImplementedError()
 
 
+@sig(H/ (H/ "a" >> "a" >> bool) >> ["a"] >> [["a"]])
 def groupBy(f, xs):
     """
     groupBy :: (a -> a -> Bool) -> [a] -> [[a]]
