@@ -59,12 +59,9 @@ class Syntax(object):
     Subclasses may override these methods to define what syntax is valid for
     those objects.
     """
-    def __init__(self, err_msg=None):
+    def __init__(self, err_msg):
         if err_msg is not None:
             self.__syntax_err_msg = err_msg
-        else:
-            self.__syntax_err_msg = "Syntax error in `%s`" % self.__name__
-        return
 
     def raise_invalid(self, msg=None):
         if msg is not None:
@@ -452,7 +449,6 @@ class __new_tcon__(Syntax):
             return build_ADT(self.name, self.args, d.dcons, d.classes)
 
         self.raise_invalid()
-        return
 
 
 class __new_tcon_enum__(__new_tcon__):
@@ -537,7 +533,6 @@ class __new_dcon_params__(__new_dcon__):
             return __new_dcons__(constructors)
 
         self.raise_invalid()
-        return
 
 
 class __new_dcon_deriving__(__new_dcon__):

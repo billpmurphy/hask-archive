@@ -191,7 +191,6 @@ class Enum(Typeclass):
             while True:
                 yield fromEnum(pointer)
                 pointer += step
-            return
 
         def enumFrom(start):
             return enumFromThen(start, succ(start))

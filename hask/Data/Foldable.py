@@ -19,8 +19,26 @@ class Foldable(Typeclass):
         return
 
 
+def traverse_(s):
+    pass
+
+def mapM_(x):
+    pass
+
+def sequenceA_(x):
+    pass
+
+def sequence_(x):
+    pass
+
+def fold(xs):
+    pass
+
+
 def foldl(f, b, xs):
     """
+    foldl :: (b -> a -> b) -> b -> t a -> b
+
     Left-associative fold of a structure.
     """
     raise NotImplementedError()
@@ -28,6 +46,7 @@ def foldl(f, b, xs):
 
 def foldl_(f, b, xs):
     """
+    foldl' :: (b -> a -> b) -> b -> t a -> b
 
     Left-associative fold of a structure. but with strict application of the
     operator.
@@ -38,6 +57,8 @@ def foldl_(f, b, xs):
 @sig(H/ (H/ "a" >> "a" >> "a") >> ["a"] >> "a")
 def foldl1(f, b, xs):
     """
+
+
     """
     raise NotImplementedError()
 

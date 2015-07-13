@@ -1,6 +1,5 @@
 Remaining TODOs:
-* Make bind type correctly
-* Write rest of Data.List and Prelude, and document everything undocumented
+* Write rest of Data.List
 * Final refactor of everything
 * Write rest of README
 * Write tests for everything

@@ -265,12 +265,8 @@ def scanr1(f, xs):
 #=============================================================================#
 ## Accumulating maps
 
-def mapAccumL(f, a, tb):
-    raise NotImplementedError()
-
-
-def mapAccumR(f, a, tb):
-    raise NotImplementedError()
+from Traversable import mapAccumL
+from Traversable import mapAccumR
 
 
 #=============================================================================#
@@ -702,6 +698,8 @@ def zip(xs, ys):
     """
     return L[itertools.izip(xs, ys)]
 
+
+@sig(H/ ["a"] >> ["b"] >> ["c"] >> [("a", "b", "c")])
 def zip3(a, b, c):
     """
     zip3 :: [a] -> [b] -> [c] -> [(a, b, c)]
@@ -710,6 +708,8 @@ def zip3(a, b, c):
     """
     return L[itertools.izip(a, b, c)]
 
+
+@sig(H/ ["a"] >> ["b"] >> ["c"] >> ["d"] >> [("a", "b", "c", "d")])
 def zip4(a, b, c, d):
     """
     zip4 :: [a] -> [b] -> [c] -> [d] -> [(a, b, c, d)]
@@ -719,6 +719,9 @@ def zip4(a, b, c, d):
     """
     return L[itertools.izip(a, b, c, d)]
 
+
+@sig(H/ ["a"] >> ["b"] >> ["c"] >> ["d"] >> ["e"] >>
+        [("a", "b", "c", "d", "e")])
 def zip5(a, b, c, d, e):
     """
     zip5 :: [a] -> [b] -> [c] -> [d] -> [e] -> [(a, b, c, d, e)]
@@ -728,6 +731,9 @@ def zip5(a, b, c, d, e):
     """
     return L[itertools.izip(a, b, c, d, e)]
 
+
+@sig(H/ ["a"] >> ["b"] >> ["c"] >> ["d"] >> ["e"] >> ["f"] >>
+        [("a", "b", "c", "d", "e", "f")])
 def zip6(a, b, c, d, e, f):
     """
     zip6 :: [a] -> [b] -> [c] -> [d] -> [e] -> [f] -> [(a, b, c, d, e, f)]
@@ -737,6 +743,9 @@ def zip6(a, b, c, d, e, f):
     """
     return L[itertools.izip(a, b, c, d, e, f)]
 
+
+@sig(H/ ["a"] >> ["b"] >> ["c"] >> ["d"] >> ["e"] >> ["f"] >> ["g"] >>
+        [("a", "b", "c", "d", "e", "f", "g")])
 def zip7(a, b, c, d, e, f, g):
     """
     zip7 :: [a] -> [b] -> [c] -> [d] -> [e] -> [f] -> [g] -> [(a, b, c, d, e, f, g)]
@@ -746,6 +755,8 @@ def zip7(a, b, c, d, e, f, g):
     """
     return L[itertools.izip(a, b, c, d, e, f, g)]
 
+
+@sig(H/ (H/ "a" >> "b" >> "c") >> ["a"] >> ["b"] >> ["c"])
 def zipWith(fn, xs, ys):
     """
     zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
@@ -754,8 +765,10 @@ def zipWith(fn, xs, ys):
     argument, instead of a tupling function. For example, zipWith (+) is
     applied to two lists to produce the list of corresponding sums.
     """
-    raise NotImplementedError()
+    return L[(fn(a, b) for a, b in zip(xs, ys))]
 
+
+@sig(H/ (H/ "a" >> "b" >> "c" >> "d") >> ["a"] >> ["b"] >> ["c"] >> ["d"])
 def zipWith3(fn, a, b, c):
     """
     zipWith3 :: (a -> b -> c -> d) -> [a] -> [b] -> [c] -> [d]
@@ -766,6 +779,9 @@ def zipWith3(fn, a, b, c):
     """
     raise NotImplementedError()
 
+
+@sig(H/ (H/ "a" >> "b" >> "c" >> "d" >> "e") >>
+        ["a"] >> ["b"] >> ["c"] >> ["d"] >> ["e"])
 def zipWith4(fn, a, b, c, d):
     """
     zipWith4 :: (a -> b -> c -> d -> e) -> [a] -> [b] -> [c] -> [d] -> [e]
@@ -776,9 +792,13 @@ def zipWith4(fn, a, b, c, d):
     """
     raise NotImplementedError()
 
+
+@sig(H/ (H/ "a" >> "b" >> "c" >> "d" >> "e" >> "f") >>
+        ["a"] >> ["b"] >> ["c"] >> ["d"] >> ["e"] >> ["f"])
 def zipWith5(fn, a, b, c, d, e):
     """
-    zipWith5 :: (a -> b -> c -> d -> e -> f) -> [a] -> [b] -> [c] -> [d] -> [e] -> [f]
+    zipWith5 :: (a -> b -> c -> d -> e -> f) -> [a] -> [b] -> [c] -> [d] -> [e]
+                -> [f]
 
     The zipWith5 function takes a function which combines five elements, as
     well as five lists and returns a list of their point-wise combination,
@@ -786,9 +806,13 @@ def zipWith5(fn, a, b, c, d, e):
     """
     raise NotImplementedError()
 
+
+@sig(H/ (H/ "a" >> "b" >> "c" >> "d" >> "e" >> "f" >> "g") >>
+        ["a"] >> ["b"] >> ["c"] >> ["d"] >> ["e"] >> ["f"] >> ["g"])
 def zipWith6(fn, a, b, c, d, e, f):
     """
-    zipWith6 :: (a -> b -> c -> d -> e -> f -> g) -> [a] -> [b] -> [c] -> [d] -> [e] -> [f] -> [g]
+    zipWith6 :: (a -> b -> c -> d -> e -> f -> g) -> [a] -> [b] -> [c] -> [d]
+                -> [e] -> [f] -> [g]
 
     The zipWith6 function takes a function which combines six elements, as well
     as six lists and returns a list of their point-wise combination, analogous
@@ -796,9 +820,13 @@ def zipWith6(fn, a, b, c, d, e, f):
     """
     raise NotImplementedError()
 
+
+@sig(H/ (H/ "a" >> "b" >> "c" >> "d" >> "e" >> "f" >> "g" >> "h") >>
+        ["a"] >> ["b"] >> ["c"] >> ["d"] >> ["e"] >> ["f"] >> ["g"] >> ["h"])
 def zipWith7(fn, a, b, c, d, e, f):
     """
-    zipWith7 :: (a -> b -> c -> d -> e -> f -> g -> h) -> [a] -> [b] -> [c] -> [d] -> [e] -> [f] -> [g] -> [h]
+    zipWith7 :: (a -> b -> c -> d -> e -> f -> g -> h) -> [a] -> [b] -> [c] ->
+                [d] -> [e] -> [f] -> [g] -> [h]
 
     The zipWith7 function takes a function which combines seven elements, as
     well as seven lists and returns a list of their point-wise combination,

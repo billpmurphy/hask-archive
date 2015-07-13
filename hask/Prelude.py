@@ -1,3 +1,5 @@
+import fractions
+
 from .lang import build_instance
 from .lang import H
 from .lang import sig
@@ -142,7 +144,8 @@ def lcm(x, y):
 
     lcm(x,y) is the smallest positive integer that both x and y divide.
     """
-    return div(x * y, gcd(a, b))
+    g = gcd(x, y)
+    return 0 if g == 0 else (x * y) / g
 
 
 #=============================================================================#
@@ -152,19 +155,10 @@ def lcm(x, y):
 from Data.Functor import Functor
 from Control.Applicative import Applicative
 from Control.Monad import Monad
-
-
-def mapM(fm, xs):
-    return sequence(map(fm, xs))
-
-def mapM_(fm, xs):
-    return sequence_(map(fm, xs))
-
-def sequence(xs):
-    return
-
-def sequence_(xs):
-    return
+from Data.Traversable import mapM
+from Data.Traversable import sequence
+from Data.Foldable import mapM_
+from Data.Foldable import sequence_
 
 
 #=============================================================================#
