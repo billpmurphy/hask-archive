@@ -155,10 +155,27 @@ def lcm(x, y):
 from Data.Functor import Functor
 from Control.Applicative import Applicative
 from Control.Monad import Monad
-from Data.Traversable import mapM
-from Data.Traversable import sequence
-from Data.Foldable import mapM_
-from Data.Foldable import sequence_
+
+
+def sequence(xs):
+
+    return
+
+def sequence_(xs):
+
+    return
+
+
+def mapM(f, xs):
+    """
+    """
+    return sequence(fmap(f, xs))
+
+
+def mapM_(f, xs):
+    """
+    """
+    return sequence_(fmap(f, xs))
 
 
 #=============================================================================#
@@ -245,25 +262,25 @@ from Data.List import null
 from Data.List import reverse
 from Data.List import length
 
-from Data.Foldable import foldl
-from Data.Foldable import foldl1
-from Data.Foldable import foldr
-from Data.Foldable import foldr1
+from Data.List import foldl
+from Data.List import foldl1
+from Data.List import foldr
+from Data.List import foldr1
 
 
 #=============================================================================#
 ## Special folds
 
-from Data.Foldable import and_
-from Data.Foldable import or_
-from Data.Foldable import any
-from Data.Foldable import all
-from Data.Foldable import sum
-from Data.Foldable import product
-from Data.Foldable import concat
-from Data.Foldable import concatMap
-from Data.Foldable import maximum
-from Data.Foldable import minimum
+from Data.List import and_
+from Data.List import or_
+from Data.List import any
+from Data.List import all
+from Data.List import sum
+from Data.List import product
+from Data.List import concat
+from Data.List import concatMap
+from Data.List import maximum
+from Data.List import minimum
 
 
 #=============================================================================#

@@ -1,5 +1,6 @@
 import itertools
 import functools
+import operator
 
 from ..lang import H
 from ..lang import sig
@@ -195,26 +196,191 @@ def permutations(xs):
 #=============================================================================#
 # Reducing lists (folds)
 
-from Foldable import foldl
-from Foldable import foldl_
-from Foldable import foldl1_
-from Foldable import foldr
-from Foldable import foldr1
+
+@sig(H/ (H/ "b" >> "a" >> "b") >> "a" >> ["a"] >> "b")
+def foldl(f, z, xs):
+    """
+    foldl :: (b -> a -> b) -> b -> [a] -> b
+
+    foldl, applied to a binary operator, a starting value (typically the
+    left-identity of the operator), and a list, reduces the list using the
+    binary operator, from left to right. The list must be finite.
+    """
+    return reduce(f, xs, z)
+
+
+@sig(H/ (H/ "b" >> "a" >> "b") >> "a" >> ["a"] >> "b")
+def foldl_(f, z, xs):
+    """
+    foldl_ :: (b -> a -> b) -> b -> [a] -> b
+
+    A strict version of foldl.
+    """
+    return foldl(f, z, xs)
+
+
+@sig(H/ (H/ "a" >> "a" >> "a") >> ["a"] >> "a")
+def foldl1(f, xs):
+    """
+    foldl1 :: (a -> a -> a) -> [a] -> a
+
+    foldl1 is a variant of foldl that has no starting value argument, and thus
+    must be applied to non-empty lists.
+    """
+    return foldl(f, xs[0], xs[1:])
+
+
+@sig(H/ (H/ "a" >> "a" >> "a") >> ["a"] >> "a")
+def foldl1_(f, xs):
+    """
+    foldl1' :: (a -> a -> a) -> [a] -> a
+
+    A strict version of foldl1
+    """
+    return foldl1(f, xs[0], xs[1:])
+
+
+@sig(H/ (H/ "a" >> "b" >> "b") >> "a" >> ["a"] >> "b")
+def foldr(f, z, xs):
+    """
+    foldr :: (a -> b -> b) -> b -> [a] -> b
+
+    foldr, applied to a binary operator, a starting value (typically the
+    right-identity of the operator), and a list, reduces the list using the
+    binary operator, from right to left
+    """
+    return ~(caseof(xs)
+                | m(L[[]])     >> z
+                | m(m.a ^ m.b) >> f(m.a, foldr(f, z, m.b)))
+
+
+@sig(H/ (H/ "a" >> "a" >> "a") >> ["a"] >> "a")
+def foldr1(f, xs):
+    """
+    foldr1 :: (a -> a -> a) -> [a] -> a
+
+    foldr1 is a variant of foldr that has no starting value argument, and thus
+    must be applied to non-empty lists.
+    """
+    return foldr(f, xs[0], xs[1:])
 
 
 #=============================================================================#
 ## Special folds
 
-from Foldable import concat
-from Foldable import concatMap
-from Foldable import and_
-from Foldable import or_
-from Foldable import any
-from Foldable import all
-from Foldable import sum
-from Foldable import product
-from Foldable import maximum
-from Foldable import minimum
+
+@sig(H/ [["a"]] >> ["a"] )
+def concat(xss):
+    """
+    concat :: [[a]] -> [a]
+
+    Concatenate a list of lists.
+    """
+    return L[(x for xs in xss for x in xs)]
+
+
+@sig(H/ (H/ "a" >> ["b"]) >> ["a"] >> ["b"])
+def concatMap(f, xs):
+    """
+    concatMap :: (a -> [b]) -> [a] -> [b]
+
+    Map a function over a list and concatenate the results.
+    """
+    return concat(map(f, xs))
+
+
+@sig(H/ [bool] >> bool)
+def and_(xs):
+    """
+    and_ :: [Bool] -> Bool
+
+    and returns the conjunction of a Boolean list. For the result to be True,
+    the list must be finite; False, however, results from a False value at a
+    finite index of a finite or infinite list.
+    """
+    return False not in xs
+
+
+@sig(H/ [bool] >> bool)
+def or_(xs):
+    """
+    or_ :: [Bool] -> Bool
+
+    or returns the disjunction of a Boolean list. For the result to be False,
+    the list must be finite; True, however, results from a True value at a
+    finite index of a finite or infinite list.
+    """
+    return True in xs
+
+
+@sig(H/ (H/ "a" >> bool) >> ["a"] >> bool)
+def any(p, xs):
+    """
+    any :: (a -> Bool) -> [a] -> Bool
+
+    Applied to a predicate and a list, any determines if any element of the
+    list satisfies the predicate. For the result to be False, the list must be
+    finite; True, however, results from a True value for the predicate applied
+    to an element at a finite index of a finite or infinite list.
+    """
+    return True in ((p(x) for x in xs))
+
+
+@sig(H/ (H/ "a" >> bool) >> ["a"] >> bool)
+def all(p, xs):
+    """
+    all :: (a -> Bool) -> [a] -> Bool
+
+    Applied to a predicate and a list, all determines if all elements of the
+    list satisfy the predicate. For the result to be True, the list must be
+    finite; False, however, results from a False value for the predicate
+    applied to an element at a finite index of a finite or infinite list.
+    """
+    return False not in ((p(x) for x in xs))
+
+
+@sig(H[(Num, "a")]/ ["a"] >> "a")
+def sum(xs):
+    """
+    sum :: Num a => [a] -> a
+
+    The sum function computes the sum of a finite list of numbers.
+    """
+    return functools.reduce(operator.add, xs, 0)
+
+
+@sig(H[(Num, "a")]/ ["a"] >> "a")
+def product(xs):
+    """
+    product :: Num a => [a] -> a
+
+    The product function computes the product of a finite list of numbers.
+    """
+    return functools.reduce(operator.mul, xs, 1)
+
+
+@sig(H[(Ord, "a")]/ ["a"] >> "a")
+def minimum(xs):
+    """
+    minimum :: Ord a => [a] -> a
+
+    minimum returns the minimum value from a list, which must be non-empty,
+    finite, and of an ordered type. It is a special case of minimumBy, which
+    allows the programmer to supply their own comparison function.
+    """
+    return min(xs)
+
+
+@sig(H[(Ord, "a")]/ ["a"] >> "a")
+def maximum(xs):
+    """
+    maximum :: Ord a => [a] -> a
+
+    maximum returns the maximum value from a list, which must be non-empty,
+    finite, and of an ordered type. It is a special case of maximumBy, which
+    allows the programmer to supply their own comparison function.
+    """
+    return max(xs)
 
 
 #=============================================================================#
@@ -390,7 +556,7 @@ def takeWhile(p, xs):
     takeWhile, applied to a predicate p and a list xs, returns the longest
     prefix (possibly empty) of xs of elements that satisfy p
     """
-    raise NotImplementedError()
+    return L[itertools.takewhile(p, xs)]
 
 
 @sig(H/ (H/ "a" >> bool) >> ["a"] >> ["a"])
@@ -400,7 +566,7 @@ def dropWhile(p, xs):
 
     dropWhile(p, xs) returns the suffix remaining after takeWhile(p, xs)
     """
-    raise NotImplementedError()
+    return L[itertools.dropwhile(p, xs)]
 
 
 @sig(H/ (H/ "a" >> bool) >> ["a"] >> ["a"])
@@ -933,7 +1099,6 @@ def delete(x, xs):
 def diff(xs, ys):
     """
     diff :: :: Eq a => [a] -> [a] -> [a]
-
     """
     raise NotImplementedError()
 
@@ -989,7 +1154,8 @@ def sortOn(f, xs):
     """
     sortOn :: Ord b => (a -> b) -> [a] -> [a]
 
-    Sort a list by comparing the results of a key function applied to each element.
+    Sort a list by comparing the results of a key function applied to each
+    element.
 
     Note: Current implementation is not lazy
     """
@@ -1081,7 +1247,7 @@ def groupBy(f, xs):
 
     The groupBy function is the non-overloaded version of group.
     """
-    raise NotImplementedError()
+    return L[(L[i[1]] for i in itertools.groupby(xs, keyfunc=f))]
 
 
 #=============================================================================#

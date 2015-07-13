@@ -79,7 +79,7 @@ instance(Num, long).where(
     add = long.__add__,
     mul = long.__mul__,
     abs = abs,
-    signum = lambda x: -1 if x < 0 else (1 if x > 0 else 0),
+    signum = lambda x: -1L if x < 0L else (1L if x > 0L else 0L),
     fromInteger = long,
     negate = long.__neg__,
     sub = long.__sub__
@@ -89,7 +89,7 @@ instance(Num, float).where(
     add = float.__add__,
     mul = float.__mul__,
     abs = abs,
-    signum = lambda x: -1 if x < 0 else (1 if x > 0 else 0),
+    signum = lambda x: -1.0 if x < 0.0 else (1.0 if x > 0.0 else 0.0),
     fromInteger = float,
     negate = float.__neg__,
     sub = float.__sub__
@@ -99,7 +99,7 @@ instance(Num, complex).where(
     add = complex.__add__,
     mul = complex.__mul__,
     abs = abs,
-    signum = lambda x: -1 if x < 0 else (1 if x > 0 else 0),
+    signum = lambda x: complex(-1) if x < 0 else complex(1 if x > 0 else 0),
     fromInteger = complex,
     negate = complex.__neg__,
     sub = complex.__sub__

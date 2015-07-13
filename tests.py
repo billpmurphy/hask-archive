@@ -1057,6 +1057,9 @@ class TestSyntax(unittest.TestCase):
                 ~(caseof(L[1, ...])
                     | m(m.a ^ m.b) >> p.a
                     | m(m.a)       >> False))
+        self.assertTrue(~(caseof(L[[]])
+                            | m(m.a ^ m.b) >> False
+                            | m(m.a)       >> True))
 
         with self.assertRaises(se):
             ~(caseof((1, 2))
@@ -1066,6 +1069,11 @@ class TestSyntax(unittest.TestCase):
             ~(caseof([1, 2, 3, 4])
                 | m(m.a ^ m.b ^ m.c) >> True
                 | m(m.x)             >> False)
+        with self.assertRaises(se):
+            ~(caseof(L[1, 2, 2])
+                | m(m.a ^ 1) >> False
+                | m(m.a)     >> True)
+
 
     def test_type_sig(self):
         tse = TypeSignatureError
@@ -1089,6 +1097,7 @@ class TestSyntax(unittest.TestCase):
         with self.assertRaises(se): H[(Eq, "a", "b")]
         with self.assertRaises(se): H[(Eq, 1)]
         with self.assertRaises(se): H[(Maybe, 1)]
+        with self.assertRaises(se): sig(H/ "a")(1)
 
 
 class TestTypeclass(unittest.TestCase):
@@ -1108,6 +1117,8 @@ class TestTypeclass(unittest.TestCase):
                 return "example()"
 
         instance(Show, example).where(show=example.__str__)
+        with self.assertRaises(te): instance(1, example)
+        with self.assertRaises(te): instance(example, str)
 
         from hask.Prelude import show
         self.assertEqual("example()", show(example()))
@@ -1297,6 +1308,12 @@ class TestMaybe(unittest.TestCase):
         self.assertEqual(Nothing, (Nothing >> s(3)) >> s(3))
         self.assertEqual(Nothing, Nothing >> s_composed)
 
+        from hask.Control.Monad import join, liftM
+        self.assertEqual(join(Just(Just(1))), Just(1))
+        self.assertEqual(join(Just(Nothing)), Nothing)
+        self.assertEqual(liftM(__+1, Just(1)), Just(2))
+        self.assertEqual(liftM(__+1, Nothing), Nothing)
+
     def test_functions(self):
         from hask.Data.Maybe import maybe, isJust, isNothing, fromJust
         from hask.Data.Maybe import listToMaybe, maybeToList, catMaybes
@@ -1310,7 +1327,7 @@ class TestMaybe(unittest.TestCase):
         self.assertTrue(isNothing(Nothing))
         self.assertEqual(fromJust(Just("bird")), "bird")
         self.assertEqual(fromJust(Just(Nothing)), Nothing)
-        with self.assertRaises(ValueError): fromJust(Nothing)
+        with self.assertRaises(ve): fromJust(Nothing)
 
         self.assertEqual(2, maybe(0, (__+1), Just(1)))
         self.assertEqual(0, maybe(0, (__+1)) % Nothing)
@@ -1448,7 +1465,7 @@ class TestEither(unittest.TestCase):
 
     def test_monad(self):
         from hask.Prelude import flip
-        from hask.Control.Monad import bind
+        from hask.Control.Monad import bind, join
 
         @sig(H/ int >> int >> t(Either, str, int))
         def sub_whole(x, y):
@@ -1462,7 +1479,8 @@ class TestEither(unittest.TestCase):
         self.assertEqual(Left("0"), Left("0") >> sub_whole(1))
 
         # monad laws
-        sub_composed = (lambda x: sub_whole(4, x) >> sub(2)) ** (H/ int >> t(Either, "a", int))
+        sub_composed = (lambda x: sub_whole(4, x) >> sub(2)) ** \
+                (H/ int >> t(Either, "a", int))
         self.assertEqual(Right(7), Right(7) >> Right)
         self.assertEqual(Left(7), Left(7) >> Right)
         self.assertEqual(Right(1), (Right(5) >> sub(1)) >> sub(3))
@@ -1472,6 +1490,9 @@ class TestEither(unittest.TestCase):
         self.assertEqual(Left("e"), Left("e") >> sub_composed)
 
         self.assertEqual(Right(2), bind(Right(4), sub(2)))
+
+        self.assertEqual(join(Right(Right(1))), Right(1))
+        self.assertEqual(join(Right(Left(1))), Left(1))
 
     def test_functions(self):
         from hask.Data.Either import either
@@ -1589,14 +1610,23 @@ class TestList(unittest.TestCase):
         self.assertTrue(L[1, 2] <= L[1, 2])
         self.assertTrue(L[1, 2] <= L[1, 2])
 
-        self.assertTrue(L[1, 2] + L[1, ...] < L[1, 2, 3], L[2, ...])
-        self.assertTrue(L[1, 2] + L[1, ...] <= L[1, 2, 3], L[2, ...])
-        self.assertTrue(L[1, 2, 3] + L[1, ...] > L[1, 2], L[2, ...])
-        self.assertTrue(L[1, 2, 3] + L[1, ...] >= L[1, 2], L[2, ...])
-        self.assertFalse(L[1, 2] + L[1, ...] > L[1, 2, 3], L[2, ...])
-        self.assertFalse(L[1, 2] + L[1, ...] >= L[1, 2, 3], L[2, ...])
-        self.assertFalse(L[1, 2, 3] + L[1, ...] < L[1, 2], L[2, ...])
-        self.assertFalse(L[1, 2, 3] + L[1, ...] <= L[1, 2], L[2, ...])
+        self.assertTrue(L[1, 2] + L[3, ...] > L[1, 2, 3] + L[2, ...])
+        self.assertTrue(L[1, 2] + L[3, ...] >= L[1, 2, 3] + L[2, ...])
+        self.assertTrue(L[1, 2, 3] + L[1, ...] < L[1, 2] + L[3, ...])
+        self.assertTrue(L[1, 2, 3] + L[1, ...] <= L[1, 2] + L[3, ...])
+        self.assertFalse(L[1, 2] + L[3, ...] < L[1, 2, 3] + L[2, ...])
+        self.assertFalse(L[1, 2] + L[3, ...] <= L[1, 2, 3] + L[2, ...])
+        self.assertFalse(L[1, 2, 3] + L[1, ...] > L[1, 2] + L[3, ...])
+        self.assertFalse(L[1, 2, 3] + L[1, ...] >= L[1, 2] + L[3, ...])
+
+        self.assertTrue(L[1, 2, 3] + L[4, ...] > L[1, 2])
+        self.assertTrue(L[1, 2, 3] + L[4, ...] >= L[1, 2])
+        self.assertTrue(L[1, 2] < L[1, 2, 3] + L[4, ...])
+        self.assertTrue(L[1, 2] <= L[1, 2, 3] + L[4, ...])
+        self.assertFalse(L[1, 2] > L[1, 2, 3] + L[4, ...])
+        self.assertFalse(L[1, 2] >= L[1, 2, 3] + L[4, ...])
+        self.assertFalse(L[1, 2, 3] + L[4, ...] < L[1, 2])
+        self.assertFalse(L[1, 2, 3] + L[4, ...] <= L[1, 2])
 
         with self.assertRaises(te): L[1, 2] > L[1.0, 2.0]
         with self.assertRaises(te): L[1, 2] > L[1.0, 2.0, ...]
@@ -1797,12 +1827,35 @@ class TestDataList(unittest.TestCase):
         from hask.Data.List import concatMap, and_, or_, any, all, sum, product
         from hask.Data.List import maximum, minimum
 
+        from hask.Data.List import repeat
+        self.assertTrue(or_(L[True, True]))
+        self.assertTrue(or_(L[True, False]))
+        self.assertFalse(or_(L[[]]))
+        self.assertTrue(or_(repeat(True)))
+        self.assertTrue(and_(L[True, True]))
+        self.assertFalse(and_(L[True, False]))
+        self.assertTrue(and_(L[[]]))
+        self.assertFalse(and_(repeat(False)))
+
+        self.assertTrue(any(__>5, L[0, ..., 6]))
+        self.assertFalse(any(__>6, L[0, ..., 6]))
+        self.assertFalse(any(__>6, L[[]]))
+        self.assertTrue(any(__>0, L[0, ...]))
+        self.assertTrue(all(__>6, L[7, ..., 15]))
+        self.assertFalse(all(__>6, L[0, ..., 5]))
+        self.assertTrue(all(__>6, L[[]]))
+        self.assertFalse(all(__<0, L[0, ...]))
+
         self.assertEqual(55, sum(L[1, ..., 10]))
         self.assertEqual(55L, sum(L[1L, ..., 10L]))
         self.assertEqual(0, sum(L[[]]))
         self.assertEqual(3628800, product(L[1, ..., 10]))
         self.assertEqual(3628800L, product(L[1L, ..., 10L]))
         self.assertEqual(1, product(L[[]]))
+        self.assertEqual(10, maximum(L[0, ..., 10]))
+        self.assertEqual(0, minimum(L[0, ..., 10]))
+        with self.assertRaises(ve): maximum(L[[]])
+        with self.assertRaises(ve): minimum(L[[]])
 
     def test_building_lists(self):
         from hask.Data.List import scanl, scanl1, scanr, scanr1, mapAccumL
@@ -1818,8 +1871,6 @@ class TestDataList(unittest.TestCase):
         from hask.Data.List import dropWhileEnd, span, break_, stripPrefix
         from hask.Data.List import group, inits, tails, isPrefixOf, isSuffixOf
         from hask.Data.List import isInfixOf, isSubsequenceOf
-
-
 
         self.assertTrue(isPrefixOf(L["a", "b"], L["a", "b", "c"]))
         self.assertFalse(isPrefixOf(L["a", "b"], L["d", "a", "b", "c"]))
@@ -2008,7 +2059,7 @@ class TestDataTuple(unittest.TestCase):
 class TestDataOrd(unittest.TestCase):
 
     def test_ord(self):
-        from hask.Data.Ord import max, max, compare, comparing
+        from hask.Data.Ord import max, min, compare, comparing
         self.assertEqual(max(1, 2), 2)
         self.assertEqual(min(1, 2), 1)
         self.assertEqual(compare(1)(2), LT)
@@ -2054,7 +2105,25 @@ class Test_README_Examples(unittest.TestCase):
     """Make sure the README examples are all working"""
 
     def test_list(self):
-        pass
+        from hask.Data.List import take
+        self.assertEqual(take(5, L["a", "b", ...]),
+                         L['a', 'b', 'c', 'd', 'e'])
+
+        self.assertEqual(L[1,...][5:10],
+                         L[6, 7, 8, 9, 10])
+
+        from hask.Data.List import map
+        from hask.Data.Char import chr
+        letters = map(chr, L[97, ...])
+        self.assertEqual(letters[:9],
+                          L['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
+
+        self.assertTrue(55 in L[1, 3, ...])
+
+    def test_ADT(self):
+        FooBar, Foo, Bar =\
+        data.FooBar("a", "b") == d.Foo("a", "b", str) | d.Bar
+        self.assertIsNotNone(Foo(1, 2, "s"))
 
     def test_sig(self):
         pass

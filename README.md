@@ -1,11 +1,13 @@
 Remaining TODOs:
-* Write rest of Data.List
+* Write rest of Data.List, Prelude
 * Final refactor of everything
 * Write rest of README
 * Write tests for everything
 * ???
 * Profit
+
 * Change type inference engine so that it is aware of typeclasses
+* Data.Foldable/Data.Traversable
 
 
 # Hask
@@ -127,7 +129,7 @@ L[1, ...]
 # list from 1 to infinity, counting by twos
 L[1, 3, ...]
 
-# list from 1 to 10 (inclusive), counting by ones
+# list from 1 to 20 (inclusive), counting by ones
 L[1, ..., 20]
 
 # list from 1 to 20 (inclusive), counting by fours
@@ -192,7 +194,8 @@ Maybe, Nothing, Just =\
     data.Maybe("a") == d.Nothing | d.Just("a") & deriving(Read, Show, Eq, Ord)
 ```
 
-Let's break this down a bit. The syntax for defining a new type constructor is:
+Let's break this down a bit. The syntax for defining a new [type
+constructor](https://wiki.haskell.org/Constructor#Type_constructor) is:
 
 ```python
 data.TypeName("type param", "type param 2" ... "type param n")
@@ -200,10 +203,11 @@ data.TypeName("type param", "type param 2" ... "type param n")
 
 This defines a new algebraic datatype with type parameters.
 
-To define data constructors for this type, use `d.` The name of the data
-constructor goes first, followed by its fields. Multiple data constructors
-should be separted by `|`. If your data constructor has no fields, you can omit
-the parens. For example:
+To define [data
+constructors](https://wiki.haskell.org/Constructor#Data_constructor) for this
+type, use `d.` The name of the data constructor goes first, followed by its
+fields. Multiple data constructors should be separted by `|`. If your data
+constructor has no fields, you can omit the parens. For example:
 
 ```python
 FooBar, Foo, Bar =\
@@ -226,9 +230,9 @@ Ordering, LT, EQ, GT =\
     data.Ordering == d.LT | d.EQ | d.GT & deriving(Read, Show, Eq, Ord, Bounded)
 ```
 
-We can now use the data constructors defined in a `data` statement to create
-instances of our new types. If our data constructor takes no arguments, we can
-use it just like a variable.
+You can now use the data constructors defined in a `data` statement to create
+instances of these new types. If the data constructor takes no arguments, you
+can use it just like a variable.
 
 ```python
 >>> Just(10)
@@ -271,12 +275,14 @@ Either a (str, int)
 
 ### The type system and typed functions
 
-So what's up with those types? Hask operates its own shadow Hindley-Milner type
-system on top of Python's type system; `_t` shows the Hask type of a particular
+So what's up with those types? Hask operates its own shadow [Hindley-Milner
+type system](https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system)
+on top of Python's type system; `_t` shows the Hask type of a particular
 object.
 
-
-There are two ways to create `TypedFunc` objects:
+In Hask, typed functions take the form of `TypedFunc` objects, which are typed
+wrappers around Python functions. There are two ways to create `TypedFunc`
+objects:
 
 1) Use the `sig` decorator to decorate the function with the type signature
 
@@ -311,7 +317,8 @@ is a discrepancy.
 >>> f(9, 1.0)  # type error
 ```
 
-Second, `TypedFunc` objects can be partially applied:
+Second, `TypedFunc` objects can be [partially
+applied](https://wiki.haskell.org/Partial_application):
 
 ```python
 >>> g = (lambda a, b, c: a / (b + c)) ** (H/ int >> int >> int >> int)
@@ -336,11 +343,13 @@ which applies a `TypedFunc` to one argument (equivalent to `($)` in Haskell).
 ```python
 ```
 
-The convinience of this notation (when combined with partial application) cannot be overstated--you can get rid of a ton of nested parenthesis this way.
+The convinience of this notation (when combined with partial application)
+cannot be overstated--you can get rid of a ton of nested parenthesis this way.
 
-The compose operation is also typed-checked, which makes it appealing to
-write programs in the Haskell style of chaining together lots of functions with
-composition and relying on the type system to catch programming errors.
+The compose operation is also typed-checked, which makes it appealing to write
+programs in [pointfree style](https://wiki.haskell.org/Pointfree), i.e,
+chaining together lots of functions with composition and relying on the type
+system to catch programming errors.
 
 As you would expect, data constructors are also just `TypedFunc` objects:
 
@@ -350,7 +359,7 @@ Just(Just(Just(Just(77))))
 ```
 
 The type signature syntax is very simple, and consists of a few basic
-primitives:
+primitives that can be combined to build any type signature:
 
 | Primitive | Syntax/examples |
 | --------- | --------------- |
@@ -502,12 +511,14 @@ up.
 ### Typeclasses and typeclass instances
 
 
-Typeclasses allow you to add additional functionality to your ADTs. Hask
-implements all of the major typeclasses from Haskell (see the Appendix for a
-full list) and provides syntax for creating new typeclass instances.
+[Typeclasses](https://en.wikipedia.org/wiki/Type_class) allow you to add
+additional functionality to your ADTs. Hask implements all of the major
+typeclasses from Haskell (see the Appendix for a full list) and provides syntax
+for creating new typeclass instances.
 
-As an example, let's add a `Monad` instance for the `Maybe` type.  First, we
-need to add `Functor` and `Applicative` instances.
+As an example, let's add a [`Monad`](https://wiki.haskell.org/Monad) instance
+for the `Maybe` type.  First, we need to add `Functor` and `Applicative`
+instances.
 
 
 ```python
@@ -662,6 +673,10 @@ Double sections are also supported:
 
 >>> (__**__)(2)(10)
 1024
+
+>>> from hask.Data.List import takeWhile
+>>> takeWhile(__ < 5, L[1, ...])
+L[1, 2, 3, 4]
 ```
 
 As you can see, this much easier than using `lambda` and adding a type

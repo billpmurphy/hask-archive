@@ -14,17 +14,22 @@ class Traversable(Foldable, Functor):
         build_instance(Traversable, cls, attrs)
         return
 
+
 def traverse(x):
     raise NotImplementedError()
+
 
 def sequenceA(x):
     raise NotImplementedError()
 
+
 def mapM(x):
-    pass
+    raise NotImplementedError()
+
 
 def sequence(x):
-    pass
+    raise NotImplementedError()
+
 
 #=============================================================================#
 # Utility functions
@@ -36,6 +41,7 @@ def for_(x):
 
 def forM(x):
     raise NotImplementedError()
+
 
 def mapAccumL(f, a, tb):
     raise NotImplementedError()

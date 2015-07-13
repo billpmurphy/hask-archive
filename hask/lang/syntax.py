@@ -60,15 +60,13 @@ class Syntax(object):
     those objects.
     """
     def __init__(self, err_msg):
-        if err_msg is not None:
-            self.__syntax_err_msg = err_msg
+        self.__syntax_err_msg = err_msg
+        self.invalid_syntax = SyntaxError(self.__syntax_err_msg)
 
-    def raise_invalid(self, msg=None):
-        if msg is not None:
-            raise SyntaxError(msg)
-        raise SyntaxError(self.__syntax_err_msg)
+    def __raise(self):
+        raise self.invalid_syntax
 
-    __syntaxerr__ = lambda s, *a: s.raise_invalid()
+    __syntaxerr__ = lambda s, *a: s.__raise()
 
 
 replace_magic_methods(Syntax, Syntax.__syntaxerr__)
@@ -129,13 +127,13 @@ class __constraints__(Syntax):
 
     def __add_constraint(self, con):
         if len(con) != 2 or not isinstance(con, tuple):
-            self.raise_invalid("Invalid typeclass constraint: %s" % str(con))
+            raise SyntaxError("Invalid typeclass constraint: %s" % str(con))
 
         if not isinstance(con[1], str):
-            self.raise_invalid("%s is not a type variable" % con[1])
+            raise SyntaxError("%s is not a type variable" % con[1])
 
         if not (inspect.isclass(con[0]) and issubclass(con[0], Typeclass)):
-            self.raise_invalid("%s is not a typeclass" % con[0])
+            raise SyntaxError("%s is not a typeclass" % con[0])
 
         self.constraints[con[1]].append(con[0])
         return
@@ -190,10 +188,10 @@ class sig(Syntax):
 
         if not isinstance(signature, __signature__):
             msg = "Signature expected in sig(); found %s" % signature
-            self.raise_invalid(msg)
+            raise SyntaxError(msg)
 
         elif len(signature.sig.args) < 2:
-            self.raise_invalid("Not enough type arguments in signature")
+            raise SyntaxError("Not enough type arguments in signature")
 
         self.sig = signature.sig
         return
@@ -344,7 +342,7 @@ class __pattern_bind__(Syntax, PatternMatchBind):
         elif isinstance(other, __pattern_bind__):
             return __pattern_bind_list__(self, other)
 
-        self.raise_invalid()
+        raise self.invalid_syntax
         return
 
 
@@ -426,7 +424,7 @@ class __data__(Syntax):
 
     def __getattr__(self, value):
         if not value[0] in string.uppercase:
-            self.raise_invalid("Type constructor name must be capitalized")
+            raise SyntaxError("Type constructor name must be capitalized")
         return __new_tcon_enum__(value)
 
 
@@ -448,7 +446,7 @@ class __new_tcon__(Syntax):
         elif isinstance(d, __new_dcons_deriving__):
             return build_ADT(self.name, self.args, d.dcons, d.classes)
 
-        self.raise_invalid()
+        raise self.invalid_syntax
 
 
 class __new_tcon_enum__(__new_tcon__):
@@ -461,20 +459,20 @@ class __new_tcon_enum__(__new_tcon__):
     def __call__(self, *typeargs):
         if len(typeargs) < 1:
             msg = "Missing type args in statement: `data.%s()`" % self.name
-            self.raise_invalid(msg)
+            raise SyntaxError(msg)
 
         # make sure all type params are strings
         if not all((type(arg) == str for arg in typeargs)):
-            self.raise_invalid("Type parameters must be strings")
+            raise SyntaxError("Type parameters must be strings")
 
         # make sure all type params are letters only
         is_letters = lambda xs: all((x in string.lowercase for x in xs))
         if not all((is_letters(arg) for arg in typeargs)):
-            self.raise_invalid("Type parameters must be lowercase letters")
+            raise SyntaxError("Type parameters must be lowercase letters")
 
         # all type parameters must have unique names
         if len(typeargs) != len(set(typeargs)):
-            self.raise_invalid("Type parameters are not unique")
+            raise SyntaxError("Type parameters are not unique")
 
         return __new_tcon_hkt__(self.name, typeargs)
 
@@ -503,7 +501,7 @@ class __d__(Syntax):
 
     def __getattr__(self, value):
         if not value[0] in string.uppercase:
-            self.raise_invalid("Data constructor name must be capitalized")
+            raise SyntaxError("Data constructor name must be capitalized")
         return __new_dcon_enum__(value)
 
 
@@ -521,7 +519,7 @@ class __new_dcon_params__(__new_dcon__):
 
     def __and__(self, derive_exp):
         if not isinstance(derive_exp, deriving):
-            self.raise_invalid()
+            raise self.invalid_syntax
         return __new_dcon_deriving__(self.name, self.args, derive_exp.classes)
 
     def __or__(self, dcon):
@@ -532,7 +530,7 @@ class __new_dcon_params__(__new_dcon__):
                 return __new_dcons_deriving__(constructors, dcon.classes)
             return __new_dcons__(constructors)
 
-        self.raise_invalid()
+        raise self.invalid_syntax
 
 
 class __new_dcon_deriving__(__new_dcon__):
@@ -568,7 +566,7 @@ class __new_dcons__(__new_dcons_deriving__):
                 return __new_dcons_deriving__(self.dcons + constructor,
                                               new_dcon.classes)
             return __new_dcons__(self.dcons + constructor)
-        self.raise_invalid()
+        raise self.invalid_syntax
 
 
 data = __data__()
@@ -719,7 +717,7 @@ class __guard_test__(Syntax):
         if isinstance(value, __guard_test__) or \
            isinstance(value, __guard_conditional__) or \
            isinstance(value, __guard_base__):
-            self.raise_invalid()
+            raise self.invalid_syntax
         return __guard_conditional__(self.__test, value)
 
 
@@ -763,10 +761,10 @@ class __unmatched_guard__(__guard_base__):
         # Consume the next line of the guard expression
 
         if isinstance(cond, __guard_test__):
-            self.raise_invalid("Guard expression is missing return value")
+            raise SyntaxError("Guard expression is missing return value")
 
         elif not isinstance(cond, __guard_conditional__):
-            self.raise_invalid("Guard condition expected, got %s" % cond)
+            raise SyntaxError("Guard condition expected, got %s" % cond)
 
         # If the condition is satisfied, change the evaluation state to
         # __matched_guard__, setting the return value to the value provided on
@@ -795,7 +793,7 @@ class __matched_guard__(__guard_base__):
         # of the lines in the guard expression
         if isinstance(cond, __guard_conditional__):
             return self
-        self.raise_invalid()
+        raise self.invalid_syntax
 
     def __invert__(self):
         return self.value
@@ -839,7 +837,7 @@ class guard(__unmatched_guard__):
 
     """
     def __invert__(self):
-        self.raise_invalid()
+        raise self.invalid_syntax
 
 
 c = __guard_test__

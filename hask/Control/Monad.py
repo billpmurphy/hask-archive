@@ -24,6 +24,7 @@ class Monad(Applicative):
         build_instance(Monad, cls, {"bind":bind})
         return
 
+
 @sig(H[(Monad, "m")]/ t("m", "a") >> (H/ "a" >> t("m", "b")) >> t("m", "b"))
 def bind(m, fn):
     """
@@ -32,6 +33,29 @@ def bind(m, fn):
     Monadic bind.
     """
     return Monad[m].bind(m, fn)
+
+
+@sig(H[(Monad, "m")]/ t("m", t("m", "a")) >> t("m", "a"))
+def join(m):
+    """
+    join :: Monad m => m (m a) -> m a
+
+    The join function is the conventional monad join operator. It is used to
+    remove one level of monadic structure, projecting its bound argument into
+    the outer level.
+    """
+    __id = (lambda x: x) ** (H/ "a" >> "a")
+    return bind(m, __id)
+
+
+@sig(H[(Monad, "m")]/ (H/ "a" >> "r") >> t("m", "a") >> t("m", "r"))
+def liftM(fn, m):
+    """
+    liftM :: Monad m => (a1 -> r) -> m a1 -> m r
+
+    Promote a function to a monad.
+    """
+    return fmap(fn, m)
 
 
 instance(Monad, List).where(

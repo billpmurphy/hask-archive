@@ -105,10 +105,12 @@ class List(collections.Sequence, Hask):
         """
         unify(self.__type__(), typeof(other))
         if self.__is_evaluated and other.__is_evaluated:
-            self.__head.extend(other.__head)
-        else:
-            self.__tail = itertools.chain(self.__tail, iter(other))
-        return self
+            return List(head=self.__head + other.__head)
+        elif self.__is_evaluated and not other.__is_evaluated:
+            return List(head=self.__head + other.__head,
+                        tail=other.__tail)
+        return List(head=self.__head,
+                    tail=itertools.chain(self.__tail, iter(other)))
 
     def __str__(self):
         if len(self.__head) == 0 and self.__is_evaluated:
@@ -137,7 +139,7 @@ class List(collections.Sequence, Hask):
                 if other.__is_evaluated:
                     return 1
                 other.__next()
-                comp = cmp(other.__head[-1], self.__head[len(other.__head)-1])
+                comp = cmp(self.__head[len(other.__head)-1], other.__head[-1])
                 if comp != 0:
                     return comp
 
@@ -158,7 +160,7 @@ class List(collections.Sequence, Hask):
                         return value_comp
 
         elif len(other.__head) > len(self.__head):
-            return other.__cmp__(self)
+            return -other.__cmp__(self)
 
         return 0
 
@@ -277,7 +279,7 @@ class __list_comprehension__(Syntax):
             elif len(lst) == 4 and lst[2] is Ellipsis:
                 return List(tail=enumFromThenTo(lst[0], lst[1], lst[3]))
 
-            self.raise_invalid("Invalid list comprehension: %s" % str(lst))
+            raise SyntaxError("Invalid list comprehension: %s" % str(lst))
 
         elif hasattr(lst, "next") or hasattr(lst, "__next__"):
             return List(tail=lst)
