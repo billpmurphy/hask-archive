@@ -1,13 +1,12 @@
 Remaining TODOs:
 * Write rest of Data.List, Prelude
-* Final refactor of everything
 * Write rest of README
-* Write tests for everything
 * ???
 * Profit
+* Write tests for everything
 
 * Change type inference engine so that it is aware of typeclasses
-* Data.Foldable/Data.Traversable
+* Data.Foldable/Data.Traversable/Data.Monoid, 4.8.0.0 Prelude
 
 
 # Hask
@@ -366,7 +365,7 @@ primitives that can be combined to build any type signature:
 | Type literal for Python builtin type or user-defined class | `int`, `float`, `set`, `list` |
 | Type variable | `"a"`, `"b"`, `"zz"` |
 | `List` of some type | `[int]`, `["a"]`, [["a"]] |
-| Tuple type | `(int, int)`, `("a", "b", "c")`, (int, ("a", "b")) |
+| Tuple type | `(int, int)`, `("a", "b", "c")`, `(int, ("a", "b"))` |
 | ADT with type parameters | `t(Maybe, "a")`, `t(Either, "a", str)` |
 | Unit type (`None`) | `None` |
 | Untyped Python function | `func` |
@@ -517,8 +516,9 @@ typeclasses from Haskell (see the Appendix for a full list) and provides syntax
 for creating new typeclass instances.
 
 As an example, let's add a [`Monad`](https://wiki.haskell.org/Monad) instance
-for the `Maybe` type.  First, we need to add `Functor` and `Applicative`
-instances.
+for the `Maybe` type.  First, we need to add
+[`Functor`](https://wiki.haskell.org/Functor) and
+[`Applicative`](https://wiki.haskell.org/Applicative_functor) instances.
 
 
 ```python
@@ -641,7 +641,7 @@ generate instances rather than defining them manually.
 
 
 Defining your own typeclasses is pretty easy--take a look at `help(Typeclass)`
-and look at the typeclasses defined in `Data.Functor` and `Data.Traversable` to
+and look at the typeclasses defined in `Data.Functor` and `Control.Monad` to
 see how it's done.
 
 
