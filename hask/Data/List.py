@@ -698,17 +698,11 @@ def isInfixOf(xs, ys):
     The isInfixOf function takes two lists and returns True iff the first list
     is contained, wholly and intact, anywhere within the second.
     """
-    for i in xrange(len(ys)-len(xs)+1):
-        for j in xrange(len(xs)):
-            if ys[i+j] != xs[j]:
-                break
-        else:
-            return True
-    return False
+    return any(isPrefixOf(xs), tails(ys))
 
 
 @sig(H[(Eq, "a")]/ ["a"] >> ["a"] >> bool)
-def isSubsequenceOf(xs, ys):
+def isSubsequenceOf(x, y):
     """
     isSubsequenceOf :: Eq a => [a] -> [a] -> Bool
 
@@ -717,7 +711,8 @@ def isSubsequenceOf(xs, ys):
 
     isSubsequenceOf(x, y) is equivalent to elem(x, subsequences(y))
     """
-    raise NotImplementedError()
+    return elem(x, subsequences(y))
+
 
 #=============================================================================#
 # Searching lists
@@ -1013,6 +1008,7 @@ def zipWith7(fn, a, b, c, d, e, f):
     return L[(fn(*s) for s in zip7(a, b, c, d, e, f))]
 
 
+@sig(H/ [("a", "b")] >> (["a"], ["b"]))
 def unzip(xs):
     """
     unzip :: [(a, b)] -> ([a], [b])
@@ -1020,7 +1016,9 @@ def unzip(xs):
     unzip transforms a list of pairs into a list of first components and a list
     of second components.
     """
-    raise NotImplementedError()
+    a = L[(i[0] for i in xs)]
+    b = L[(i[1] for i in xs)]
+    return a, b
 
 
 def unzip3(xs):
@@ -1113,6 +1111,8 @@ def delete(x, xs):
 def diff(xs, ys):
     """
     diff :: :: Eq a => [a] -> [a] -> [a]
+
+    List difference.
     """
     raise NotImplementedError()
 
@@ -1173,7 +1173,7 @@ def sortOn(f, xs):
 
     Note: Current implementation is not lazy
     """
-    return L[sorted(xs, key=f)]
+    raise NotImplementedError()
 
 
 @sig(H[(Ord, "a")]/ "a" >> ["a"] >> ["a"])

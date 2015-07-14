@@ -44,9 +44,9 @@ from Data.Tuple import uncurry
 ## Basic type classes
 
 
-from .lang.typeclasses import Read
-from .lang.typeclasses import Show
-from .lang.typeclasses import show
+from .lang import Read
+from .lang import Show
+from .lang import show
 
 from Data.Eq import Eq
 from Data.Ord import Ord
@@ -54,16 +54,16 @@ from Data.Ord import max
 from Data.Ord import min
 from Data.Ord import compare
 
-from .lang.typeclasses import Enum
-from .lang.typeclasses import toEnum
-from .lang.typeclasses import succ
-from .lang.typeclasses import pred
-from .lang.typeclasses import enumFromThen
-from .lang.typeclasses import enumFrom
-from .lang.typeclasses import enumFromThenTo
-from .lang.typeclasses import enumFromTo
+from .lang import Enum
+from .lang import toEnum
+from .lang import succ
+from .lang import pred
+from .lang import enumFromThen
+from .lang import enumFrom
+from .lang import enumFromThenTo
+from .lang import enumFromTo
 
-from .lang.typeclasses import Bounded
+from .lang import Bounded
 from Data.Functor import Functor
 from Data.Functor import fmap
 

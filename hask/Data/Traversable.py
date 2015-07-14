@@ -6,6 +6,19 @@ from Functor import Functor
 
 
 class Traversable(Foldable, Functor):
+    """
+    Functors representing data structures that can be traversed from left to
+    right.
+
+    Dependencies:
+        Foldable, Functor
+
+    Attributes:
+        traverse, sequenceA, mapM, sequence
+
+    Minimal complete definition:
+        traverse
+    """
     @classmethod
     def make_instance(typeclass, cls, traverse, sequenceA=None, mapM=None,
                       sequence=None):

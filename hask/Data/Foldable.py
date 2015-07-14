@@ -13,6 +13,15 @@ from Num import Num
 
 
 class Foldable(Typeclass):
+    """
+    Data structures that can be folded.
+
+    Attributes:
+        foldr, foldr1, foldl, foldl_, foldl1, foldl1_
+
+    Minimal complete definition:
+        foldr
+    """
     @classmethod
     def make_instance(typeclass, cls, foldr):
         build_instance(Foldable, cls, {"foldr":foldr})

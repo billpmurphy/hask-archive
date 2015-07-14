@@ -9,21 +9,149 @@ from type_system import typeof
 from type_system import build_ADT
 from type_system import TypedFunc
 from type_system import Hask
+from type_system import Typeclass
+from type_system import build_instance
 
 from typeclasses import Show
 from typeclasses import show
 from typeclasses import Eq
 from typeclasses import Ord
-from typeclasses import Enum
-from typeclasses import enumFrom
-from typeclasses import enumFromThen
-from typeclasses import enumFromTo
-from typeclasses import enumFromThenTo
 from typeclasses import Bounded
 from typeclasses import Read
 
 from syntax import Syntax
 from syntax import instance
+from syntax import sig
+from syntax import H
+
+
+class Enum(Typeclass):
+    """
+    Class Enum defines operations on sequentially ordered types.
+
+    The enumFrom... methods are used in translation of arithmetic sequences.
+
+    Instances of Enum may be derived for any enumeration type (types whose
+    constructors have no fields). The nullary constructors are assumed to be
+    numbered left-to-right by fromEnum from 0 through n-1.
+
+    Attributes:
+        toEnum, fromEnum, succ, pred, enumFrom, enumFromThen, enumFrom,
+        enumFromThenTo, EnumFromTo
+
+    Minimal complete definition:
+        toEnum, fromEnum
+    """
+    @classmethod
+    def make_instance(typeclass, cls, toEnum, fromEnum):
+        def succ(a):
+            return fromEnum(toEnum(a) + 1)
+
+        def pred(a):
+            return fromEnum(toEnum(a) - 1)
+
+        def enumFromThen(start, second):
+            pointer = toEnum(start)
+            step = toEnum(second) - pointer
+            while True:
+                yield fromEnum(pointer)
+                pointer += step
+
+        def enumFrom(start):
+            return enumFromThen(start, succ(start))
+
+        def enumFromThenTo(start, second, end):
+            pointer, stop = toEnum(start), toEnum(end)
+            step = toEnum(second) - pointer
+            while pointer <= stop:
+                yield fromEnum(pointer)
+                pointer += step
+            return
+
+        def enumFromTo(start, end):
+            return enumFromThenTo(start, succ(start), end)
+
+        attrs = {"toEnum":toEnum, "fromEnum":fromEnum, "succ":succ,
+                 "pred":pred, "enumFromThen":enumFromThen, "enumFrom":enumFrom,
+                 "enumFromThenTo":enumFromThenTo, "enumFromTo":enumFromTo}
+        build_instance(Enum, cls, attrs)
+        return
+
+
+#@sig(H/ "a" >> int)
+def toEnum(a):
+    """
+    fromEnum :: a -> int
+
+    Convert to an int.
+    """
+    return Enum[a].toEnum(a)
+
+
+@sig(H/ "a" >> "a")
+def succ(a):
+    """
+    succ :: a -> a
+
+    the successor of a value. For numeric types, succ adds 1.
+    """
+    return Enum[a].succ(a)
+
+
+@sig(H/ "a" >> "a")
+def pred(a):
+    """
+    pred :: a -> a
+
+    the predecessor of a value. For numeric types, pred subtracts 1.
+    """
+    return Enum[a].pred(a)
+
+
+@sig(H/ "a" >> "a" >> ["a"])
+def enumFromThen(start, second):
+    """
+    enumFromThen :: a -> a -> [a]
+
+    Used in translation of [n, n_, ...]
+    """
+    return L[Enum[start].enumFromThen(start, second)]
+
+
+@sig(H/ "a" >> ["a"])
+def enumFrom(start):
+    """
+    enumFrom :: a -> [a]
+
+    Used in translation of L[n, ...]
+    """
+    return L[Enum[start].enumFrom(start)]
+
+
+@sig(H/ "a" >> "a" >> "a" >> ["a"])
+def enumFromThenTo(start, second, end):
+    """
+    enumFromThenTo :: a -> a -> a -> [a]
+
+    Used in translation of L[n, n_, ..., m]
+    """
+    return L[Enum[start].enumFromThenTo(start, second, end)]
+
+
+@sig(H/ "a" >> "a" >> ["a"])
+def enumFromTo(start, end):
+    """
+    enumFromTo :: a -> a -> [a]
+
+    Used in translation of L[n, ..., m]
+    """
+    return L[Enum[start].enumFromTo(start, end)]
+
+
+instance(Enum, int).where(toEnum=int, fromEnum=int)
+instance(Enum, long).where(toEnum=int, fromEnum=long)
+instance(Enum, bool).where(toEnum=int, fromEnum=bool)
+instance(Enum, str).where(toEnum=ord, fromEnum=chr)
 
 
 #=============================================================================#
@@ -265,19 +393,19 @@ class __list_comprehension__(Syntax):
                 any((Ellipsis is x for x in lst)):
             # L[x, ...]
             if len(lst) == 2 and lst[1] is Ellipsis:
-                return List(tail=enumFrom(lst[0]))
+                return enumFrom(lst[0])
 
             # L[x, y, ...]
             elif len(lst) == 3 and lst[2] is Ellipsis:
-                return List(tail=enumFromThen(lst[0], lst[1]))
+                return enumFromThen(lst[0], lst[1])
 
             # L[x, ..., y]
             elif len(lst) == 3 and lst[1] is Ellipsis:
-                return List(tail=enumFromTo(lst[0], lst[2]))
+                return enumFromTo(lst[0], lst[2])
 
             # L[x, y, ..., z]
             elif len(lst) == 4 and lst[2] is Ellipsis:
-                return List(tail=enumFromThenTo(lst[0], lst[1], lst[3]))
+                return enumFromThenTo(lst[0], lst[1], lst[3])
 
             raise SyntaxError("Invalid list comprehension: %s" % str(lst))
 

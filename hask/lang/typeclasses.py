@@ -16,19 +16,18 @@ from syntax import H
 # Basic typeclasses
 
 
-class Read(Typeclass):
-    @classmethod
-    def make_instance(typeclass, cls, read):
-        build_instance(Read, cls, {"read":read})
-        return
-
-    @classmethod
-    def derive_instance(typeclass, cls):
-        Read.make_instance(cls, read=eval)
-        return
-
 
 class Show(Typeclass):
+    """
+    Conversion of values to readable strings.
+
+    Attributes:
+        __str__, show
+
+    Minimal complete definition:
+        show
+
+    """
     @classmethod
     def make_instance(typeclass, cls, show):
         __show__ = show ** (H/ "a" >> str)
@@ -59,15 +58,17 @@ class Show(Typeclass):
 
 @sig(H/ "a" >> str)
 def show(obj):
+    """
+    show :: a -> str
+
+    Convert a value to a readable string.
+    """
     return Show[obj].show(obj)
 
 
 class Eq(Typeclass):
     """
     The Eq class defines equality (==) and inequality (!=).
-
-    Dependencies:
-        n/a
 
     Attributes:
         __eq__
@@ -106,8 +107,25 @@ class Eq(Typeclass):
         return
 
 
-
 class Ord(Eq):
+    """
+    The Ord class is used for totally ordered datatypes.
+
+    Instances of Ord can be derived for any user-defined datatype whose
+    constituent types are in Ord. The declared order of the constructors in the
+    data declaration determines the ordering in derived Ord instances. The
+    Ordering datatype allows a single comparison to determine the precise
+    ordering of two objects.
+
+    Dependencies:
+        Eq
+
+    Attributes:
+        __lt__, __le__, __gt__, __ge__
+
+    Minimal complete definition:
+        lt
+    """
     @classmethod
     def make_instance(typeclass, cls, lt, le=None, gt=None, ge=None):
         def_le = lambda s, o: s.__lt__(o) or s.__eq__(o)
@@ -155,7 +173,27 @@ class Ord(Eq):
         return
 
 
+#=============================================================================#
+# Classes not yet functional, because they have polymorphic return types
+
+
 class Bounded(Typeclass):
+    """
+    The Bounded class is used to name the upper and lower limits of a type. Ord
+    is not a superclass of Bounded since types that are not totally ordered may
+    also have upper and lower bounds.
+
+    The Bounded class may be derived for any enumeration type; minBound is the
+    first constructor listed in the data declaration and maxBound is the last.
+    Bounded may also be derived for single-constructor datatypes whose
+    constituent types are in Bounded.
+
+    Attributes:
+        minBound, maxBound
+
+    Minimal complete definition:
+        minBound, maxBound
+    """
     @classmethod
     def make_instance(typeclass, cls, minBound, maxBound):
         attrs = {"minBound":minBound, "maxBound":maxBound}
@@ -176,63 +214,29 @@ class Bounded(Typeclass):
         return
 
 
-class Enum(Typeclass):
+class Read(Typeclass):
+    """
+    Parsing of Strings, producing values.
+
+    Attributes:
+        read
+
+    Minimal complete definition:
+        read
+    """
     @classmethod
-    def make_instance(typeclass, cls, toEnum, fromEnum):
-        def succ(a):
-            return fromEnum(toEnum(a) + 1)
+    def make_instance(typeclass, cls, read):
+        build_instance(Read, cls, {"read":read})
+        return
 
-        def pred(a):
-            return fromEnum(toEnum(a) - 1)
-
-        def enumFromThen(start, second):
-            pointer = toEnum(start)
-            step = toEnum(second) - pointer
-            while True:
-                yield fromEnum(pointer)
-                pointer += step
-
-        def enumFrom(start):
-            return enumFromThen(start, succ(start))
-
-        def enumFromThenTo(start, second, end):
-            pointer, stop = toEnum(start), toEnum(end)
-            step = toEnum(second) - pointer
-            while pointer <= stop:
-                yield fromEnum(pointer)
-                pointer += step
-            return
-
-        def enumFromTo(start, end):
-            return enumFromThenTo(start, succ(start), end)
-
-        attrs = {"toEnum":toEnum, "fromEnum":fromEnum, "succ":succ,
-                 "pred":pred, "enumFromThen":enumFromThen, "enumFrom":enumFrom,
-                 "enumFromThenTo":enumFromThenTo, "enumFromTo":enumFromTo}
-        build_instance(Enum, cls, attrs)
+    @classmethod
+    def derive_instance(typeclass, cls):
+        Read.make_instance(cls, read=eval)
         return
 
 
-def toEnum(a):
-    return Enum[a].toEnum(a)
-
-def succ(a):
-    return Enum[a].succ(a)
-
-def pred(a):
-    return Enum[a].pred(a)
-
-def enumFromThen(start, second):
-    return Enum[start].enumFromThen(start, second)
-
-def enumFrom(start):
-    return Enum[start].enumFrom(start)
-
-def enumFromThenTo(start, second, end):
-    return Enum[start].enumFromThenTo(start, second, end)
-
-def enumFromTo(start, end):
-    return Enum[start].enumFromTo(start, end)
+#=============================================================================#
+# Instances for builtin types
 
 
 instance(Show, str).where(show=str.__repr__)
@@ -269,10 +273,3 @@ instance(Ord, list).where(lt=list.__lt__, le=list.__le__,
                           gt=list.__gt__, ge=list.__ge__)
 instance(Ord, tuple).where(lt=tuple.__lt__, le=tuple.__le__,
                            gt=tuple.__gt__, ge=tuple.__ge__)
-
-instance(Enum, int).where(toEnum=int, fromEnum=int)
-instance(Enum, long).where(toEnum=int, fromEnum=long)
-instance(Enum, bool).where(toEnum=int, fromEnum=bool)
-instance(Enum, str).where(toEnum=ord, fromEnum=chr)
-
-

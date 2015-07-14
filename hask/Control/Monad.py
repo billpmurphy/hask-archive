@@ -13,10 +13,25 @@ from Applicative import Applicative
 
 
 class Monad(Applicative):
+    """
+    The Monad class defines the basic operations over a monad, a concept from a
+    branch of mathematics known as category theory. From the perspective of a
+    Haskell programmer, however, it is best to think of a monad as an abstract
+    datatype of actions.
 
+    Dependencies:
+        Functor, Applicative
+
+    Attributes:
+        bind, __rshift__
+
+    Minimal complete definition:
+        bind
+    """
     @classmethod
     def make_instance(typeclass, cls, bind):
-        bind = bind ** (H[(Monad, "m")]/ t("m", "a") >> (H/ "a" >> t("m", "b")) >> t("m", "b"))
+        bind = bind ** (H[(Monad, "m")]/ t("m", "a") >> (H/ "a" >> t("m", "b"))
+                >> t("m", "b"))
         if not is_builtin(cls):
             def bind_wrap(s, o):
                 return Monad[s].bind(s, o)

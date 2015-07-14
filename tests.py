@@ -1941,10 +1941,15 @@ class TestDataList(unittest.TestCase):
         self.assertEqual(L[(1, "a"), (2, "b")], zip(L[1, 2], L["a", "b"]))
         self.assertEqual(L[(1, "a"), (2, "b")], zip(L[1, 2, 3], L["a", "b"]))
         self.assertEqual(L[(1, "a"), (2, "b")], zip(L[1, 2], L["a", "b", "c"]))
+        self.assertEqual(L[[]], zip(L[[]], L[[]]))
 
         self.assertEqual(L[1, 1, 1], zipWith(__-__, L[1, 2, 3], L[0, 1, 2]))
         self.assertEqual(L[1, 1, 1], zipWith(__-__, L[1, 2, 3, 4], L[0, 1, 2]))
         self.assertEqual(L[1, 1, 1], zipWith(__-__, L[1, 2, 3], L[0, 1, 2, 3]))
+        self.assertEqual(L[[]], zipWith(__-__, L[[]], L[[]]))
+
+        self.assertEqual((L[1, 3], L[2, 4]), unzip(L[(1, 2), (3, 4)]))
+        self.assertEqual((L[[]], L[[]]), unzip(L[[]]))
 
     def test_set_operations(self):
         from hask.Data.List import nub, delete, diff, union, intersect

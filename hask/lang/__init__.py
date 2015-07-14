@@ -3,8 +3,15 @@ from typeclasses import show
 from typeclasses import Read
 from typeclasses import Eq
 from typeclasses import Ord
-from typeclasses import Enum
 from typeclasses import Bounded
+from lazylist import Enum
+from lazylist import succ
+from lazylist import pred
+from lazylist import toEnum
+from lazylist import enumFrom
+from lazylist import enumFromTo
+from lazylist import enumFromThen
+from lazylist import enumFromThenTo
 
 from type_system import typeof
 from type_system import is_builtin
