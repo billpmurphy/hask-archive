@@ -1797,21 +1797,27 @@ class TestDataList(unittest.TestCase):
         self.assertEqual(4, head(L[4, 2]))
         self.assertEqual(1, head(L[1, ...]))
         with self.assertRaises(IndexError): head(L[[]])
+
         self.assertEqual(1, last(L[[1]]))
         self.assertEqual(4, last(L[1, 5, 3, 6, 4]))
         with self.assertRaises(IndexError): last(L[[]])
+
         self.assertEqual(L[[]], tail(L[[1]]))
         self.assertEqual(L[2, 3], tail(L[1, 2, 3]))
         with self.assertRaises(IndexError): tail(L[[]])
+
         self.assertEqual(L[[]], init(L[[1]]))
         self.assertEqual(L[1, 2], init(L[1, 2, 3]))
         with self.assertRaises(IndexError): init(L[[]])
+
         self.assertEqual(Nothing, uncons(L[[]]))
         self.assertEqual(Just % (1, L[[]]), uncons(L[[1]]))
         self.assertEqual(Just % (1, L[2, 3]), uncons(L[1, 2, 3]))
+
         self.assertTrue(null(L[[]]))
         self.assertFalse(null(L[[1]]))
         self.assertFalse(null(L[1, ...]))
+
         self.assertEqual(20, length(L[0, ..., 19]))
         self.assertEqual(0, length(L[[]]))
 
@@ -1832,6 +1838,7 @@ class TestDataList(unittest.TestCase):
         self.assertTrue(or_(L[True, False]))
         self.assertFalse(or_(L[[]]))
         self.assertTrue(or_(repeat(True)))
+
         self.assertTrue(and_(L[True, True]))
         self.assertFalse(and_(L[True, False]))
         self.assertTrue(and_(L[[]]))
@@ -1841,6 +1848,7 @@ class TestDataList(unittest.TestCase):
         self.assertFalse(any(__>6, L[0, ..., 6]))
         self.assertFalse(any(__>6, L[[]]))
         self.assertTrue(any(__>0, L[0, ...]))
+
         self.assertTrue(all(__>6, L[7, ..., 15]))
         self.assertFalse(all(__>6, L[0, ..., 5]))
         self.assertTrue(all(__>6, L[[]]))
@@ -1849,12 +1857,15 @@ class TestDataList(unittest.TestCase):
         self.assertEqual(55, sum(L[1, ..., 10]))
         self.assertEqual(55L, sum(L[1L, ..., 10L]))
         self.assertEqual(0, sum(L[[]]))
+
         self.assertEqual(3628800, product(L[1, ..., 10]))
         self.assertEqual(3628800L, product(L[1L, ..., 10L]))
         self.assertEqual(1, product(L[[]]))
+
         self.assertEqual(10, maximum(L[0, ..., 10]))
-        self.assertEqual(0, minimum(L[0, ..., 10]))
         with self.assertRaises(ve): maximum(L[[]])
+
+        self.assertEqual(0, minimum(L[0, ..., 10]))
         with self.assertRaises(ve): minimum(L[[]])
 
     def test_building_lists(self):
@@ -1876,20 +1887,40 @@ class TestDataList(unittest.TestCase):
         self.assertEqual(L[1, 2, 3], take(3, L[1, 2, 3]))
         self.assertEqual(L[1, 2, 3], take(3, L[1, ...]))
         self.assertEqual(L[[]], take(0, L[1, ...]))
+
         self.assertEqual(L[2, 3], drop(1, L[1, 2, 3]))
         self.assertEqual(L[[]], drop(3, L[1, 2, 3]))
         self.assertEqual(L[1, 2, 3], drop(0, L[1, 2, 3]))
+        self.assertEqual(4, drop(3, L[1, ...])[0])
 
-        self.assertEqual(L[ L[[]], L[[1]], L[1, 2], L[1, 2, 3]], inits(L[1, 2, 3]))
+        self.assertEqual((L[1, 2, 3], L[4, 5]), splitAt(3, L[1, ..., 5]))
+        self.assertEqual((L[[]], L[[]]), splitAt(0, L[[]]))
+        self.assertEqual((L[[]], L[1, 2]), splitAt(0, L[1, 2]))
+        self.assertEqual((L[[]], L[[]]), splitAt(10, L[[]]))
+        self.assertEqual((L[1, 2], L[[]]), splitAt(10, L[1, 2]))
+        self.assertEqual(L[1, ..., 10], splitAt(10, L[1, ...])[0])
+
+        self.assertEqual(L[1, ..., 4], takeWhile(__<5, L[1, ...]))
+        self.assertEqual(L[[]], takeWhile(__>5, L[1, ...]))
+        self.assertEqual(L[[]], takeWhile(__|True, L[[]]))
+
+        self.assertEqual(L[ L[[]], L[[1]], L[1, 2], L[1, 2, 3]],
+                         inits(L[1, 2, 3]))
         self.assertEqual(L[[L[[]]]], inits(L[[]]))
-        self.assertEqual(L[ L[1, 2, 3], L[2, 3], L[[3]], L[[]] ], tails(L[1, 2, 3]))
+
+        self.assertEqual(L[ L[1, 2, 3], L[2, 3], L[[3]], L[[]] ],
+                         tails(L[1, 2, 3]))
         self.assertEqual(L[[L[[]]]], tails(L[[]]))
 
         self.assertTrue(isPrefixOf(L["a", "b"], L["a", "b", "c"]))
+        self.assertTrue(isPrefixOf(L["a", "b"], L["a", ...]))
         self.assertFalse(isPrefixOf(L["a", "b"], L["d", "a", "b", "c"]))
+
         self.assertTrue(isSuffixOf(L["b", "c"], L["a", "b", "c"]))
         self.assertFalse(isSuffixOf(L["a", "b"], L["d", "a", "b", "c"]))
+
         self.assertTrue(isInfixOf(L[1, 2], L[2, 3, 1, 2, 4]))
+        self.assertTrue(isInfixOf(L[1, 2], L[1, ...]))
         self.assertFalse(isInfixOf(L[8, 1], L[2, 3, 1, 2, 4]))
         self.assertFalse(isInfixOf(L[1, 2], L[2, 3, 1, 4]))
 
