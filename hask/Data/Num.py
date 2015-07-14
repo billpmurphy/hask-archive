@@ -1,5 +1,6 @@
 import math
 import fractions
+import sys
 
 from ..lang import data
 from ..lang import d
@@ -16,6 +17,18 @@ from Ord import Ord
 
 
 class Num(Show, Eq):
+    """
+    Basic numeric class.
+
+    Dependencies:
+        Show, Eq
+
+    Attributes:
+        __add__, __mul__, __abs__, signum, fromInteger, __neg__, __sub__
+
+    Minimal complete definition:
+        add, mul, abs, signum, fromInteger, negate
+    """
     @classmethod
     def make_instance(typeclass, cls, add, mul, abs, signum, fromInteger,
             negate, sub=None):
@@ -56,7 +69,7 @@ def signum(a):
 
 
 @sig(H[(Num, "a")]/ "a" >> "a")
-def abs_(a):
+def abs(a):
     """
     abs :: Num a => a -> a
 
@@ -107,21 +120,25 @@ instance(Num, complex).where(
 
 
 class Fractional(Num):
+    """
+    Fractional numbers, supporting real division.
+
+    Dependencies:
+        Num
+
+    Attributes:
+        fromRational, recip, __div__
+
+    Minimal complete definition:
+        fromRational, div
+    """
     @classmethod
-    def make_instance(typeclass, cls):
-        build_instance(Fractional, cls, {})
+    def make_instance(typeclass, cls, fromRational, div, recip=None):
+        if recip is None:
+            recip = lambda x: div(1, x)
+        attrs = {"fromRational":fromRational, "div":div, "recip":recip}
+        build_instance(Fractional, cls, attrs)
         return
-
-instance(Fractional, float).where()
-
-
-class Floating(Fractional):
-    @classmethod
-    def make_instance(typeclass, cls):
-        build_instance(Floating, cls, {})
-        return
-
-instance(Floating, float).where()
 
 
 Ratio, R =\
@@ -130,7 +147,85 @@ Ratio, R =\
 Rational = t(Ratio, int)
 
 
+instance(Fractional, float).where(
+    fromRational = lambda rat: float(rat[0])/float(rat[1]),
+    div = float.__div__,
+    recip = lambda x: 1.0/x
+)
+
+
+@sig(H[(Fractional, "a")]/ "a" >> "a")
+def recip(a):
+    """
+    recip :: Fractional a => a -> a
+
+    Reciprocal fraction.
+    """
+    return Fractional[a].recip(a)
+
+
+class Floating(Fractional):
+    """
+    Trigonometric and hyperbolic functions and related functions.
+
+    Dependencies:
+        Fractional
+
+    Attributes:
+        pi, exp, sqrt, log, pow, logBase, sin, tan, cos, asin, atan, acos,
+        sinh, tanh, cosh, asinh, atanh, acosh
+
+    Minimal complete definition:
+        pi, exp, sqrt, log, pow, logBase, sin, tan, cos, asin, atan, acos,
+        sinh, tanh, cosh, asinh, atanh, acosh
+    """
+    @classmethod
+    def make_instance(typeclass, cls, pi, exp, sqrt, log, pow, logBase, sin,
+            tan, cos, asin, atan, acos, sinh, tanh, cosh, asinh, atanh, acosh):
+        attrs = {"pi":pi, "exp":exp, "sqrt":sqrt, "log":log, "pow":pow,
+                "logBase":logBase, "sin":sin, "tan":tan, "cos":cos,
+                "asin":asin, "atan":atan, "acos":acos, "sinh":sinh,
+                "tanh":tanh, "cosh":cosh, "asinh":asinh, "atanh":atanh,
+                "acosh":acosh}
+        build_instance(Floating, cls, attrs)
+        return
+
+
+instance(Floating, float).where(
+    pi = math.pi,
+    exp = math.exp,
+    sqrt = math.sqrt,
+    log = math.log,
+    pow = pow,
+    logBase = math.log,
+    sin = math.sin,
+    tan = math.tan,
+    cos = math.cos,
+    asin = math.asin,
+    atan = math.atan,
+    acos = math.acos,
+    sinh = math.sinh,
+    tanh = math.tanh,
+    cosh = math.cosh,
+    asinh = math.asinh,
+    atanh = math.atanh,
+    acosh = math.acosh
+)
+
+
 class Real(Num, Ord):
+    """
+    Real numbers.
+
+    Dependencies:
+        Num, Ord
+
+    Attributes:
+        toRational
+
+    Minimal complete definition:
+        toRational
+    """
     @classmethod
     def make_instance(typeclass, cls, toRational):
         build_instance(Real, cls, {})
@@ -139,13 +234,30 @@ class Real(Num, Ord):
 
 @sig(H[(Real, "a")]/ "a" >> Rational)
 def toRational(x):
+    """
+    toRational :: Real a => a -> Rational
+
+    Conversion to Rational.
+    """
     return Real[x].toRational(x)
 
 
 class Integral(Real, Enum):
+    """
+    Integral numbers, supporting integer division.
+
+    Dependencies:
+        Real, Enum
+
+    Attributes:
+        quotRem, toInteger, quot, rem, div, mod
+
+    Minimal complete definition:
+        quotRem, toInteger, quot, rem, div, mod
+    """
     @classmethod
-    def make_instance(typeclass, cls, quotRem, toInteger, quot=None, rem=None,
-            div=None, mod=None, divMod=None):
+    def make_instance(typeclass, cls, quotRem, toInteger, quot, rem, div, mod,
+            divMod):
         attrs = {"quotRem":quotRem, "toInteger":toInteger, "quot":quot,
                  "rem":rem, "div":div, "mod":mod, "divMod":divMod}
         build_instance(Integral, cls, attrs)
@@ -154,6 +266,11 @@ class Integral(Real, Enum):
 
 @sig(H[(Integral, "a")]/ "a" >> "a" >> t(Ratio, "a"))
 def toRatio(num, denom):
+    """
+    toRatio :: Integral a => a -> a -> Ratio a
+
+    Conversion to Ratio.
+    """
     frac = fractions.Fraction(num, denom)
     return R(frac.numerator, frac.denominator)
 
@@ -168,52 +285,185 @@ instance(Real, long).where(
 )
 
 instance(Real, float).where(
-    toRational = lambda x: toRatio(round(x), 1)
+    toRational = lambda x: toRatio(round(x), 1) # obviously incorrect
 )
 
 instance(Integral, int).where(
     quotRem = lambda x, y: (x / y, x % y),
-    toInteger = int
+    toInteger = int,
+    quot = int.__div__,
+    rem = int.__mod__,
+    div = int.__div__,
+    mod = int.__mod__,
+    divMod = divmod
 )
 
 instance(Integral, long).where(
     quotRem = lambda x, y: (x / y, x % y),
-    toInteger = int
+    toInteger = int,
+    quot = long.__div__,
+    rem = long.__mod__,
+    div = long.__div__,
+    mod = long.__mod__,
+    divMod = divmod
 )
 
 
 class RealFrac(Real, Fractional):
+    """
+    Extracting components of fractions.
+
+    Dependencies:
+        Real, Fractional
+
+    Attributes:
+        properFraction, truncate, round, ceiling, floor
+
+    Minimal complete definition:
+        properFraction, truncate, round, ceiling, floor
+    """
     @classmethod
-    def make_instance(typeclass, cls):
-        build_instance(RealFrac, cls, {})
+    def make_instance(typeclass, cls, properFraction, truncate, round, ceiling,
+            floor):
+        attrs = {"properFraction":properFraction, "truncate":truncate,
+                "round":round, "ceiling":ceiling, "floor":floor}
+        build_instance(RealFrac, cls, attrs)
         return
 
 
-instance(RealFrac, float).where()
+@sig(H[(RealFrac, "a"), (Integral, "b")]/ "a" >> ("b", "a"))
+def properFraction(x):
+    """
+    properFraction :: RealFrac a, Integral b => a -> (b, a)
+
+    The function properFraction takes a real fractional number x and returns a
+    pair (n,f) such that x = n+f, and:
+
+        n is an integral number with the same sign as x; and
+        f is a fraction with the same type and sign as x, and with absolute
+        value less than 1.
+    """
+    return RealFrac[x].properFraction(x)
+
+
+@sig(H[(RealFrac, "a"), (Integral, "b")]/ "a" >> "b")
+def truncate(x):
+    """
+    truncate :: RealFrac a, Integral b => a -> b
+
+    truncate(x) returns the integer nearest x between zero and x
+    """
+    return RealFrac[x].truncate(x)
+
+
+@sig(H[(RealFrac, "a"), (Integral, "b")]/ "a" >> "b")
+def round(x):
+    """
+    round :: RealFrac a, Integral b => a -> b
+
+    round(x) returns the nearest integer to x; the even integer if x is
+    equidistant between two integers
+    """
+    return RealFrac[x].round(x)
+
+
+@sig(H[(RealFrac, "a"), (Integral, "b")]/ "a" >> "b")
+def ceiling(x):
+    """
+    ceiling :: RealFrac a, Integral b => a -> b
+
+    ceiling(x) returns the least integer not less than x
+    """
+    return RealFrac[x].ceiling(x)
+
+
+@sig(H[(RealFrac, "a"), (Integral, "b")]/ "a" >> "b")
+def floor(x):
+    """
+    floor :: RealFrac a, Integral b => a -> b
+
+    floor(x) returns the greatest integer not greater than x
+    """
+    return RealFrac[x].floor(x)
+
+
+instance(RealFrac, float).where(
+    properFraction = lambda x: (int(math.floor(x)), x - math.floor(x)),
+    truncate = lambda x: int(math.floor(x) if x > 0 else math.floor(x+1)),
+    round = lambda x: int(round(x, 0)),
+    ceiling = math.ceil,
+    floor = math.floor
+)
 
 
 class RealFloat(Floating, RealFrac):
+    """
+    Efficient, machine-independent access to the components of a floating-point
+    number.
+
+    Dependencies:
+        Floating, RealFrac
+
+    Attributes:
+        floatRange, isNan, isInfinite, isNegativeZero, atan2
+
+    Minimal complete definition:
+        floatRange, isNan, isInfinite, isNegativeZero, atan2
+    """
     @classmethod
-    def make_instance(typeclass, cls, floatRadix, floatDigits, floatRange,
-            decodeFloat, encodeFloat, exponent, significant, scaleFloat, isNan,
-            isInfinite, isDenormalized, isNegativeZero, isIEEE, atan2):
-        build_instance(RealFloat, cls, {})
+    def make_instance(typeclass, cls, floatRange, isNan, isInfinite,
+            isNegativeZero, atan2):
+        attrs = {"floatRange":floatRange, "isNan":isNan,
+                "isInfinite":isInfinite, "isNegativeZero":isNegativeZero,
+                "atan2":atan2}
+        build_instance(RealFloat, cls, attrs)
         return
 
 
+@sig(H[(RealFloat, "a")]/ "a" >> bool)
+def isNaN(x):
+    """
+    isNaN :: RealFloat a => a -> bool
+
+    True if the argument is an IEEE "not-a-number" (NaN) value
+    """
+    return RealFloat[x].isNan(x)
+
+
+@sig(H[(RealFloat, "a")]/ "a" >> bool)
+def isInfinite(x):
+    """
+    isInfinite :: RealFloat a => a -> bool
+
+    True if the argument is an IEEE infinity or negative infinity
+    """
+    return RealFloat[x].isInfinite(x)
+
+
+@sig(H[(RealFloat, "a")]/ "a" >> bool)
+def isNegativeZero(x):
+    """
+    isNegativeZero :: RealFloat a => a -> bool
+
+    True if the argument is an IEEE negative zero
+    """
+    return RealFloat[x].isNegativeZero(x)
+
+
+@sig(H[(RealFloat, "a")]/ "a" >> "a" >> "a")
+def atan2(y, x):
+    """
+    atan2 :: RealFloat a => a -> a -> a
+
+    a version of arctangent taking two real floating-point arguments
+    """
+    return RealFloat[x].atan2(y, x)
+
+
 instance(RealFloat, float).where(
-    floatRadix=None,
-    floatDigits=None,
-    floatRange=None,
-    decodeFloat=None,
-    encodeFloat=None,
-    exponent=None,
-    significant=None,
-    scaleFloat=None,
-    isNan=None,
+    floatRange=(sys.float_info.min, sys.float_info.max),
+    isNan=math.isnan,
     isInfinite=lambda x: x == float('inf') or x == -float('inf'),
-    isDenormalized=None,
-    isNegativeZero=None,
-    isIEEE=None,
+    isNegativeZero=lambda x: x == float("-0"),
     atan2=math.atan2
 )

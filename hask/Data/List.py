@@ -179,7 +179,10 @@ def subsequences(xs):
     The subsequences function returns the list of all subsequences of the
     argument.
     """
-    raise NotImplementedError()
+    ret = L[[L[[]]]]
+    for r, _ in enumerate(xs):
+        ret += L[(L[x] for x in itertools.combinations(xs, r+1))]
+    return ret
 
 
 @sig(H/ ["a"] >> [["a"]] )
@@ -190,7 +193,9 @@ def permutations(xs):
     The permutations function returns the list of all permutations of the
     argument.
     """
-    return L[itertools.permutations(xs)]
+    if null(xs):
+        return L[[]]
+    return L[(L[x] for x in itertools.permutations(xs))]
 
 
 #=============================================================================#
@@ -434,8 +439,30 @@ def scanr1(f, xs):
 #=============================================================================#
 ## Accumulating maps
 
-from Traversable import mapAccumL
-from Traversable import mapAccumR
+@sig(H/ (H/ "a" >> "x" >> ("a", "y")) >> "a" >> ["x"] >> ("a", ["y"]))
+def mapAccumL(xs):
+    """
+    mapAccumL :: (a -> x -> (a, y)) -> a -> [x] -> (a, [y])
+
+    The mapAccumL function behaves like a combination of map and foldl; it
+    applies a function to each element of a list, passing an accumulating
+    parameter from left to right, and returning a final value of this
+    accumulator together with the new list.
+    """
+    raise NotImplementedError()
+
+
+@sig(H/ (H/ "a" >> "x" >> ("a", "y")) >> "a" >> ["x"] >> ("a", ["y"]))
+def mapAccumR(xs):
+    """
+    mapAccumR :: (acc -> x -> (acc, y)) -> acc -> [x] -> (acc, [y])
+
+    The mapAccumR function behaves like a combination of map and foldr; it
+    applies a function to each element of a list, passing an accumulating
+    parameter from right to left, and returning a final value of this
+    accumulator together with the new list.
+    """
+    raise NotImplementedError()
 
 
 #=============================================================================#
@@ -500,6 +527,7 @@ def cycle(x):
 #=============================================================================#
 ## Unfolding
 
+
 @sig(H/ (H/ "b" >> t(Maybe, ("a", "b"))) >> "b" >> ["a"])
 def unfoldr(f, x):
     """
@@ -508,10 +536,13 @@ def unfoldr(f, x):
     The unfoldr function is a `dual' to foldr: while foldr reduces a list to a
     summary value, unfoldr builds a list from a seed value. The function takes
     the element and returns Nothing if it is done producing the list or returns
-    Just (a,b), in which case, a is a prepended to the list and b is used as
-    the next element in a recursive call
+    Just (a,b), in which case, a is prepended to the list and b is used as the
+    next element in a recursive call
     """
-    raise NotImplementedError()
+    y = f(x)
+    if y == Nothing:
+        return L[[]]
+    return y[0][0] ^ unfoldr(f, y[0][1])
 
 
 #=============================================================================#
@@ -1021,6 +1052,7 @@ def unzip(xs):
     return a, b
 
 
+@sig(H/ [("a", "b", "c")] >> (["a"], ["b"], ["c"]))
 def unzip3(xs):
     """
     unzip3 :: [(a, b, c)] -> ([a], [b], [c])
@@ -1028,8 +1060,13 @@ def unzip3(xs):
     The unzip3 function takes a list of triples and returns three lists,
     analogous to unzip.
     """
-    raise NotImplementedError()
+    a = L[(i[0] for i in xs)]
+    b = L[(i[1] for i in xs)]
+    c = L[(i[2] for i in xs)]
+    return a, b, c
 
+
+@sig(H/ [("a", "b", "c", "d")] >> (["a"], ["b"], ["c"], ["d"]))
 def unzip4(xs):
     """
     unzip4 :: [(a, b, c, d)] -> ([a], [b], [c], [d])
@@ -1037,8 +1074,14 @@ def unzip4(xs):
     The unzip4 function takes a list of quadruples and returns four lists,
     analogous to unzip.
     """
-    raise NotImplementedError()
+    a = L[(i[0] for i in xs)]
+    b = L[(i[1] for i in xs)]
+    c = L[(i[2] for i in xs)]
+    d = L[(i[3] for i in xs)]
+    return a, b, c, d
 
+
+@sig(H/ [("a", "b", "c", "d", "e")] >> (["a"], ["b"], ["c"], ["d"], ["e"]))
 def unzip5(xs):
     """
     unzip5 :: [(a, b, c, d, e)] -> ([a], [b], [c], [d], [e])
@@ -1046,8 +1089,16 @@ def unzip5(xs):
     The unzip5 function takes a list of five-tuples and returns five lists,
     analogous to unzip.
     """
-    raise NotImplementedError()
+    a = L[(i[0] for i in xs)]
+    b = L[(i[1] for i in xs)]
+    c = L[(i[2] for i in xs)]
+    d = L[(i[3] for i in xs)]
+    e = L[(i[4] for i in xs)]
+    return a, b, c, d, e
 
+
+@sig(H/ [("a", "b", "c", "d", "e", "f")]
+        >> (["a"], ["b"], ["c"], ["d"], ["e"], ["f"]))
 def unzip6(xs):
     """
     unzip6 :: [(a, b, c, d, e, f)] -> ([a], [b], [c], [d], [e], [f])
@@ -1055,8 +1106,17 @@ def unzip6(xs):
     The unzip6 function takes a list of six-tuples and returns six lists,
     analogous to unzip.
     """
-    raise NotImplementedError()
+    a = L[(i[0] for i in xs)]
+    b = L[(i[1] for i in xs)]
+    c = L[(i[2] for i in xs)]
+    d = L[(i[3] for i in xs)]
+    e = L[(i[4] for i in xs)]
+    f = L[(i[5] for i in xs)]
+    return a, b, c, d, e, f
 
+
+@sig(H/ [("a", "b", "c", "d", "e", "f", "g")]
+        >> (["a"], ["b"], ["c"], ["d"], ["e"], ["f"], ["g"]))
 def unzip7(xs):
     """
     unzip7 :: [(a, b, c, d, e, f, g)] -> ([a], [b], [c], [d], [e], [f], [g])
@@ -1064,7 +1124,14 @@ def unzip7(xs):
     The unzip7 function takes a list of seven-tuples and returns seven lists,
     analogous to unzip.
     """
-    raise NotImplementedError()
+    a = L[(i[0] for i in xs)]
+    b = L[(i[1] for i in xs)]
+    c = L[(i[2] for i in xs)]
+    d = L[(i[3] for i in xs)]
+    e = L[(i[4] for i in xs)]
+    f = L[(i[5] for i in xs)]
+    g = L[(i[6] for i in xs)]
+    return a, b, c, d, e, f, g
 
 
 #=============================================================================#

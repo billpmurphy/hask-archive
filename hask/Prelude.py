@@ -79,15 +79,37 @@ from Data.Traversable import Traversable
 
 
 from Data.Num import Num
-from Data.Num import abs_
+from Data.Num import abs
 from Data.Num import negate
 from Data.Num import signum
+
 from Data.Num import Fractional
+from Data.Num import recip
+
 from Data.Num import Integral
+from Data.Num import toRatio
+
+from Data.Num import Ratio
+from Data.Num import R
+from Data.Num import Rational
+
 from Data.Num import Floating
+
 from Data.Num import Real
+from Data.Num import toRational
+
 from Data.Num import RealFrac
+from Data.Num import properFraction
+from Data.Num import truncate
+from Data.Num import round
+from Data.Num import ceiling
+from Data.Num import floor
+
 from Data.Num import RealFloat
+from Data.Num import isNaN
+from Data.Num import isInfinite
+from Data.Num import isNegativeZero
+from Data.Num import atan2
 
 
 #=============================================================================#

@@ -1828,6 +1828,13 @@ class TestDataList(unittest.TestCase):
         self.assertEqual(L[1, 2, 1], intersperse(2, L[1, 1]))
         self.assertEqual(L[[]], intersperse(2, L[[]]))
 
+        self.assertEqual(L[[L[[]]]], subsequences(L[[]]))
+        self.assertEqual(L[ L[[]], L[[1]], L[[2]], L[1, 2]],
+                         subsequences(L[1, 2]))
+
+        self.assertEqual(L[L[1, 2], L[2, 1]], permutations(L[1, 2]))
+        self.assertEqual(L[[]], permutations(L[[]]))
+
     def test_reducing_lists(self):
         from hask.Data.List import foldl, foldl_, foldl_, foldr, foldr1, concat
         from hask.Data.List import concatMap, and_, or_, any, all, sum, product
@@ -1876,6 +1883,11 @@ class TestDataList(unittest.TestCase):
         plus_one = (lambda x: x + 1) ** (H/ int >> int)
         self.assertEquals(iterate(plus_one, 0)[:10], L[range(10)])
         self.assertEquals(iterate(__+1, 0)[:10], L[range(10)])
+
+        uf = (lambda x: Nothing if x > 5 else Just((x+1, x+1))) ** \
+                (H/ int >> t(Maybe, (int, int)))
+        self.assertEquals(L[[]], unfoldr(uf, 6))
+        self.assertEquals(L[1, ..., 6], unfoldr(uf, 0))
 
     def test_sublists(self):
         from hask.Data.List import take, drop, splitAt, takeWhile, dropWhile
@@ -1948,8 +1960,9 @@ class TestDataList(unittest.TestCase):
         self.assertEqual(L[1, 1, 1], zipWith(__-__, L[1, 2, 3], L[0, 1, 2, 3]))
         self.assertEqual(L[[]], zipWith(__-__, L[[]], L[[]]))
 
-        self.assertEqual((L[1, 3], L[2, 4]), unzip(L[(1, 2), (3, 4)]))
+        self.assertEqual((L["a", "b"], L[2, 4]), unzip(L[("a", 2), ("b", 4)]))
         self.assertEqual((L[[]], L[[]]), unzip(L[[]]))
+
 
     def test_set_operations(self):
         from hask.Data.List import nub, delete, diff, union, intersect
@@ -1985,7 +1998,14 @@ class TestPrelude(unittest.TestCase):
         from hask.Prelude import Maybe, Just, Nothing, maybe
         from hask.Prelude import Either, Left, Right, either
         from hask.Prelude import Ordering, LT, EQ, GT, max, min, compare
-        from hask.Prelude import Num, abs_, negate, subtract
+        from hask.Prelude import Num, abs, negate, subtract
+        from hask.Prelude import Fractional, recip
+        from hask.Prelude import Integral, toRatio, Ratio, R, Rational
+        from hask.Prelude import Floating, Real, toRational
+        from hask.Prelude import RealFrac, properFraction, truncate, round
+        from hask.Prelude import ceiling, floor
+        from hask.Prelude import RealFloat, isNaN, isInfinite, isNegativeZero
+        from hask.Prelude import atan2
 
         # Data.List, Data.Foldable
         from hask.Prelude import map, filter, head, last, tail, init, null
@@ -1996,6 +2016,7 @@ class TestPrelude(unittest.TestCase):
         from hask.Prelude import replicate, cycle, take, drop, splitAt
         from hask.Prelude import takeWhile, dropWhile, span, break_, elem
         from hask.Prelude import notElem, lookup, zip, zip3, unzip, unzip3
+        from hask.Prelude import zipWith, zipWith3
 
     def test_functions(self):
         from hask.Prelude import subtract, even, odd, gcd, lcm, id, const, flip
