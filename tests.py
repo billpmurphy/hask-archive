@@ -1872,6 +1872,19 @@ class TestDataList(unittest.TestCase):
         from hask.Data.List import group, inits, tails, isPrefixOf, isSuffixOf
         from hask.Data.List import isInfixOf, isSubsequenceOf
 
+        self.assertEqual(L[1, 2], take(2, L[1, 2, 3]))
+        self.assertEqual(L[1, 2, 3], take(3, L[1, 2, 3]))
+        self.assertEqual(L[1, 2, 3], take(3, L[1, ...]))
+        self.assertEqual(L[[]], take(0, L[1, ...]))
+        self.assertEqual(L[2, 3], drop(1, L[1, 2, 3]))
+        self.assertEqual(L[[]], drop(3, L[1, 2, 3]))
+        self.assertEqual(L[1, 2, 3], drop(0, L[1, 2, 3]))
+
+        self.assertEqual(L[ L[[]], L[[1]], L[1, 2], L[1, 2, 3]], inits(L[1, 2, 3]))
+        self.assertEqual(L[[L[[]]]], inits(L[[]]))
+        self.assertEqual(L[ L[1, 2, 3], L[2, 3], L[[3]], L[[]] ], tails(L[1, 2, 3]))
+        self.assertEqual(L[[L[[]]]], tails(L[[]]))
+
         self.assertTrue(isPrefixOf(L["a", "b"], L["a", "b", "c"]))
         self.assertFalse(isPrefixOf(L["a", "b"], L["d", "a", "b", "c"]))
         self.assertTrue(isSuffixOf(L["b", "c"], L["a", "b", "c"]))

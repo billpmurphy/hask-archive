@@ -276,7 +276,10 @@ def concat(xss):
 
     Concatenate a list of lists.
     """
-    return L[(x for xs in xss for x in xs)]
+    l = L[[]]
+    for xs in xss:
+        l = l + xs
+    return l
 
 
 @sig(H/ (H/ "a" >> ["b"]) >> ["a"] >> ["b"])
@@ -589,7 +592,9 @@ def span(p, xs):
     element is longest prefix (possibly empty) of xs of elements that satisfy p
     and second element is the remainder of the list
     """
-    raise NotImplementedError()
+    front = takeWhile(p, xs)
+    rest = xs[len(front):]
+    return front, rest
 
 
 @sig(H/ (H/ "a" >> bool)  >> ["a"] >> (["a"], ["a"]))
@@ -601,7 +606,8 @@ def break_(p, xs):
     element is longest prefix (possibly empty) of xs of elements that do not
     satisfy p and second element is the remainder of the list
     """
-    raise NotImplementedError()
+    inv = (lambda x: not p(x)) ** (H/ "a" >> bool)
+    return span(inv, xs)
 
 
 @sig(H[(Eq, "a")]/ ["a"] >> ["a"] >> t(Maybe, ["a"]))
@@ -613,7 +619,9 @@ def stripPrefix(xs, ys):
     Nothing if the list did not start with the prefix given, or Just the list
     after the prefix, if it does.
     """
-    raise NotImplementedError()
+    if isPrefixOf(xs, ys):
+        return Just(ys[len(xs)])
+    return Nothing
 
 
 @sig(H[(Eq, "a")]/ ["a"] >> [["a"]])
@@ -638,7 +646,9 @@ def inits(xs):
     The inits function returns all initial segments of the argument, shortest
     first.
     """
-    raise NotImplementedError()
+    if null(xs):
+        return L[[xs]]
+    return L[[L[[]]]] + L[(xs[:n+1] for n,_ in enumerate(xs))]
 
 
 @sig(H/ ["a"] >> [["a"]])
@@ -649,7 +659,9 @@ def tails(xs):
     The tails function returns all final segments of the argument, longest
     first.
     """
-    raise NotImplementedError()
+    if null(xs):
+        return L[[L[[]]]]
+    return L[(xs[n:] for n,_ in enumerate(xs))] + L[[L[[]]]]
 
 
 #=============================================================================#
@@ -931,7 +943,7 @@ def zipWith(fn, xs, ys):
     argument, instead of a tupling function. For example, zipWith (+) is
     applied to two lists to produce the list of corresponding sums.
     """
-    return L[(fn(a, b) for a, b in zip(xs, ys))]
+    return L[(fn(*s) for s in zip(xs, ys))]
 
 
 @sig(H/ (H/ "a" >> "b" >> "c" >> "d") >> ["a"] >> ["b"] >> ["c"] >> ["d"])
@@ -943,7 +955,7 @@ def zipWith3(fn, a, b, c):
     well as three lists and returns a list of their point-wise combination,
     analogous to zipWith.
     """
-    raise NotImplementedError()
+    return L[(fn(*s) for s in zip3(a, b, c))]
 
 
 @sig(H/ (H/ "a" >> "b" >> "c" >> "d" >> "e") >>
@@ -956,7 +968,7 @@ def zipWith4(fn, a, b, c, d):
     well as four lists and returns a list of their point-wise combination,
     analogous to zipWith.
     """
-    raise NotImplementedError()
+    return L[(fn(*s) for s in zip4(a, b, c, d))]
 
 
 @sig(H/ (H/ "a" >> "b" >> "c" >> "d" >> "e" >> "f") >>
@@ -970,7 +982,7 @@ def zipWith5(fn, a, b, c, d, e):
     well as five lists and returns a list of their point-wise combination,
     analogous to zipWith.
     """
-    raise NotImplementedError()
+    return L[(fn(*s) for s in zip5(a, b, c, d, e))]
 
 
 @sig(H/ (H/ "a" >> "b" >> "c" >> "d" >> "e" >> "f" >> "g") >>
@@ -984,7 +996,7 @@ def zipWith6(fn, a, b, c, d, e, f):
     as six lists and returns a list of their point-wise combination, analogous
     to zipWith.
     """
-    raise NotImplementedError()
+    return L[(fn(*s) for s in zip6(a, b, c, d, e, f))]
 
 
 @sig(H/ (H/ "a" >> "b" >> "c" >> "d" >> "e" >> "f" >> "g" >> "h") >>
@@ -998,7 +1010,8 @@ def zipWith7(fn, a, b, c, d, e, f):
     well as seven lists and returns a list of their point-wise combination,
     analogous to zipWith.
     """
-    raise NotImplementedError()
+    return L[(fn(*s) for s in zip7(a, b, c, d, e, f))]
+
 
 def unzip(xs):
     """
@@ -1008,6 +1021,7 @@ def unzip(xs):
     of second components.
     """
     raise NotImplementedError()
+
 
 def unzip3(xs):
     """
