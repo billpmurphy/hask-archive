@@ -3,6 +3,7 @@ import fractions
 from .lang import build_instance
 from .lang import H
 from .lang import sig
+from .lang import t
 from .lang import L
 from .lang import instance
 
@@ -194,6 +195,48 @@ def lcm(x, y):
 from Data.Functor import Functor
 from Control.Applicative import Applicative
 from Control.Monad import Monad
+
+
+@sig(H[(Monad, "m")]/ t("m", "a") >> t("m", None))
+def sequence(xs):
+    """
+    sequence :: Monad m => [m a] -> m [a]
+
+    Evaluate each action in the sequence from left to right, and collect the
+    results.
+    """
+    raise NotImplementedError()
+
+
+@sig(H[(Monad, "m")]/ t("m", "a") >> t("m", None))
+def sequence_(xs):
+    """
+    sequence_ :: Monad m => [m a] -> m None
+
+    Evaluate each action in the sequence from left to right, and ignore the
+    results.
+    """
+    raise NotImplementedError()
+
+
+def mapM(f, xs):
+    """
+    mapM :: Monad m => (a -> m b) -> [a] -> m [b]
+
+    mapM(f) is equivalent to sequence * map(f)
+    """
+    return sequence(fmap(f, xs))
+
+
+def mapM_(f, xs):
+    """
+    mapM_ :: Monad m => (a -> m b) -> [a] -> m ()
+
+    mapM_(f) is equivalent to sequence_ * map(f)
+    """
+    return sequence_(fmap(f, xs))
+
+
 
 
 #=============================================================================#

@@ -7,9 +7,12 @@
 # Changes from Robert's version:
 # 1) Simplified type language somewhat (Let and Letrec are merged, as are Var
 #    and Ident)
-# 2) Type system expanded to handle polymorphic higher-kinded types
+# 2) Type system expanded to handle polymorphic higher-kinded types (however,
+#    in its current state it does not do this correctly due to the way that
+#    typeclasses were bolted on; this will be fixed in future versions)
 # 3) Interface tweaked a bit to work better with Python types, including
 #    pretty-printing of type names and some useful subclasses of TypeOperator
+# 4) Type unification also unifies typeclass constraints
 
 
 #=============================================================================#

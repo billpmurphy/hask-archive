@@ -328,9 +328,6 @@ operators. `*` is the compose operator (equivalent to `(.)` in Haskell), so
 `f * g` is equivalent to `lambda x: f(g(x))`. `%` is just the apply operator,
 which applies a `TypedFunc` to one argument (equivalent to `($)` in Haskell).
 
-```python
-```
-
 The convinience of this notation (when combined with partial application)
 cannot be overstated--you can get rid of a ton of nested parenthesis this way.
 
@@ -422,9 +419,23 @@ def addRational(rat1, rat2):
 
 ### Pattern matching
 
+Hask provides special syntax for pattern matching. Pattern matching is a more
+powerful control flow tool than the `if` statement, and can be used to
+deconstruct iterables and ADTs and bind values to local variables.
 
+In Hask, pattern matching expressions follow this syntax:
 
-Here is a function that uses pattern matching to compute the fibonacci sequence:
+```python
+~(caseof(value_to_match)
+    | m(match_1) >> return_value_1
+    | m(match_2) >> return_value_2
+    | m(match_3) >> return_value_3)
+
+```
+
+Here is a function that uses pattern matching to compute the fibonacci
+sequence. Note that within a pattern match expression, `m.*` is used to bind
+variables, and `p.*` is used to access them.
 
 ```python
 def fib(x):
@@ -440,9 +451,8 @@ def fib(x):
 13
 ```
 
-In a pattern match expression, `m.*` is used to bind variables, and `p.*` is
-used to access them. As the above example shows, you can combine pattern
-matching and recursive functions without a hitch.
+As the above example shows, you can combine pattern matching and recursive
+functions without a hitch.
 
 You can also deconstruct an iterable using `^` (the cons operator). The variable
 before the `^` is bound to the first element of the iterable, and the variable
@@ -529,7 +539,7 @@ instance(Functor, Maybe).where(
 and map any function of type `a -> b` into a value of type `Maybe a`.
 
 ```python
->>> times2 = (lambda x: x) ** (H/ int >> int)
+>>> times2 = (lambda x: x * 2) ** (H/ int >> int)
 >>> toFloat = float ** (H/ int >> float))
 
 >>> fmap(Just(10), toFloat)
@@ -632,7 +642,7 @@ generate instances rather than defining them manually.
 
 
 Defining your own typeclasses is pretty easy--take a look at `help(Typeclass)`
-and look at the typeclasses defined in `Data.Functor` and `Control.Monad` to
+and look at the typeclasses defined in `Data.Functor` and `Data.Num` to
 see how it's done.
 
 
@@ -822,11 +832,6 @@ L[12, 4, 2]
 True
 
 
->>> from hask.Data.List import take, map
->>> take(5) * map(2**__) % L[1, ...]
-L[2, 4, 8, 16, 32]
-
-
 >>> from hask.Control.Monad import join
 >>> join(Just(Just(1)))
 Just(1)
@@ -858,7 +863,7 @@ points:
 * `typify` converts a Python function into a `TypedFunc` object
 
 
-That's all, folks!
+
 
 
 
@@ -879,14 +884,14 @@ That's all, folks!
 | `Applicative` | `Functor` | `pure` | | |
 | `Monad` | `Applicative` | `bind` | | `>>` |
 | `Monoid` | | `mappend`, `mempty` |  `mconcat` | `+` |
-| `Foldable` | `Functor` | `foldr` | `fold`, `foldMap`, `foldr_`, `foldl`, `foldl_`, `foldr1`, `foldl1`, `toList`, `null`, `length`, `elem`, `maximum`, `minimum`, `sum`, `product` | `len` |
+| `Foldable` | | `foldr` | `fold`, `foldMap`, `foldr_`, `foldl`, `foldl_`, `foldr1`, `foldl1`, `toList`, `null`, `length`, `elem`, `maximum`, `minimum`, `sum`, `product` | `len` |
 | `Traversable` | `Foldable`, `Functor` | `traverse` | `sequenceA`, `mapM`, `sequence` | |
 | `Num` | `Show`, `Eq` | `add`, `mul`, `abs`, `signum`, `fromInteger`, `negate` | `sub` | `+`, `-`, `*` |
 | `Real` | `Num`, `Ord` | `toRational` | |
 | `Integral` | `Real`, `Enum` | `quotRem`, `divMod`, `toInteger` | `quot`, `rem`, `div`, `mod` | `/`, `%` |
 | `Fractional` | `Num` | `fromRational`, `div` | `recip` | `/` |
-| `Floating` | `Fractional` | `pi`, `exp`, `log`, `sin`, `cos`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `asinh`, `cosh`, `atanh` | |
-| `RealFrac` | `Real`, `Fractional` | `properFraction` `truncate`, `round`, `ceiling`, `floor` |
+| `Floating` | `Fractional` | `exp`, `sqrt`, `log`, `pow`, `logBase`, `sin`, `tan`, `cos`, `asin`, `atan`, `acos`, `sinh`, `tanh`, `cosh`, `asinh`, `atanh`, `acosh` | |
+| `RealFrac` | `Real`, `Fractional` | `properFraction`, `truncate`, `round`, `ceiling`, `floor` |
 | `RealFloat` | `Floating`, `RealFrac` | `floatRange`, `isNaN`, `isInfinite`, `isNegativeZero`, `atan2` |
 
 
@@ -909,7 +914,7 @@ That's all, folks!
 | `hask.Data.Traversable` | `hask.lang`, `hask.Data.Foldable`, `hask.Data.Functor` | `Traversable` |
 | `hask.Data.Monoid` | `hask.lang` | `Monoid` (`mappend`, `mempty`, `mconcat`) |
 | `hask.Data.Ratio` | `hask.lang`, `hask.Data.Num` | `Integral`, `Ratio` (`R`), `Rational`, `toRatio`, `toRational`, `numerator`, `denominator` |
-| `hask.Data.Num` | `hask.lang`, `hask.Data.Eq`, `hask.Data.Ord` | `Num` (`+`, `*`, `abs`, `signum`, `fromInteger`, `negate`, `-`), `Fractional` (`fromRational`, `/`, `recip`), `Floating` (`exp`, `sqrt`, `log`, `pow`, `logBase`, `sin`, `tan`, `cos`, `asin`, `atan`, `acos`, `sinh`, `tanh`, `cosh`, `asinh`, `atanh`, `acosh`), `Real` (`toRational`), `Integral` (`quotRem`, `quot`, `rem`, `div`, `mod`), `toRatio`, `RealFrac` (`properFraction`, `truncate`, `round`, ceiling`, `floor`), `RealFloat` (`isNan`, `isInfinite`, `isNegativeZero`, `atan2`) |
+| `hask.Data.Num` | `hask.lang`, `hask.Data.Eq`, `hask.Data.Ord` | `Num` (`+`, `*`, `abs`, `signum`, `fromInteger`, `negate`, `-`), `Fractional` (`fromRational`, `/`, `recip`), `Floating` (`exp`, `sqrt`, `log`, `pow`, `logBase`, `sin`, `tan`, `cos`, `asin`, `atan`, `acos`, `sinh`, `tanh`, `cosh`, `asinh`, `atanh`, `acosh`), `Real` (`toRational`), `Integral` (`quotRem`, `quot`, `rem`, `div`, `mod`), `toRatio`, `RealFrac` (`properFraction`, `truncate`, `round`, `ceiling`, `floor`), `RealFloat` (`isNan`, `isInfinite`, `isNegativeZero`, `atan2`) |
 | `hask.Control.Applicative` | `hask.lang`, `hask.Data.Functor` | `Applicative` |
 | `hask.Control.Monad` | `hask.lang`, `hask.Control.Applicative`, `hask.Data.Functor` | `Monad` (`bind`, `>>`), `join`, `liftM` |
 | `hask.Python.builtins` | `hask.lang` | `callable`, `cmp`, `delattr`, `divmod`, `frozenset`, `getattr`, `hasattr`, `hash`, `hex`, `isinstance`, `issubclass`, `len`, `oct`, `repr`, `setattr`, `sorted`, `unichr` |
