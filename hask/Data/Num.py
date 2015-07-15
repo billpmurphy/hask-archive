@@ -191,6 +191,142 @@ class Floating(Fractional):
         return
 
 
+@sig(H[(Floating, "a")]/ "a" >> "a")
+def exp(x):
+    """
+    exp :: Floating a => a -> a
+    """
+    return Floating[x].exp(x)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a")
+def sqrt(x):
+    """
+    sqrt :: Floating a => a -> a
+    """
+    return Floating[x].sqrt(x)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a")
+def log(x):
+    """
+    log:: Floating a => a -> a
+    """
+    return Floating[x].log(x)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a" >> "a")
+def pow(x, y):
+    """
+    pow :: Floating a => a -> a -> a
+    """
+    return Floating[x].pow(x, y)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a" >> "a")
+def logBase(x, b):
+    """
+    logBase :: Floating a => a -> a -> a
+    """
+    return Floating[x].logBase(x, b)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a")
+def sin(x):
+    """
+    sin :: Floating a => a -> a
+    """
+    return Floating[x].sin(x)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a")
+def cos(x):
+    """
+    cos :: Floating a => a -> a
+    """
+    return Floating[x].cos(x)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a")
+def tan(x):
+    """
+    tan :: Floating a => a -> a
+    """
+    return Floating[x].tan(x)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a")
+def asin(x):
+    """
+    asin :: Floating a => a -> a
+    """
+    return Floating[x].asin(x)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a")
+def atan(x):
+    """
+    atan :: Floating a => a -> a
+    """
+    return Floating[x].atan(x)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a")
+def acos(x):
+    """
+    acos :: Floating a => a -> a
+    """
+    return Floating[x].acos(x)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a")
+def sinh(x):
+    """
+    sinh :: Floating a => a -> a
+    """
+    return Floating[x].sinh(x)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a")
+def tanh(x):
+    """
+    tanh :: Floating a => a -> a
+    """
+    return Floating[x].tanh(x)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a")
+def cosh(x):
+    """
+    cosh :: Floating a => a -> a
+    """
+    return Floating[x].cosh(x)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a")
+def asinh(x):
+    """
+    asinh :: Floating a => a -> a
+    """
+    return Floating[x].asinh(x)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a")
+def atanh(x):
+    """
+    atanh :: Floating a => a -> a
+    """
+    return Floating[x].atanh(x)
+
+
+@sig(H[(Floating, "a")]/ "a" >> "a")
+def acosh(x):
+    """
+    acosh :: Floating a => a -> a
+    """
+    return Floating[x].acosh(x)
+
+
 instance(Floating, float).where(
     pi = math.pi,
     exp = math.exp,

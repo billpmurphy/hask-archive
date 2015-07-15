@@ -73,6 +73,9 @@ from hask.lang import Typeclass
 from hask.lang import Hask
 
 
+#=============================================================================#
+# Other imports
+
 # Basic Typeclasses
 from hask.Prelude import Read
 from hask.Prelude import Show

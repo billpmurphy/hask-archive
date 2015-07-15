@@ -330,7 +330,7 @@ def unify(t1, t2):
         unify_var(b, a)
     elif isinstance(a, TypeOperator) and isinstance(b, TypeOperator):
         # Unify polymorphic higher-kinded type
-        if isinstance(a.name, TypeVariable):
+        if isinstance(a.name, TypeVariable) and len(a.types) > 0:
             a.name = b.name
             a.types = b.types
             unify(a, b)

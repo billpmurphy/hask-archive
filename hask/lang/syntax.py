@@ -208,6 +208,8 @@ def t(type_constructor, *params):
        len(type_constructor.__params__) != len(params):
             raise TypeError("Incorrect number of type parameters to %s" % \
                             type_constructor.__name__)
+
+    params = [p.sig if isinstance(p, __signature__) else p for p in params]
     return TypeSignatureHKT(type_constructor, params)
 
 

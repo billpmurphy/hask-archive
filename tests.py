@@ -350,7 +350,12 @@ class TestHindleyMilner(unittest.TestCase):
         self.unified(
                 typeof(Left(2.0)),
                 build_sig_arg(t(Either, "a", int), {}, {}))
-
+        self.unified(
+                typeof(Just(__+1)),
+                build_sig_arg(t(Maybe, "a"), {}, {}))
+        self.unified(
+                typeof(Just(__+1)),
+                build_sig_arg(t(Maybe, (H/ "a" >> "b")), {}, {}))
 
     def test_signature_build(self):
         """Make sure type signatures are built correctly"""
@@ -383,6 +388,9 @@ class TestHindleyMilner(unittest.TestCase):
 
         # 1 :: int
         self.unified(typeof(1), TypeOperator(int, []))
+
+        # "a" :: str
+        self.unified(typeof("a"), TypeOperator(str, []))
 
         # Nothing :: Maybe a
         self.unified(
@@ -452,6 +460,7 @@ class TestTypeSystem(unittest.TestCase):
         with self.assertRaises(te): n_to_n(1)
 
     def test_TypedFunc_func(self):
+        """PyFunc signature type"""
         @sig(H/ func >> func)
         def id_wrap(f):
             return lambda x: f(x)
@@ -489,8 +498,6 @@ class TestTypeSystem(unittest.TestCase):
             return a
 
         self.assertEqual(1, eq_id(1))
-        #with self.assertRaises(te): eq_id(staticmethod(lambda x: x))
-
 
     def test_match(self):
         match_only = lambda v, p: pattern_match(v, p)[0]
@@ -2001,7 +2008,10 @@ class TestPrelude(unittest.TestCase):
         from hask.Prelude import Num, abs, negate, subtract
         from hask.Prelude import Fractional, recip
         from hask.Prelude import Integral, toRatio, Ratio, R, Rational
-        from hask.Prelude import Floating, Real, toRational
+        from hask.Prelude import Floating, exp, sqrt, log, pow, logBase, sin
+        from hask.Prelude import tan, cos, asin, atan, acos, sinh, tanh, cosh
+        from hask.Prelude import asinh, atanh, acosh
+        from hask.Prelude import Real, toRational
         from hask.Prelude import RealFrac, properFraction, truncate, round
         from hask.Prelude import ceiling, floor
         from hask.Prelude import RealFloat, isNaN, isInfinite, isNegativeZero

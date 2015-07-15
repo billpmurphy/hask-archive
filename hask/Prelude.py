@@ -94,6 +94,23 @@ from Data.Num import R
 from Data.Num import Rational
 
 from Data.Num import Floating
+from Data.Num import exp
+from Data.Num import sqrt
+from Data.Num import log
+from Data.Num import pow
+from Data.Num import logBase
+from Data.Num import sin
+from Data.Num import tan
+from Data.Num import cos
+from Data.Num import asin
+from Data.Num import atan
+from Data.Num import acos
+from Data.Num import sinh
+from Data.Num import tanh
+from Data.Num import cosh
+from Data.Num import asinh
+from Data.Num import atanh
+from Data.Num import acosh
 
 from Data.Num import Real
 from Data.Num import toRational

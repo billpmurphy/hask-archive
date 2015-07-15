@@ -364,7 +364,7 @@ primitives that can be combined to build any type signature:
 | --------- | --------------- |
 | Type literal for Python builtin type or user-defined class | `int`, `float`, `set`, `list` |
 | Type variable | `"a"`, `"b"`, `"zz"` |
-| `List` of some type | `[int]`, `["a"]`, [["a"]] |
+| `List` of some type | `[int]`, `["a"]`, `[["a"]]` |
 | Tuple type | `(int, int)`, `("a", "b", "c")`, `(int, ("a", "b"))` |
 | ADT with type parameters | `t(Maybe, "a")`, `t(Either, "a", str)` |
 | Unit type (`None`) | `None` |
@@ -434,6 +434,7 @@ def addRational(rat1, rat2):
 ### Pattern matching
 
 
+
 Here is a function that uses pattern matching to compute the fibonacci sequence:
 
 ```python
@@ -450,8 +451,9 @@ def fib(x):
 13
 ```
 
-As the above example shows, you can combine pattern matching and recursive
-functions without a hitch.
+In a pattern match expression, `m.*` is used to bind variables, and `p.*` is
+used to access them. As the above example shows, you can combine pattern
+matching and recursive functions without a hitch.
 
 You can also deconstruct an iterable using `^` (the cons operator). The variable
 before the `^` is bound to the first element of the iterable, and the variable
@@ -516,7 +518,7 @@ typeclasses from Haskell (see the Appendix for a full list) and provides syntax
 for creating new typeclass instances.
 
 As an example, let's add a [`Monad`](https://wiki.haskell.org/Monad) instance
-for the `Maybe` type.  First, we need to add
+for the `Maybe` type.  First, however, `Maybe` needs
 [`Functor`](https://wiki.haskell.org/Functor) and
 [`Applicative`](https://wiki.haskell.org/Applicative_functor) instances.
 
@@ -560,15 +562,15 @@ Just(50.0)
 Nothing
 ```
 
-Note that in this example we use `*` as both the function compose operator and
-as `fmap`, to lift functions into a `Maybe` value. If this seems confusing,
+Note that this example uses `*` as both the function compose operator and as
+`fmap`, to lift functions into a `Maybe` value. If this seems confusing,
 remember that `fmap` for functions is just function composition!
 
 
-Now that we have made `Maybe` an instance of `Functor`, we can make it an
-instance of `Applicative` and then an instance of `Monad` by defining the
-appropriate function implementations. To implement `Applicative`, we just need
-to provide `pure`. To implement `Monad`, we need to provide `bind`.
+Now that `Maybe` is an instance of `Functor`, we can make it an instance of
+`Applicative` and then an instance of `Monad` by defining the appropriate
+function implementations. To implement `Applicative`, we just need to provide
+`pure`. To implement `Monad`, we need to provide `bind`.
 
 
 ```python
@@ -764,11 +766,11 @@ Nothing
 ```
 
 Note that this is equivalent to lifting the original function into the Maybe
-monad. That is, we have changed its type from `function` to `a -> Maybe b`.
-This makes it easier to use the convineient monad error handling style commonly
-seen in Haskell with existing Python functions.
+monad. That is, its type has changed from `function` to `a -> Maybe b`.  This
+makes it easier to use the convineient monad error handling style commonly seen
+in Haskell with existing Python functions.
 
-Continuing with our silly example, we can try to eat three pieces of cheese,
+Continuing with our silly example, let's try to eat three pieces of cheese,
 returning `Nothing` if the attempt was unsuccessful:
 
 ```python
@@ -821,14 +823,24 @@ use `help` liberally. See the Appendix below for a full list of modules. Some
 highlights:
 
 ```python
->>> from Data.List import mapMaybe
+>>> from hask.Data.List import mapMaybe
 >>> mapMaybe * safe_div(12) % L[0, 1, 3, 0, 6]
 L[12, 4, 2]
 
 
->>> from Data.List import isInfixOf
+>>> from hask.Data.List import isInfixOf
 >>> isInfixOf(L[2, 8], L[1, 4, 6, 2, 8, 3, 7])
 True
+
+
+>>> from hask.Data.List import take, map
+>>> take(5) * map(2**__) % L[1, ...]
+L[2, 4, 8, 16, 32]
+
+
+>>> from hask.Control.Monad import join
+>>> join(Just(Just(1)))
+Just(1)
 ```
 
 Hask also has wrappers some existing Python functions in TypedFunc objects, for
@@ -872,7 +884,7 @@ That's all, folks!
 | `Read` | | `read` | | |
 | `Eq` | | `eq` | `ne` | `==`, `!=` | |
 | `Ord` | `Eq` | `lt` | `gt`, `le`, `ge` | `<`, `<`, `=<`, `=>` | |
-| `Enum` | | `toEnum`, `fromEnum` | `enumTo`, `enumFromTo`, `enumFromThen`, `enumFromThenTo` | |
+| `Enum` | | `toEnum`, `fromEnum` | `pred`, `succ`, `enumTo`, `enumFromTo`, `enumFromThen`, `enumFromThenTo` | |
 | `Bounded` | | `minBound`, `maxBound` | | |
 | `Functor` | | `fmap` | | `*` |
 | `Applicative` | `Functor` | `pure` | | |
@@ -882,11 +894,11 @@ That's all, folks!
 | `Traversable` | `Foldable`, `Functor` | `traverse` | `sequenceA`, `mapM`, `sequence` | |
 | `Num` | `Show`, `Eq` | `abs`, `signum`, `fromInteger`, `negate` | | `+`, `-`, `*` |
 | `Real` | `Num`, `Ord` | `toRational` | |
-| `Integral` | `Real`, `Enum` | `quotRem`, `toInteger` | `quot`, `rem`, `div`, `mod`, `toInteger` | `/`, `%` |
-| `Fractional` | `Num` | `fromRational`, `recip` |  | `/` |
+| `Integral` | `Real`, `Enum` | `quotRem`, `toInteger`, `quot`, `rem`, `div`, `mod`, `toInteger` | | `/`, `%` |
+| `Fractional` | `Num` | `fromRational` | `recip` | `/` |
 | `Floating` | `Fractional` | `pi`, `exp`, `log`, `sin`, `cos`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `asinh`, `cosh`, `atanh` | |
 | `RealFrac` | `Real`, `Fractional` | `properFraction` `truncate`, `round`, `ceiling`, `floor` |
-| `RealFloat` | `Floating`, `RealFrac` | `floatRadix`, `floatDigits`, `floatRange`, `decodeFloat`, `encodeFloat`, `exponent`, `significand`, `scaleFloat`, `isNaN`, `isInfinite`, `isDenormalized`, `isNegativeZero`, `isIEEE`, `atan2` |
+| `RealFloat` | `Floating`, `RealFrac` | `floatRange`, `isNaN`, `isInfinite`, `isNegativeZero`, `atan2` |
 
 
 **Table 2.** Hask library structure.
@@ -910,6 +922,6 @@ That's all, folks!
 | `hask.Data.Ratio` | `hask.lang` | `Integral`, `Ratio` (`R`), `Rational`, `toRatio`, `toRational`, `numerator`, `denominator` |
 | `hask.Data.Num` | `hask.lang` |
 | `hask.Control.Applicative` | `hask.lang` | `Applicative` |
-| `hask.Control.Monad` | `hask.lang` |
+| `hask.Control.Monad` | `hask.lang`, `hask.Control.Applicative`, `hask.Data.Functor` | `Monad` (`bind`, `>>`), `join`, `liftM` |
 | `hask.Python.builtins` | `hask.lang` | `callable`, `cmp`, `delattr`, `divmod`, `frozenset`, `getattr`, `hasattr`, `hash`, `hex`, `isinstance`, `issubclass`, `len`, `oct`, `repr`, `setattr`, `sorted`, `unichr` |
-| `hask.lang` | `Show` (`show`), `Read`, `Eq`, `Ord`, `Enum`, `Bounded`, `typeof`, `is_builtin`, `has_instance`, `nt_to_tuple`, `build_instance`, `Typeclass`, `Hask`, `TypedFunc`, `TypeSignatureError`, `undefined`, `caseof`, `m`, `p`, `IncompletePattnerError`, `data`, `d`, `deriving`, `H`, `sig`, `t`, `func`, `typify`, `NoGuardMatchException`, `guard`, `c`, `otherwise`, `instance`, `__`, `_t`, `_q`, `_i`, `List`, `L` |
+| `hask.lang` | | `Show` (`show`), `Read`, `Eq`, `Ord`, `Enum` (`fromEnum`, `succ`, `pred`, `enumFrom`, `enumFromTo`, `enumFromThen`, `enumFromThenTo`), `Bounded`, `typeof`, `is_builtin`, `has_instance`, `nt_to_tuple`, `build_instance`, `Typeclass`, `Hask`, `TypedFunc`, `TypeSignatureError`, `undefined`, `caseof`, `m`, `p`, `IncompletePattnerError`, `data`, `d`, `deriving`, `H`, `sig`, `t`, `func`, `typify`, `NoGuardMatchException`, `guard`, `c`, `otherwise`, `instance`, `__`, `_t`, `_q`, `_i`, `List`, `L` |
