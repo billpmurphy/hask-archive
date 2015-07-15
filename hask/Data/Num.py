@@ -392,8 +392,14 @@ class Integral(Real, Enum):
         quotRem, toInteger, quot, rem, div, mod
     """
     @classmethod
-    def make_instance(typeclass, cls, quotRem, toInteger, quot, rem, div, mod,
-            divMod):
+    def make_instance(typeclass, cls, quotRem, divMod, toInteger, quot=None,
+            rem=None, div=None, mod=None):
+
+        quot = lambda x: quotRem(x)[0] if quot is None else quot
+        rem = lambda x: quotRem(x)[1] if rem is None else rem
+        div = lambda x: divMod(x)[0] if div is None else div
+        mod = lambda x: divMod(x)[1] if mod is None else mod
+
         attrs = {"quotRem":quotRem, "toInteger":toInteger, "quot":quot,
                  "rem":rem, "div":div, "mod":mod, "divMod":divMod}
         build_instance(Integral, cls, attrs)
@@ -409,7 +415,6 @@ def toRatio(num, denom):
     """
     frac = fractions.Fraction(num, denom)
     return R(frac.numerator, frac.denominator)
-
 
 
 instance(Real, int).where(

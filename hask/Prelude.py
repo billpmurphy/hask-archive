@@ -196,27 +196,6 @@ from Control.Applicative import Applicative
 from Control.Monad import Monad
 
 
-def sequence(xs):
-
-    return
-
-def sequence_(xs):
-
-    return
-
-
-def mapM(f, xs):
-    """
-    """
-    return sequence(fmap(f, xs))
-
-
-def mapM_(f, xs):
-    """
-    """
-    return sequence_(fmap(f, xs))
-
-
 #=============================================================================#
 # Miscellaneous functions
 

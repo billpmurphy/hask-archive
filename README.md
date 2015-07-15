@@ -1,14 +1,3 @@
-Remaining TODOs:
-* Write rest of Data.List, Prelude
-* Write rest of README
-* ???
-* Profit
-* Write tests for everything
-
-* Change type inference engine so that it is aware of typeclasses
-* Data.Foldable/Data.Traversable/Data.Monoid, 4.8.0.0 Prelude
-
-
 # Hask
 
 Hask is a pure-Python, zero-dependencies library that mimics most of the core
@@ -892,10 +881,10 @@ That's all, folks!
 | `Monoid` | | `mappend`, `mempty` |  `mconcat` | `+` |
 | `Foldable` | `Functor` | `foldr` | `fold`, `foldMap`, `foldr_`, `foldl`, `foldl_`, `foldr1`, `foldl1`, `toList`, `null`, `length`, `elem`, `maximum`, `minimum`, `sum`, `product` | `len` |
 | `Traversable` | `Foldable`, `Functor` | `traverse` | `sequenceA`, `mapM`, `sequence` | |
-| `Num` | `Show`, `Eq` | `abs`, `signum`, `fromInteger`, `negate` | | `+`, `-`, `*` |
+| `Num` | `Show`, `Eq` | `add`, `mul`, `abs`, `signum`, `fromInteger`, `negate` | `sub` | `+`, `-`, `*` |
 | `Real` | `Num`, `Ord` | `toRational` | |
-| `Integral` | `Real`, `Enum` | `quotRem`, `toInteger`, `quot`, `rem`, `div`, `mod`, `toInteger` | | `/`, `%` |
-| `Fractional` | `Num` | `fromRational` | `recip` | `/` |
+| `Integral` | `Real`, `Enum` | `quotRem`, `divMod`, `toInteger` | `quot`, `rem`, `div`, `mod` | `/`, `%` |
+| `Fractional` | `Num` | `fromRational`, `div` | `recip` | `/` |
 | `Floating` | `Fractional` | `pi`, `exp`, `log`, `sin`, `cos`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `asinh`, `cosh`, `atanh` | |
 | `RealFrac` | `Real`, `Fractional` | `properFraction` `truncate`, `round`, `ceiling`, `floor` |
 | `RealFloat` | `Floating`, `RealFrac` | `floatRange`, `isNaN`, `isInfinite`, `isNegativeZero`, `atan2` |
@@ -907,21 +896,21 @@ That's all, folks!
 | ------ | ------------ | ------------------ |
 | `hask` | | |
 | `hask.Prelude` | `hask.lang` |
-| `hask.Data.Maybe` | `hask.lang`, `hask.Data.Eq`, `hask.Data.Ord`, `hask.Data.Functor`, `hask.Control.Applicative`, `hask.Control.Monad` |
-| `hask.Data.Either` | `hask.lang`, `hask.Data.Eq`, `hask.Data.Ord`, `hask.Data.Functor`, `hask.Control.Applicative`, `hask.Control.Monad` |
-| `hask.Data.List` | `hask.lang`
+| `hask.Data.Maybe` | `hask.lang`, `hask.Data.Eq`, `hask.Data.Ord`, `hask.Data.Functor`, `hask.Control.Applicative`, `hask.Control.Monad` | `Maybe` (`Nothing`, `Just`), `in_maybe`, `maybe`, `isJust`, `isNothing`, `fromJust`, `listToMaybe`, `maybeToList`, `catMaybes`, `mapMaybe` |
+| `hask.Data.Either` | `hask.lang`, `hask.Data.Eq`, `hask.Data.Ord`, `hask.Data.Functor`, `hask.Control.Applicative`, `hask.Control.Monad` | `Either` (`Left`, `Right`), `in_either`, `either`, `lefts`, `rights`, `isLeft`, `isRight`, `partitionEithers` |
+| `hask.Data.List` | `hask.lang`, `hask.Data.Foldable`, `hask.Data.Eq`, `hask.Data.Ord`, `hask.Data.Num`, `hask.Data.Maybe` |
 | `hask.Data.String` | `hask.lang` | `words`, `unwords`, `lines`, `unlines` |
 | `hask.Data.Tuple` | `hask.lang` | `fst`, `snd`, `swap`, `curry`, `uncurry` |
 | `hask.Data.Char` | `hask.lang` | `isControl`, `isSpace`, `isLower`, `isUpper`, `isAlpha`, `isAlphaNum`, `isPrint`, `isDigit`, `isOctDigit`, `isHexDigit`, `isLetter`, `isMark`, `isNumber`, `isPunctuation`, `isSymbol`, `isSeparator`, `isAscii`, `isLatin1`, `isAsciiUpper`, `toLower`, `toUpper`, `toTitle`, `digitToInt`, `intToDigit`, `chr`, `ord` |
 | `hask.Data.Eq` | `hask.lang` | `Eq` (`==`, `!=`)
 | `hask.Data.Ord` | `hask.lang`, `hask.Data.Eq` | `Ord` (`>`, `<`, `>=`, `<=`), `Ordering` (`LT`, `EQ`, `GT`), `max`, `min`, `compare`, `comparing` |
 | `hask.Data.Functor` | `hask.lang` | `Functor` (`fmap`, `*`),  |
-| `hask.Data.Foldable` | `hask.lang` | `Foldable` (`foldr`, `foldl`, `foldl_`, `foldl1`, `foldl1_`, `foldr`, `foldr1`), `concat`, `concatMap`, `and_`, `or_`, `any`, `all`, `sum`, `product`, `minimum`, `maximum` |
-| `hask.Data.Traversable` | `hask.lang`
+| `hask.Data.Foldable` | `hask.lang` | `Foldable` |
+| `hask.Data.Traversable` | `hask.lang`, `hask.Data.Foldable`, `hask.Data.Functor` | `Traversable` |
 | `hask.Data.Monoid` | `hask.lang` | `Monoid` (`mappend`, `mempty`, `mconcat`) |
-| `hask.Data.Ratio` | `hask.lang` | `Integral`, `Ratio` (`R`), `Rational`, `toRatio`, `toRational`, `numerator`, `denominator` |
-| `hask.Data.Num` | `hask.lang` |
-| `hask.Control.Applicative` | `hask.lang` | `Applicative` |
+| `hask.Data.Ratio` | `hask.lang`, `hask.Data.Num` | `Integral`, `Ratio` (`R`), `Rational`, `toRatio`, `toRational`, `numerator`, `denominator` |
+| `hask.Data.Num` | `hask.lang`, `hask.Data.Eq`, `hask.Data.Ord` | `Num` (`+`, `*`, `abs`, `signum`, `fromInteger`, `negate`, `-`), `Fractional` (`fromRational`, `/`, `recip`), `Floating` (`exp`, `sqrt`, `log`, `pow`, `logBase`, `sin`, `tan`, `cos`, `asin`, `atan`, `acos`, `sinh`, `tanh`, `cosh`, `asinh`, `atanh`, `acosh`), `Real` (`toRational`), `Integral` (`quotRem`, `quot`, `rem`, `div`, `mod`), `toRatio`, `RealFrac` (`properFraction`, `truncate`, `round`, ceiling`, `floor`), `RealFloat` (`isNan`, `isInfinite`, `isNegativeZero`, `atan2`) |
+| `hask.Control.Applicative` | `hask.lang`, `hask.Data.Functor` | `Applicative` |
 | `hask.Control.Monad` | `hask.lang`, `hask.Control.Applicative`, `hask.Data.Functor` | `Monad` (`bind`, `>>`), `join`, `liftM` |
 | `hask.Python.builtins` | `hask.lang` | `callable`, `cmp`, `delattr`, `divmod`, `frozenset`, `getattr`, `hasattr`, `hash`, `hex`, `isinstance`, `issubclass`, `len`, `oct`, `repr`, `setattr`, `sorted`, `unichr` |
 | `hask.lang` | | `Show` (`show`), `Read`, `Eq`, `Ord`, `Enum` (`fromEnum`, `succ`, `pred`, `enumFrom`, `enumFromTo`, `enumFromThen`, `enumFromThenTo`), `Bounded`, `typeof`, `is_builtin`, `has_instance`, `nt_to_tuple`, `build_instance`, `Typeclass`, `Hask`, `TypedFunc`, `TypeSignatureError`, `undefined`, `caseof`, `m`, `p`, `IncompletePattnerError`, `data`, `d`, `deriving`, `H`, `sig`, `t`, `func`, `typify`, `NoGuardMatchException`, `guard`, `c`, `otherwise`, `instance`, `__`, `_t`, `_q`, `_i`, `List`, `L` |
