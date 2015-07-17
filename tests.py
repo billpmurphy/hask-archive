@@ -1,3 +1,4 @@
+import math
 import unittest
 
 from hask import H, sig, t, func, TypeSignatureError
@@ -337,6 +338,9 @@ class TestHindleyMilner(unittest.TestCase):
                 Tuple([a, a, a]))
 
         # list
+        self.unified(typeof(L[[]]), build_sig_arg(["a"], {}, {}))
+        self.unified(typeof(L[1, 1]), build_sig_arg([int], {}, {}))
+        self.unified(typeof(L[[L[1, 1]]]), build_sig_arg([[int]], {}, {}))
 
         # adts
         self.unified(typeof(Nothing), build_sig_arg(t(Maybe, "a"), {}, {}))
@@ -422,7 +426,6 @@ class TestHindleyMilner(unittest.TestCase):
                     [TypeOperator(float, []), TypeVariable()]))
 
 
-
 class TestTypeSystem(unittest.TestCase):
 
     def test_TypedFunc_builtin(self):
@@ -437,9 +440,9 @@ class TestTypeSystem(unittest.TestCase):
         self.assertEqual(2, f(g(5)))
         self.assertEqual(2, (f * g)(5))
         self.assertEqual(2, f * g % 5)
+        self.assertEqual(8, f * f * f % 2)
         self.assertEqual(f(h(g(5))), (f * h * g)(5))
         self.assertEqual((i * h * f)(9), "22")
-
         with self.assertRaises(te): f(4.0)
         with self.assertRaises(te): f("4")
         with self.assertRaises(te): f(1, 2)
@@ -1947,6 +1950,11 @@ class TestDataList(unittest.TestCase):
         from hask.Data.List import elem, notElem, lookup, find, filter
         from hask.Data.List import partition
 
+        self.assertTrue(elem(1, L[1, ...]))
+        self.assertFalse(elem(2, L[1, 3, 4, 5]))
+        self.assertFalse(notElem(1, L[1, ...]))
+        self.assertTrue(notElem(2, L[1, 3, 4, 5]))
+
     def test_indexing_lists(self):
         from hask.Data.List import elemIndex, elemIndices, findIndex
         from hask.Data.List import findIndicies
@@ -1969,7 +1977,6 @@ class TestDataList(unittest.TestCase):
 
         self.assertEqual((L["a", "b"], L[2, 4]), unzip(L[("a", 2), ("b", 4)]))
         self.assertEqual((L[[]], L[[]]), unzip(L[[]]))
-
 
     def test_set_operations(self):
         from hask.Data.List import nub, delete, diff, union, intersect
@@ -2101,14 +2108,30 @@ class TestDataChar(unittest.TestCase):
             self.assertEqual(i, ord * chr % i)
 
 
+class TestDataNum(unittest.TestCase):
+
+    def test_Num(self):
+        from hask.Data.Num import negate, signum, abs
+        self.assertEqual(negate(5), -5)
+        self.assertEqual(negate(-5), 5)
+        self.assertEqual(signum(5), 1)
+        self.assertEqual(signum(-5), -1)
+        self.assertEqual(signum(0), 0)
+        self.assertEqual(abs(5), 5)
+        self.assertEqual(abs(-5), 5)
+
+    def test_RealFloat(self):
+        from hask.Data.Num import isNaN, isInfinite, isNegativeZero, atan2
+        self.assertTrue(isNaN(float("nan")) and not isNaN(1.0))
+        self.assertTrue(isInfinite(float("-inf")) and not isInfinite(1.0))
+        self.assertTrue(isNegativeZero(-0.0) and not isNegativeZero(0.0))
+        self.assertEqual(round(atan2(0.0, 0.0), 5), round(0.0, 5))
+        self.assertEqual(round(atan2(0.0, -0.0), 5), round(math.pi, 5))
+
 class TestDataTuple(unittest.TestCase):
 
     def test_tuple(self):
-        from hask.Data.Tuple import fst
-        from hask.Data.Tuple import snd
-        from hask.Data.Tuple import curry
-        from hask.Data.Tuple import uncurry
-        from hask.Data.Tuple import swap
+        from hask.Data.Tuple import fst, snd, curry, uncurry, swap
 
         self.assertEqual(1, fst((1, 2)))
         self.assertEqual(("a", "b"), fst((("a", "b"), ("c", "d"))))

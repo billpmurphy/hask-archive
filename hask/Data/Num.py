@@ -39,7 +39,7 @@ class Num(Show, Eq):
 
         sub = default_sub if sub is None else sub
         attrs = {"add":add, "mul":mul, "abs":abs, "signum":signum,
-                 "fromInteger":fromInteger, "neg":negate, "sub":sub}
+                 "fromInteger":fromInteger, "negate":negate, "sub":sub}
 
         build_instance(Num, cls, attrs)
         return
@@ -81,7 +81,7 @@ def abs(a):
 instance(Num, int).where(
     add = int.__add__,
     mul = int.__mul__,
-    abs = abs,
+    abs = int.__abs__,
     signum = lambda x: -1 if x < 0 else (1 if x > 0 else 0),
     fromInteger = int,
     negate = int.__neg__,
@@ -91,7 +91,7 @@ instance(Num, int).where(
 instance(Num, long).where(
     add = long.__add__,
     mul = long.__mul__,
-    abs = abs,
+    abs = long.__abs__,
     signum = lambda x: -1L if x < 0L else (1L if x > 0L else 0L),
     fromInteger = long,
     negate = long.__neg__,
@@ -101,7 +101,7 @@ instance(Num, long).where(
 instance(Num, float).where(
     add = float.__add__,
     mul = float.__mul__,
-    abs = abs,
+    abs = float.__abs__,
     signum = lambda x: -1.0 if x < 0.0 else (1.0 if x > 0.0 else 0.0),
     fromInteger = float,
     negate = float.__neg__,
@@ -111,7 +111,7 @@ instance(Num, float).where(
 instance(Num, complex).where(
     add = complex.__add__,
     mul = complex.__mul__,
-    abs = abs,
+    abs = complex.__abs__,
     signum = lambda x: complex(-1) if x < 0 else complex(1 if x > 0 else 0),
     fromInteger = complex,
     negate = complex.__neg__,
@@ -605,6 +605,6 @@ instance(RealFloat, float).where(
     floatRange=(sys.float_info.min, sys.float_info.max),
     isNan=math.isnan,
     isInfinite=lambda x: x == float('inf') or x == -float('inf'),
-    isNegativeZero=lambda x: x == float("-0"),
+    isNegativeZero=lambda x: math.copysign(1, x) == -1.0,
     atan2=math.atan2
 )
