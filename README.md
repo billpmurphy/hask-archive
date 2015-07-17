@@ -102,9 +102,10 @@ L[1, 2, 3, 4]
 ```
 
 Lists are always evaluated lazily, and will only evaluate list elements as
-needed, so you can use infinite Lists or put never-ending generators inside of a `List`. (Of course, you can still blow up the interpreter if you try
-to evaluate the entirety of an infinite List, e.g. by trying to find the length
-of the List with `len`.)
+needed, so you can use infinite Lists or put never-ending generators inside of
+a `List`. (Of course, you can still blow up the interpreter if you try to
+evaluate the entirety of an infinite List, e.g. by trying to find the length of
+the List with `len`.)
 
 One way to create infinite lists is via list comprehensions. As in Haskell,
 there are four basic type of list comprehensions:
@@ -419,18 +420,17 @@ def addRational(rat1, rat2):
 
 ### Pattern matching
 
-Hask provides special syntax for pattern matching. Pattern matching is a more
-powerful control flow tool than the `if` statement, and can be used to
-deconstruct iterables and ADTs and bind values to local variables.
+Pattern matching is a more powerful control flow tool than the `if` statement,
+and can be used to deconstruct iterables and ADTs and bind values to local
+variables.
 
-In Hask, pattern matching expressions follow this syntax:
+Pattern matching expressions follow this syntax:
 
 ```python
 ~(caseof(value_to_match)
-    | m(match_1) >> return_value_1
-    | m(match_2) >> return_value_2
-    | m(match_3) >> return_value_3)
-
+    | m(pattern_1) >> return_value_1
+    | m(pattern_2) >> return_value_2
+    | m(pattern_3) >> return_value_3)
 ```
 
 Here is a function that uses pattern matching to compute the fibonacci
@@ -664,25 +664,23 @@ Just(3)
 >>> from hask.Data.List import takeWhile
 >>> takeWhile(__<5, L[1, ...])
 L[1, 2, 3, 4]
-```
 
-Double sections are also supported:
-
-```python
 >>> (__+__)('Hello ', 'world')
 'Hello world'
 
 >>> (__**__)(2)(10)
 1024
 
->>> from hask.Data.List import takeWhile
->>> takeWhile(__ < 5, L[1, ...])
-L[1, 2, 3, 4]
+>>> from hask.Data.List import zipWith, take
+>>> take(5) % zipWith(__ * __, L[1, ...], L[1, ...])
+L[1, 4, 9, 16, 25]
 ```
 
 As you can see, this much easier than using `lambda` and adding a type
 signature with the `(lambda x: ...) ** (H/ ...)` syntax.
 
+In addition, the types of the `TypedFuncs` created by sections are always
+polymorphic, to allow for any operator overloading.
 
 ### Guards
 
@@ -765,21 +763,21 @@ Nothing
 ```
 
 Note that this is equivalent to lifting the original function into the Maybe
-monad. That is, its type has changed from `function` to `a -> Maybe b`.  This
+monad. That is, its type has changed from `func` to `a -> Maybe b`.  This
 makes it easier to use the convineient monad error handling style commonly seen
 in Haskell with existing Python functions.
 
-Continuing with our silly example, let's try to eat three pieces of cheese,
+Continuing with this silly example, let's try to eat three pieces of cheese,
 returning `Nothing` if the attempt was unsuccessful:
 
 ```python
 >>> cheese = 10
->>> cheese_left = chese >> maybe_eat >> maybe_eat >> maybe_eat
+>>> cheese_left = cheese >> maybe_eat >> maybe_eat >> maybe_eat
 >>> cheese_left
 Just(7)
 
 >>> cheese = 1
->>> cheese_left = chese >> maybe_eat >> maybe_eat >> maybe_eat
+>>> cheese_left = cheese >> maybe_eat >> maybe_eat >> maybe_eat
 >>> cheese_left
 Nothing
 ```
@@ -837,8 +835,8 @@ True
 Just(1)
 ```
 
-Hask also has wrappers some existing Python functions in TypedFunc objects, for
-ease of compatibity. (Eventually, Hask will have typed wrappers for much of the
+Hask also provies `TypeFunc` wrappers for everything in `__builtins__` for ease
+of compatibity. (Eventually, Hask will have typed wrappers for most of the
 Python standard library.)
 
 ```python

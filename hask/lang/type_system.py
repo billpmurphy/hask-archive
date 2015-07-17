@@ -423,11 +423,12 @@ def make_type_const(name, typeargs):
     cls.__type__ = lambda self: \
         TypeOperator(cls, [TypeVariable() for i in cls.__params__])
 
-    # Unless typeclasses are derived, ADTs do not support any of these
-    # attributes
+    # Unless typeclass instances or provided or derived, ADTs do not support any of these
+    # attributes, and trying to use one is a TypeError
     cls.__iter__ = lambda self: raise_fn(TypeError)
     cls.__contains__ = lambda self, other: raise_fn(TypeError)
     cls.__add__ = lambda self, other: raise_fn(TypeError)
+    cls.__radd__ = lambda self, other: raise_fn(TypeError)
     cls.__rmul__ = lambda self, other: raise_fn(TypeError)
     cls.__mul__ = lambda self, other: raise_fn(TypeError)
     cls.__lt__ = lambda self, other: raise_fn(TypeError)
@@ -436,8 +437,13 @@ def make_type_const(name, typeargs):
     cls.__ge__ = lambda self, other: raise_fn(TypeError)
     cls.__eq__ = lambda self, other: raise_fn(TypeError)
     cls.__ne__ = lambda self, other: raise_fn(TypeError)
+    cls.count = lambda self, other: raise_fn(TypeError)
+    cls.index = lambda self, other: raise_fn(TypeError)
+
+    # Unless Show is instantiated/derived, use object's `repr` method
     cls.__repr__ = object.__repr__
     cls.__str__ = object.__str__
+
     return cls
 
 
@@ -534,6 +540,10 @@ def pattern_match(value, pattern, env=None):
         env: a dictionary of local variables bound while matching
 
     Returns: (True, env) if the match is successful, and (False, env) otherwise
+
+    Raises:
+        SyntaxError, if a variable name is used multiple times in the same
+        pattern
     """
     env = {} if env is None else env
     if isinstance(pattern, PatternMatchBind):

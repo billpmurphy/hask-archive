@@ -106,9 +106,14 @@ class __constraints__(Syntax):
     """
     H/ creates a new function type signature.
 
-    Example usage:
-
-        (H/ int >> int)
+    Examples:
+    (H/ int >> int >> int)
+    (H/ (H/ "a" >> "b" >> "c") >> "b" >> "a" >> "c")
+    (H/ func >> set >> set)
+    (H/ (H/ "a" >> "b") >> ["a"] >> ["b"])
+    (H[(Eq, "a")]/ "a" >> ["a"] >> bool)
+    (H/ int >> int >> t(Maybe, int))
+    (H/ int >> None)
 
     See help(sig) for more information on type signature decorators.
     """
@@ -147,6 +152,7 @@ class __constraints__(Syntax):
 
 class __signature__(Syntax):
     """
+    Class that represents a (complete or incomplete) type signature.
     """
     def __init__(self, args, constraints):
         self.sig = TypeSignature(args, constraints)
@@ -216,6 +222,21 @@ def t(type_constructor, *params):
 def typify(fn, hkt=None):
     """
     Convert an untyped Python function to a TypeFunc.
+
+    Args:
+        fn: The function to wrap
+        hkt: A higher-kinded type wrapped in a closure (e.g., lambda x: t(Maybe, x))
+
+    Returns:
+        A TypedFunc object with a polymorphic type (e.g. a -> b -> c, etc) with
+        the same number of arguments as fn. If hkt is supplied, the return type
+        will be the supplied HKT parameterized by a type variable.
+
+    Example usage:
+
+    @typify(hkt=lambda x: t(Maybe, x))
+    def add(x, y):
+        return x + y
     """
     args = [chr(i) for i in range(97, 98 + fn.func_code.co_argcount)]
     if hkt is not None:
@@ -290,7 +311,7 @@ class MatchStack(object):
 
 class __var_bind__(Syntax):
     """
-    Bind a local variable while pattern matching.
+    m.* binds a local variable while pattern matching.
     For example usage, see help(caseof).
     """
     def __getattr__(self, name):
@@ -305,7 +326,7 @@ class __var_bind__(Syntax):
 
 class __var_access__(Syntax):
     """
-    Access a local variable bound during pattern matching.
+    p.* accesses a local variable bound during pattern matching.
     For example usage, see help(caseof).
     """
     def __getattr__(self, name):
@@ -350,7 +371,8 @@ class __pattern_bind__(Syntax, PatternMatchBind):
 
 class __match_line__(Syntax):
     """
-    Represents one line of a caseof
+    This class represents one line of a caseof expression, i.e.:
+    m( ... ) >> return_value
     """
     def __init__(self, is_match, return_value):
         self.is_match = is_match
@@ -360,18 +382,23 @@ class __match_line__(Syntax):
 
 class __match_test__(Syntax):
     """
-    represents the pattern part of one caseof line
+    This class represents the pattern part of one caseof line, i.e.:
+    m( ... )
     """
     def __init__(self, is_match):
         self.is_match = is_match
         return
+
     def __rshift__(self, value):
         MatchStack.get_frame().cache = {}
         return __match_line__(self.is_match, value)
 
 
 class __unmatched_case__(Syntax):
-
+    """
+    This class represents a caseof expression in mid-evaluation, when zero or
+    more lines have been tested, but before a match has been found.
+    """
     def __or__(self, line):
         if line.is_match:
             MatchStack.get_frame().matched = True
@@ -385,7 +412,10 @@ class __unmatched_case__(Syntax):
 
 
 class __matched_case__(Syntax):
-
+    """
+    This class represents a caseof expression in mid-evaluation, when one or
+    more lines have been tested and after a match has been found.
+    """
     def __init__(self, return_value):
         self.value = return_value
         return
@@ -416,7 +446,9 @@ class caseof(__unmatched_case__):
 
 class __data__(Syntax):
     """
-    Examples:
+    `data` is part of Hask's special syntax for defining ADTs.
+
+    Example usage:
 
     Maybe, Nothing, Just =\
     data.Maybe("a") == d.Nothing | d.Just("a") & deriving(Read, Show, Eq, Ord)
@@ -432,7 +464,7 @@ class __data__(Syntax):
 
 class __new_tcon__(Syntax):
     """
-    Base class for syntax classes related to creating new type constructors.
+    Base class for Syntax classes related to creating new type constructors.
     """
     def __init__(self, name, args=()):
         self.name = name
@@ -453,6 +485,10 @@ class __new_tcon__(Syntax):
 
 class __new_tcon_enum__(__new_tcon__):
     """
+    This class represents a `data` statement in mid evaluation; it represents
+    the part of the expression that builds the type constructor, before type
+    parameters have been added.
+
     Examples:
 
     data.Either
@@ -481,6 +517,10 @@ class __new_tcon_enum__(__new_tcon__):
 
 class __new_tcon_hkt__(__new_tcon__):
     """
+    This class represents a `data` statement in mid evaluation; it represents
+    the part of the expression that builds the type constructor, after type
+    parameters have been added.
+
     Examples:
 
     data.Maybe("a")
@@ -508,7 +548,10 @@ class __d__(Syntax):
 
 
 class __new_dcon__(Syntax):
-
+    """
+    Base class for Syntax objects that handle data constructor creation syntax
+    within a `data` statment (`d.*`).
+    """
     def __init__(self, dcon_name, args=(), classes=()):
         self.name = dcon_name
         self.args = args
@@ -518,7 +561,16 @@ class __new_dcon__(Syntax):
 
 
 class __new_dcon_params__(__new_dcon__):
+    """
+    This class represents a `data` statement in mid evaluation; it represents
+    the part of the expression that builds a data constructor, after type
+    parameters have been added.
 
+    Examples:
+
+    d.Just("a")
+    d.Foo(int, "a", "b", str)
+    """
     def __and__(self, derive_exp):
         if not isinstance(derive_exp, deriving):
             raise self.invalid_syntax
@@ -536,17 +588,45 @@ class __new_dcon_params__(__new_dcon__):
 
 
 class __new_dcon_deriving__(__new_dcon__):
+    """
+    This class represents a `data` statement in mid evaluation; it represents
+    the part of the expression that builds a data constructor (with or without type
+    parameters) and adds derived typeclasses.
+
+    Examples:
+
+    d.Just("a") & deriving(Show, Eq, Ord)
+    d.Bar & deriving(Eq)
+    """
     pass
 
 
 class __new_dcon_enum__(__new_dcon_params__):
+    """
+    This class represents a `data` statement in mid evaluation; it represents
+    the part of the expression that builds a data constructor, after type
+    parameters have been added.
 
+    Examples:
+
+    d.Just
+    d.Foo
+    """
     def __call__(self, *typeargs):
         return __new_dcon_params__(self.name, typeargs)
 
 
 class __new_dcons_deriving__(Syntax):
+    """
+    This class represents a `data` statement in mid evaluation; it represents
+    the part of the expression that builds data constructors (with or without type
+    parameters) and adds derived typeclasses.
 
+    Examples:
+
+    d.Nothing | d.Just("a") & deriving(Show, Eq, Ord)
+    d.Foo(int, "a", "b", str) | d.Bar & deriving(Eq)
+    """
     def __init__(self, data_consts, classes=()):
         self.dcons = data_consts
         self.classes = classes
@@ -555,6 +635,15 @@ class __new_dcons_deriving__(Syntax):
 
 
 class __new_dcons__(__new_dcons_deriving__):
+    """
+    This class represents a `data` statement in mid evaluation; it represents
+    the part of the expression that builds data constructors (with or without type
+    parameters), with no derived typeclasses.
+
+    Examples:
+
+    d.Foo(int, "a", "b", str) | d.Bar
+    """
 
     def __init__(self, data_consts):
         super(__new_dcons__, self).__init__(data_consts)
@@ -597,17 +686,20 @@ class deriving(Syntax):
 
 class __section__(Syntax):
     """
-    Special syntax for operator sections.
+    __ is Hask's special syntax for operator sections.
 
     Example usage:
-        (__+1)
+    >>> (__+1)(5)
+    6
 
-        (6/__)
+    >>> (6/__) * (__-1) % 4
+    2
 
-        (__*__)
+    >>> (__*__)(2, 10)
+    1024
 
     Operators supported:
-    + - * / // divmod ** >> << | & ^ == != > >= < <=
+    + - * / // ** >> << | & ^ == != > >= < <=
     """
     def __init__(self, syntax_err_msg):
         super(__section__, self).__init__(syntax_err_msg)
