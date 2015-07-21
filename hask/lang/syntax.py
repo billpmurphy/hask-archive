@@ -338,7 +338,10 @@ p = __var_access__("Syntax error in pattern match")
 
 
 class __pattern_bind_list__(Syntax, PatternMatchListBind):
-
+    """
+    Class that represents a pattern designed to match an iterable, consisting
+    of a head (one element) and a tail (zero to many elements).
+    """
     def __init__(self, head, tail):
         self.head = [head]
         self.tail = tail
@@ -350,7 +353,10 @@ class __pattern_bind_list__(Syntax, PatternMatchListBind):
 
 
 class __pattern_bind__(Syntax, PatternMatchBind):
-
+    """
+    Class that represents a pattern designed to match any value and bind it to
+    a name.
+    """
     def __init__(self, name):
         self.name = name
         super(__pattern_bind__, self).__init__("Syntax error in match")
