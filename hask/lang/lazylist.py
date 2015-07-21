@@ -45,26 +45,26 @@ class Enum(Typeclass):
     @classmethod
     def make_instance(typeclass, cls, toEnum, fromEnum):
         def succ(a):
-            return fromEnum(toEnum(a) + 1)
+            return toEnum(fromEnum(a) + 1)
 
         def pred(a):
-            return fromEnum(toEnum(a) - 1)
+            return toEnum(fromEnum(a) - 1)
 
         def enumFromThen(start, second):
-            pointer = toEnum(start)
-            step = toEnum(second) - pointer
+            pointer = fromEnum(start)
+            step = fromEnum(second) - pointer
             while True:
-                yield fromEnum(pointer)
+                yield toEnum(pointer)
                 pointer += step
 
         def enumFrom(start):
             return enumFromThen(start, succ(start))
 
         def enumFromThenTo(start, second, end):
-            pointer, stop = toEnum(start), toEnum(end)
-            step = toEnum(second) - pointer
+            pointer, stop = fromEnum(start), fromEnum(end)
+            step = fromEnum(second) - pointer
             while pointer <= stop:
-                yield fromEnum(pointer)
+                yield toEnum(pointer)
                 pointer += step
             return
 
@@ -78,8 +78,8 @@ class Enum(Typeclass):
         return
 
 
-#@sig(H/ "a" >> int)
-def toEnum(a):
+@sig(H/ "a" >> int)
+def fromEnum(a):
     """
     fromEnum :: a -> int
 
@@ -148,10 +148,10 @@ def enumFromTo(start, end):
     return L[Enum[start].enumFromTo(start, end)]
 
 
-instance(Enum, int).where(toEnum=int, fromEnum=int)
-instance(Enum, long).where(toEnum=int, fromEnum=long)
-instance(Enum, bool).where(toEnum=int, fromEnum=bool)
-instance(Enum, str).where(toEnum=ord, fromEnum=chr)
+instance(Enum, int).where(fromEnum=int, toEnum=int)
+instance(Enum, long).where(fromEnum=int, toEnum=long)
+instance(Enum, bool).where(fromEnum=int, toEnum=bool)
+instance(Enum, str).where(fromEnum=ord, toEnum=chr)
 
 
 #=============================================================================#

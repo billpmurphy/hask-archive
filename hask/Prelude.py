@@ -56,7 +56,7 @@ from Data.Ord import min
 from Data.Ord import compare
 
 from .lang import Enum
-from .lang import toEnum
+from .lang import fromEnum
 from .lang import succ
 from .lang import pred
 from .lang import enumFromThen

@@ -7,7 +7,7 @@ from typeclasses import Bounded
 from lazylist import Enum
 from lazylist import succ
 from lazylist import pred
-from lazylist import toEnum
+from lazylist import fromEnum
 from lazylist import enumFrom
 from lazylist import enumFromTo
 from lazylist import enumFromThen

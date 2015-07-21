@@ -782,8 +782,8 @@ class TestBuiltins(unittest.TestCase):
         self.assertEqual("'a'", show("a"))
 
     def test_enum(self):
-        from hask.Prelude import toEnum, succ, pred
-        self.assertEqual(1, toEnum(1))
+        from hask.Prelude import fromEnum, succ, pred
+        self.assertEqual(1, fromEnum(1))
         self.assertEqual("b", succ("a"))
         self.assertEqual("a", pred("b"))
         self.assertEqual(2, succ(1))
