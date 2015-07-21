@@ -28,7 +28,6 @@ Features not yet implemented, but coming soon:
 * Python 3 compatibility
 * Better support for polymorphic return values/type defaulting
 * Better support for lazy evaluation (beyond just the `List` type and pattern matching)
-* Improved pattern matching, including pattern matching on Lists
 * More of the Haskell standard library (`Control.*` libraries, QuickCheck, and more)
 * Monadic, lazy I/O
 
@@ -60,8 +59,10 @@ Hask is a grab-bag of features that add up to one big pseudo-Haskell functional
 programming library. The rest of this README lays out the basics.
 
 I recommend playing around in the REPL while going through the examples. You
-can import all the language features with `from hask import *`. To import the
-Prelude, use `from hask.Prelude import *`.
+
+To import all the language features: `from hask import *`
+To import the Prelude: `from hask import Prelude`
+To import a `base` library, e.g. `Data.List`: `from hask import Data.List`
 
 
 ### The List type and list comprehensions
@@ -331,6 +332,10 @@ which applies a `TypedFunc` to one argument (equivalent to `($)` in Haskell).
 
 The convinience of this notation (when combined with partial application)
 cannot be overstated--you can get rid of a ton of nested parenthesis this way.
+
+```python
+
+```
 
 The compose operation is also typed-checked, which makes it appealing to write
 programs in [pointfree style](https://wiki.haskell.org/Pointfree), i.e,
@@ -897,7 +902,7 @@ points:
 
 | Module | Dependencies | Exported functions |
 | ------ | ------------ | ------------------ |
-| `hask` | | |
+| `hask` | `hask.lang`, `hask.Data.Char`, `hask.Data.Either`, `hask.Data.Eq`, `hask.Data.Foldable`, `hask.Data.Functor`, `hask.Data.List`, `hask.Data.Maybe`, `hask.Data.Monoid`, `hask.Data.Num`, `hask.Data.Ord`, `hask.Data.Ratio`, `hask.Data.String`, `hask.Data.Traversable`, `hask.Data.Tuple`, `hask.Control.Applicative`, `hask.Control.Monad`, `hask.Python.builtins` | `instance`, `__`, `guard`, `c`, `otherwise`, `NoGuardMatchException`, `L`, `data`, `d`, `deriving`, `sig`, `H`, `t`, `func`, `TypeSignatureError`, `caseof`, `p`, `m`, `IncompletePatternError`, `_t`, `_i`, `_q`, `typeof`, `has_instance`, `Typeclass`, `Hask`, `Read`, `Show`, `Eq`, `Ord`, `Enum `Bounded`, `Num`, `Real`, `Integral`, `Fractional`, `Floating`, `RealFrac`, `RealFloat`, `Functor`, `Applicative`, `Monad`, `Traversable`, `Foldable`, `Maybe`, `Just`, `Nothing`, `in_maybe`, `Either`, `Left`, `Right`, `in_either`, `Ordering`, `LT`, `EQ`, `GT` |
 | `hask.Prelude` | `hask.lang` |
 | `hask.Data.Maybe` | `hask.lang`, `hask.Data.Eq`, `hask.Data.Ord`, `hask.Data.Functor`, `hask.Control.Applicative`, `hask.Control.Monad` | `Maybe` (`Nothing`, `Just`), `in_maybe`, `maybe`, `isJust`, `isNothing`, `fromJust`, `listToMaybe`, `maybeToList`, `catMaybes`, `mapMaybe` |
 | `hask.Data.Either` | `hask.lang`, `hask.Data.Eq`, `hask.Data.Ord`, `hask.Data.Functor`, `hask.Control.Applicative`, `hask.Control.Monad` | `Either` (`Left`, `Right`), `in_either`, `either`, `lefts`, `rights`, `isLeft`, `isRight`, `partitionEithers` |
