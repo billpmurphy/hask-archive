@@ -450,6 +450,9 @@ class TestTypeSystem(unittest.TestCase):
     def test_TypedFunc_var(self):
         pass
 
+    def test_TypedFunc_tuple(self):
+        pass
+
     def test_TypedFunc_list(self):
         pass
 
@@ -674,11 +677,67 @@ class TestADTInternals_Builtin(unittest.TestCase):
 
 
 class TestADTInternals_Poly(unittest.TestCase):
-    """
-    Dummy type constructors and data constructors for an ADT with
-    polymorphic fields
-    """
-    pass
+    def setUp(self):
+        """
+        Dummy type constructors and data constructors for an ADT with
+        polymorphic fields
+        """
+        ds =  [("M1", ["a"]), ("M2", ["a", "b"]), ("M3", ["a", "c", "c"])]
+        self.Type_Const, self.M1, self.M2, self.M3 =\
+                build_ADT("Type_Const", ["a", "b", "c"], ds, [])
+
+    def test_adt(self):
+        self.assertTrue(isinstance(self.M1(1), self.Type_Const))
+        self.assertTrue(isinstance(self.M2(1, "abc"), self.Type_Const))
+        self.assertTrue(isinstance(self.M2(1)("abc"), self.Type_Const))
+        self.assertTrue(isinstance(self.M3(1, 2, 3), self.Type_Const))
+        self.assertTrue(isinstance(self.M3(1)(2, 3), self.Type_Const))
+        with self.assertRaises(te): self.M3(1, "a", 2)
+
+    def test_derive_eq_data(self):
+        with self.assertRaises(te): self.M1(1) == self.M1(1)
+        with self.assertRaises(te): self.M1(1) == self.M2(1, "b")
+        with self.assertRaises(te): self.M1(1) != self.M1(1)
+        with self.assertRaises(te): self.M1(1) != self.M2(1, "b")
+
+        Eq.derive_instance(self.Type_Const)
+
+        self.assertEqual(self.M1(1), self.M1(1))
+        self.assertEqual(self.M2(1, "a"), self.M2(1, "a"))
+        self.assertNotEqual(self.M1("a"), self.M1("b"))
+        self.assertNotEqual(self.M1("a"), self.M2("a", "b"))
+        self.assertEqual(self.M3(1, "b", "b"), self.M3(1, "b", "b"))
+        with self.assertRaises(te): self.M1(1) == self.M1("a")
+        with self.assertRaises(te): self.M3(1, 2, 2) == self.M3(1, "a", "b")
+
+    def test_derive_show_data(self):
+        self.assertNotEqual("M1(1)", str(self.M1(1)))
+        self.assertNotEqual("M2(1, 2)", str(self.M2(1, 2)))
+
+        Show.derive_instance(self.Type_Const)
+
+        self.assertEqual("M1(1)", str(self.M1(1)))
+        self.assertEqual("M2(1, 2)", str(self.M2(1, 2)))
+
+    def test_derive_ord_data(self):
+        with self.assertRaises(te): self.M1(1) > self.M1(1)
+        with self.assertRaises(te): self.M1(1) < self.M2(1, "b")
+        with self.assertRaises(te): self.M1(1) >= self.M1(1)
+        with self.assertRaises(te): self.M1(1) <= self.M2(1, "b")
+
+        Eq.derive_instance(self.Type_Const)
+        Ord.derive_instance(self.Type_Const)
+
+        self.assertTrue(self.M1(1) < self.M2(100, "a"))
+        self.assertTrue(self.M1(1) <= self.M2(100, "a"))
+        self.assertFalse(self.M1(1) > self.M2(100, "a"))
+        self.assertFalse(self.M1(1) >= self.M2(100, "a"))
+        self.assertTrue(self.M3(1, "a", "b") < self.M3(1, "a", "c"))
+        self.assertTrue(self.M3(1, "a", "b") <= self.M3(1, "a", "c"))
+        self.assertFalse(self.M1(1) > self.M2(100, "a"))
+        self.assertFalse(self.M1(1) >= self.M2(100, "a"))
+        with self.assertRaises(te): self.M1(1) > self.M1("a")
+        with self.assertRaises(te): self.M3(1, 2, 2) > self.M3(1, "a", "b")
 
 
 class TestADTSyntax(unittest.TestCase):
@@ -730,7 +789,7 @@ class TestADTSyntax(unittest.TestCase):
         self.assertIsNotNone(d.A("a") | d.B("b") & deriving(Eq, Show))
 
     def test_adts(self):
-        """Assorted ADT tests"""
+        """Assorted ADT tests that don't fit anywhere else"""
         T, M1, M2, M3 =\
         data.T("a", "b") == d.M1("a") | d.M2("b") | d.M3 & deriving(Eq)
 
@@ -758,6 +817,7 @@ class TestADTSyntax(unittest.TestCase):
         self.assertNotEqual(C("b"), B("b", "c"))
         with self.assertRaises(te): M1("a") == C("a")
 
+        # make sure everything works with only 1 constructor
         A, B =\
         data.A == d.B(str, str) & deriving(Show, Eq)
         self.assertTrue(has_instance(A, Show))
@@ -766,11 +826,13 @@ class TestADTSyntax(unittest.TestCase):
         self.assertEqual(B("a", "b"), B("a", "b"))
         self.assertNotEqual(B("a", "b"), B("a", "c"))
 
+        # make sure everything works with a bunch of constructors
         X, X1, X2, X3, X4, X5, X6 =\
         data.X == d.X1 | d.X2 | d.X3 | d.X4 | d.X5 | d.X6 & deriving(Eq, Ord)
+        self.assertTrue(X1 != X2 and X2 != X3 and X3 != X4 and X4 != X5 and \
+                X4 != X5 and X5 != X6)
         self.assertTrue(X1 < X2 < X3 < X4 < X5 < X6)
         with self.assertRaises(te): X1 < A("a", "a")
-
         with self.assertRaises(te): data.X == d.A | d.B & deriving(Show, 1)
 
 
@@ -2192,7 +2254,7 @@ class TestPython(unittest.TestCase):
             a = 1
             pass
 
-        # add more
+        self.assertTrue(callable(__+1))
         self.assertEqual(1, cmp(10) % 9)
         self.assertEqual(divmod(5)(2), (2, 1))
 
@@ -2202,6 +2264,7 @@ class TestPython(unittest.TestCase):
         with self.assertRaises(te): hasattr(list)(len)
         with self.assertRaises(te): getattr(list)(len)
         with self.assertRaises(te): setattr(list)(len)
+        with self.assertRaises(te): delattr(list)(len)
 
 
 class Test_README_Examples(unittest.TestCase):

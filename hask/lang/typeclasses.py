@@ -160,8 +160,7 @@ class Ord(Eq):
             if self.__ADT_slot__ == other.__ADT_slot__:
                 if len(nt_to_tuple(self)) == 0:
                     return fn((), ())
-                zipped_fields = zip(nt_to_tuple(self), nt_to_tuple(other))
-                return all((fn(a, b) for a, b in zipped_fields))
+                return fn(nt_to_tuple(self), nt_to_tuple(other))
             return fn(self.__ADT_slot__, other.__ADT_slot__)
 
         lt = lambda s, o: zip_cmp(s, o, operator.lt)
