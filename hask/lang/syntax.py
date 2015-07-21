@@ -436,6 +436,23 @@ class __matched_case__(Syntax):
 
 class caseof(__unmatched_case__):
     """
+    Pattern matching can be used to deconstruct lists and ADTs, and is a very
+    useful control flow tool.
+
+    Usage:
+
+    ~(caseof(value_to_match)
+        | m(pattern_1) >> return_value_1
+        | m(pattern_2) >> return_value_2
+        | m(pattern_3) >> return_value_3)
+
+    Example usage:
+
+    def fib(x):
+        return ~(caseof(x)
+                    | m(0)   >> 1
+                    | m(1)   >> 1
+                    | m(m.n) >> fib(p.n - 1) + fib(p.n - 2))
     """
     def __init__(self, value):
         if isinstance(value, Undefined):
