@@ -435,6 +435,7 @@ class TestTypeSystem(unittest.TestCase):
         g = (lambda x: x - 5) ** (H/ int >> int)
         h = (lambda x: x * 2) ** (H/ int >> int)
         i = (lambda x: str(x)) ** (H/ int >> str)
+        j = (lambda x: x[0]) ** (H/ list >> float)
 
         # basic type checking
         self.assertEqual(2, f(g(5)))
@@ -443,18 +444,54 @@ class TestTypeSystem(unittest.TestCase):
         self.assertEqual(8, f * f * f % 2)
         self.assertEqual(f(h(g(5))), (f * h * g)(5))
         self.assertEqual((i * h * f)(9), "22")
+        self.assertEqual(1., j % [1., 2.])
         with self.assertRaises(te): f(4.0)
         with self.assertRaises(te): f("4")
         with self.assertRaises(te): f(1, 2)
 
     def test_TypedFunc_var(self):
-        pass
+        @sig(H/ "a" >> "b" >> "a" >> "b")
+        def superconst(a, b, c):
+            return b
+
+        self.assertEqual(1, superconst([], 1, [1, 2]))
+        self.assertEqual(None, superconst([], None, [1, 2]))
+        with self.assertRaises(te): superconst(1, "a", 1.)
 
     def test_TypedFunc_tuple(self):
-        pass
+        @sig(H/ (int, "a", str) >> str)
+        def pprint(tup):
+            return str(tup[0]) + tup[2]
+
+        self.assertEqual("1a", pprint((1, 9., "a")))
+        with self.assertRaises(te): pprint((1, 2, 3))
+        with self.assertRaises(te): pprint(("1", 2, "3"))
+        with self.assertRaises(te): pprint((1, 2, 3, 4))
+        with self.assertRaises(te): pprint((1, 2))
+
+        @sig(H/ ("a", "b") >> ("b", "a"))
+        def swap(tup):
+            return (tup[1], tup[0])
+
+        self.assertEqual(swap((1, 2)), (2, 1))
+        self.assertEqual(swap((1., 2)), (2, 1.))
+        with self.assertRaises(te): swap((1, 2, 3))
 
     def test_TypedFunc_list(self):
-        pass
+        @sig(H/ [int] >> int)
+        def sum1(l):
+            return sum(l)
+
+        self.assertEqual(sum1 % L[1, 2, 3], 6)
+        with self.assertRaises(te): sum1 % L[1., 2., 3.]
+
+        @sig(H/ [["a"]] >> ["a"])
+        def flatten(xss):
+            return L[(x for xs in xss for x in xs)]
+
+        self.assertEqual(flatten(L[L["a", "b"], L["c", "d"]]),
+                         L["a", "b", "c", "d"])
+        with self.assertRaises(te): flatten(L["a", "b"])
 
     def test_TypedFunc_None(self):
         @sig(H/ None >> None)
@@ -2252,7 +2289,6 @@ class TestPython(unittest.TestCase):
 
         class Example(object):
             a = 1
-            pass
 
         self.assertTrue(callable(__+1))
         self.assertEqual(1, cmp(10) % 9)
@@ -2271,6 +2307,18 @@ class Test_README_Examples(unittest.TestCase):
     """Make sure the README examples are all working"""
 
     def test_list(self):
+        self.assertEqual([1, 2, 3], list(L[1, 2, 3]))
+        my_list = ["a", "b", "c"]
+        self.assertEqual(L["a", "b", "c"], L[my_list])
+        self.assertEqual(L[(x**2 for x in range(1, 11))],
+            L[1, 4, 9, 16, 25, 36, 49, 64, 81, 100])
+
+        self.assertEqual(L[1, 2, 3], 1 ^ L[2, 3])
+        self.assertEqual("goodnight" ^ ("sweet" ^ ("prince" ^ L[[]])),
+            L["goodnight", "sweet", "prince"])
+        with self.assertRaises(te): "a" ^ L[1.0, 10.3]
+        self.assertEqual(L[1, 2] + L[3, 4], L[1, 2, 3, 4])
+
         from hask.Data.List import take
         self.assertEqual(take(5, L["a", "b", ...]),
                          L['a', 'b', 'c', 'd', 'e'])
@@ -2292,7 +2340,71 @@ class Test_README_Examples(unittest.TestCase):
         self.assertIsNotNone(Foo(1, 2, "s"))
 
     def test_sig(self):
-        pass
+        @sig(H/ "a" >> "b" >> "a")
+        def const(x, y):
+            return x
+        self.assertEqual(const(1, 2), 1)
+
+        def const(x, y):
+            return x
+        const = const ** (H/ "a" >> "b" >> "a")
+        self.assertEqual(const(1, 2), 1)
+
+        f = (lambda x, y: x + y) ** (H/ int >> int >> int)
+        self.assertEqual(5, f(2, 3))
+        with self.assertRaises(te): f(9, 1.0)
+
+        g = (lambda a, b, c: a / (b + c)) ** (H/ int >> int >> int >> int)
+        self.assertEqual(g(10, 2, 3), 2)
+        part_g = g(12)
+        self.assertEqual(part_g(2, 2), 3)
+        self.assertEqual(g(20, 1)(4), 4)
+        self.assertEqual(Just * Just * Just * Just % 77, Just(Just(Just(Just(77)))))
+
+        # add two ints together
+        @sig(H/ int >> int >> int)
+        def add(x, y):
+            return x + y
+
+        # reverse order of arguments to a function
+        @sig(H/ (H/ "a" >> "b" >> "c") >> "b" >> "a" >> "c")
+        def flip(f, b, a):
+            return f(a, b)
+
+        # map a Python (untyped) function over a Python (untyped) set
+        @sig(H/ func >> set >> set)
+        def set_map(fn, lst):
+            return set((fn(x) for x in lst))
+
+        # map a typed function over a List
+        @sig(H/ (H/ "a" >> "b") >> ["a"] >> ["b"])
+        def map(f, xs):
+            return L[(f(x) for x in xs)]
+
+        # type signature with an Eq constraint
+        @sig(H[(Eq, "a")]/ "a" >> ["a"] >> bool)
+        def not_in(y, xs):
+            return not any((x == y for x in xs))
+
+        # type signature with a type constructor (Maybe) that has type arguments
+        @sig(H/ int >> int >> t(Maybe, int))
+        def safe_div(x, y):
+            return Nothing if y == 0 else Just(x/y)
+
+        # type signature for a function that returns nothing
+        @sig(H/ int >> None)
+        def launch_missiles(num_missiles):
+            return
+
+        Ratio, R =\
+                data.Ratio("a") == d.R("a", "a") & deriving(Eq)
+
+        Rational = t(Ratio, int)
+
+
+        @sig(H/ Rational >> Rational >> Rational)
+        def addRational(rat1, rat2):
+            pass
 
     def test_match(self):
         @sig(H/ int >> int)
@@ -2307,8 +2419,74 @@ class Test_README_Examples(unittest.TestCase):
         self.assertEqual(1, fib(1))
         self.assertEqual(13, fib(6))
 
+        def default_to_zero(x):
+            return ~(caseof(x)
+                        | m(Just(m.x)) >> p.x
+                        | m(Nothing)   >> 0)
+
+        self.assertEqual(default_to_zero(Just(27)), 27)
+        self.assertEqual(default_to_zero(Nothing), 0)
+        self.assertEqual(Just(20.0)[0], 20.0)
+        self.assertEqual(Left("words words words words")[0], "words words words words")
+        with self.assertRaises(IndexError): Nothing[0]
+
     def test_typeclasses(self):
-        pass
+        from hask.Prelude import fmap
+        M, N, J = data.M("a") == d.N | d.J("a") & deriving(Show, Eq, Ord)
+
+        def maybe_fmap(fn, maybe_value):
+            return ~(caseof(maybe_value)
+                        | m(N)      >> N
+                        | m(J(m.x)) >> J(fn(p.x))
+                    )
+
+        instance(Functor, M).where(
+            fmap = maybe_fmap
+        )
+
+        times2 = (lambda x: x * 2) ** (H/ int >> int)
+        toFloat = float ** (H/ int >> float)
+
+        self.assertEqual(fmap(toFloat, J(10)), J(10.0))
+        self.assertEqual(fmap(toFloat, fmap(times2, J(25))), J(50.0))
+        self.assertEqual((toFloat * times2) * J(25), J(50.0))
+        self.assertEqual((toFloat * times2) * N, N)
+
+        instance(Applicative, M).where(
+            pure = J
+        )
+
+        instance(Monad, M).where(
+            bind = lambda x, f: ~(caseof(x)
+                                    | m(J(m.a)) >> f(p.a)
+                                    | m(N)   >> N)
+        )
+
+        @sig(H/ int >> int >> t(M, int))
+        def safe_div(x, y):
+            return N if y == 0 else J(x/y)
+
+        from hask.Prelude import flip
+        divBy = flip(safe_div)
+        self.assertEqual(J(9) >> divBy(3), J(3))
+
+        self.assertEqual(Just(12) >> divBy(2) >> divBy(2) >> divBy(3), J(1))
+        self.assertEqual(J(12) >> divBy(0) >> divBy(6), N)
+
+        from hask.Data.List import replicate
+        self.assertEqual(L[1, 2] >> replicate(2) >> replicate(2),
+                L[1, 1, 1, 1, 2, 2, 2, 2])
+
+        class Person(object):
+            def __init__(self, name, age):
+                self.name = name
+                self.age = age
+
+        instance(Eq, Person).where(
+            eq = lambda p1, p2: p1.name == p2.name and p1.age == p2.age
+        )
+
+        self.assertFalse(Person("Philip Wadler", 59) == Person("Simon Peyton Jones", 57))
 
     def test_sections(self):
         f = (__ - 20) * (2 ** __) * (__ + 3)
@@ -2357,6 +2535,28 @@ class Test_README_Examples(unittest.TestCase):
         either_eat = in_either(eat_cheese)
         self.assertEqual(either_eat(10), Right(9))
         self.assertTrue(isinstance(either_eat(0)[0], ValueError))
+
+    def test_examples(self):
+        @sig(H/ int >> int >> t(Maybe, int))
+        def safe_div(x, y):
+            return Nothing if y == 0 else Just(x/y)
+
+        from hask.Data.Maybe import mapMaybe
+        self.assertEqual(mapMaybe(safe_div(12)) % L[0, 1, 3, 0, 6],
+            L[12, 4, 2])
+
+        from hask.Data.List import isInfixOf
+        self.assertTrue(isInfixOf(L[2, 8], L[1, 4, 6, 2, 8, 3, 7]))
+
+        from hask.Control.Monad import join
+        self.assertEqual(join(Just(Just(1))), Just(1))
+
+        from hask.Prelude import flip
+        from hask.Data.Tuple import snd
+        from hask.Python.builtins import divmod, hex
+
+        hexMod = hex * snd * flip(divmod, 16)
+        self.assertEqual(hexMod(24), '0x8')
 
 
 if __name__ == '__main__':

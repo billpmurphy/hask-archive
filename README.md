@@ -82,7 +82,7 @@ L[1, 2, 3]
 >>> L[my_list]
 L['a', 'b', 'c']
 
->>> L[(x**2 for xs in range(1, 11)]
+>>> L[(x**2 for x in range(1, 11))]
 L[1 ... ]
 ```
 
@@ -94,7 +94,7 @@ two lists, use `+`, the concatenation operator.
 L[1, 2, 3]
 
 >>> "goodnight" ^ ("sweet" ^ ("prince" ^ L[[]]))
-L["goodnight", "sweet", "price"]
+L["goodnight", "sweet", "prince"]
 
 >>> "a" ^ L[1.0, 10.3]  # type error
 
@@ -249,11 +249,11 @@ You can view the type of an object with `_t` (equivalent to `:t` in ghci).
 >>> _t(1)
 int
 
->>> _t(Just("soylent green")
-Maybe str
+>>> _t(Just("soylent green"))
+(Maybe str)
 
 >>> _t(Right(("a", 1)))
-Either a (str, int)
+(Either a (str, int))
 
 >>> _t(Just)
 (a -> Maybe a)
@@ -528,7 +528,7 @@ for the `Maybe` type.  First, however, `Maybe` needs
 
 
 ```python
-def maybe_fmap(maybe_value, fn):
+def maybe_fmap(fn, x):
     """Apply a function to the value inside of a (Maybe a) value"""
     return ~(caseof(x)
                 | m(Nothing)   >> Nothing
@@ -545,12 +545,12 @@ and map any function of type `a -> b` into a value of type `Maybe a`.
 
 ```python
 >>> times2 = (lambda x: x * 2) ** (H/ int >> int)
->>> toFloat = float ** (H/ int >> float))
+>>> toFloat = float ** (H/ int >> float)
 
->>> fmap(Just(10), toFloat)
+>>> fmap(toFloat, Just(10))
 Just(10.0)
 
->>> fmap(fmap(Just(25), times2), toFloat)
+>>> fmap(toFloat, fmap(times2, Just(25)))
 Just(50.0)
 ```
 
@@ -619,7 +619,7 @@ As in Haskell, `List` is also a monad, and `bind` for the `List` type is just
 `concatMap`.
 
 ```python
->>> from Data.List import replicate
+>>> from hask.Data.List import replicate
 >>> L[1, 2] >> replicate(2) >> replicate(2)
 L[1, 1, 1, 1, 2, 2, 2, 2]
 ```
@@ -825,8 +825,8 @@ use `help` liberally. See the Appendix below for a full list of modules. Some
 highlights:
 
 ```python
->>> from hask.Data.List import mapMaybe
->>> mapMaybe * safe_div(12) % L[0, 1, 3, 0, 6]
+>>> from hask.Data.Maybe import mapMaybe
+>>> mapMaybe(safe_div(12)) % L[0, 1, 3, 0, 6]
 L[12, 4, 2]
 
 
@@ -906,7 +906,7 @@ points:
 | `hask.Prelude` | `hask.lang` | |
 | `hask.Data.Maybe` | `hask.lang`, `hask.Data.Eq`, `hask.Data.Ord`, `hask.Data.Functor`, `hask.Control.Applicative`, `hask.Control.Monad` | `Maybe` (`Nothing`, `Just`), `in_maybe`, `maybe`, `isJust`, `isNothing`, `fromJust`, `listToMaybe`, `maybeToList`, `catMaybes`, `mapMaybe` |
 | `hask.Data.Either` | `hask.lang`, `hask.Data.Eq`, `hask.Data.Ord`, `hask.Data.Functor`, `hask.Control.Applicative`, `hask.Control.Monad` | `Either` (`Left`, `Right`), `in_either`, `either`, `lefts`, `rights`, `isLeft`, `isRight`, `partitionEithers` |
-| `hask.Data.List` | `hask.lang`, `hask.Data.Foldable`, `hask.Data.Eq`, `hask.Data.Ord`, `hask.Data.Num`, `hask.Data.Maybe` |
+| `hask.Data.List` | `hask.lang`, `hask.Data.Foldable`, `hask.Data.Eq`, `hask.Data.Ord`, `hask.Data.Num`, `hask.Data.Maybe` | `head`, `last`, `tail`, `init`, `uncons`, `null`, `length`, `map`, `reverse`, `intersperse`, `intercalate`, `transpose`, `subsequences`, `permutations`, `foldl`, `foldl_`, `foldl1`, `foldl1_`, `foldr`, `foldr1`, `concat`, `concatMap`, `and_`, `or_`, `any`, `all`, `sum`, `product`, `minimum`, `maximum`, `scanl`, `scanl1`, `scanr`, `scanr1`, `mapAccumL`, `mapAccumR`, `iterate`, `repeat`, `replicate`, `cycle`, `unfoldr`, `take`, `drop`, `splitAt`, `takeWhile`, `dropWhile`, `dropWhileEnd`, `span`, `break_`, `stripPrefix`, `group`, `inits`, `tails`, `isPrefixOf`, `isSuffixOf`, `isInfixOf`, `isSubsequenceOf`, `elem`, `notElem`, `lookup`, `find`, `filter`, `partition`, `elemIndex`, `elemIndices`, `findIndex`, `findIndicies`, `zip`, `zip3`, `zip4`, `zip5`, `zip6`, `zip7`, `zipWith`, `zipWith3`, `zipWith4`, `zipWith5`, `zipWith6`, `zipWith7`, `unzip`, `unzip3`, `unzip4`, `unzip5`, `unzip6`, `unzip7`, `lines`, `words`, `unlines`, `unwords`, `nub`, `delete`, `diff`, `union`, `intersect`, `sort`, `sortOn`, `insert`, `nubBy`, `deleteBy`, `deleteFirstBy`, `unionBy`, `intersectBy`, `groupBy`, `sortBy`, `insertBy`, `maximumBy`, `minimumBy`, `genericLength`, `genericTake`, `genericDrop`, `genericSplitAt`, `genericIndex`, `genericReplicate` |
 | `hask.Data.String` | `hask.lang` | `words`, `unwords`, `lines`, `unlines` |
 | `hask.Data.Tuple` | `hask.lang` | `fst`, `snd`, `swap`, `curry`, `uncurry` |
 | `hask.Data.Char` | `hask.lang` | `isControl`, `isSpace`, `isLower`, `isUpper`, `isAlpha`, `isAlphaNum`, `isPrint`, `isDigit`, `isOctDigit`, `isHexDigit`, `isLetter`, `isMark`, `isNumber`, `isPunctuation`, `isSymbol`, `isSeparator`, `isAscii`, `isLatin1`, `isAsciiUpper`, `toLower`, `toUpper`, `toTitle`, `digitToInt`, `intToDigit`, `chr`, `ord` |
