@@ -2406,6 +2406,10 @@ class Test_README_Examples(unittest.TestCase):
         def addRational(rat1, rat2):
             pass
 
+        from hask.Prelude import flip
+        h = (lambda x, y: x / y) ** (H/ float >> float >> float)
+        self.assertEqual(h(3.0) * h(6.0) * flip(h, 2.0) % 36.0, 9.0)
+
     def test_match(self):
         @sig(H/ int >> int)
         def fib(x):
