@@ -6,18 +6,14 @@ from hindley_milner import ListType
 from hindley_milner import unify
 
 from type_system import typeof
-from type_system import build_ADT
-from type_system import TypedFunc
-from type_system import Hask
 from type_system import Typeclass
+from type_system import Hask
 from type_system import build_instance
 
 from typeclasses import Show
 from typeclasses import show
 from typeclasses import Eq
 from typeclasses import Ord
-from typeclasses import Bounded
-from typeclasses import Read
 
 from syntax import Syntax
 from syntax import instance

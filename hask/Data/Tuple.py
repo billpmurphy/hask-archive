@@ -34,7 +34,7 @@ def curry(tup_fn, x, y):
     return tup_fn((x, y))
 
 
-@sig( H/ (H/ "a" >> "b" >> "c") >> ("a", "b") >> "c")
+@sig(H/ (H/ "a" >> "b" >> "c") >> ("a", "b") >> "c")
 def uncurry(fn, tup):
     """
     uncurry :: (a -> b -> c) -> (a, b) -> c

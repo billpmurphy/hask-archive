@@ -212,7 +212,7 @@ def t(type_constructor, *params):
     if inspect.isclass(type_constructor) and \
        issubclass(type_constructor, ADT) and \
        len(type_constructor.__params__) != len(params):
-            raise TypeError("Incorrect number of type parameters to %s" % \
+            raise TypeError("Incorrect number of type parameters to %s" %
                             type_constructor.__name__)
 
     params = [p.sig if isinstance(p, __signature__) else p for p in params]
@@ -225,7 +225,8 @@ def typify(fn, hkt=None):
 
     Args:
         fn: The function to wrap
-        hkt: A higher-kinded type wrapped in a closure (e.g., lambda x: t(Maybe, x))
+        hkt: A higher-kinded type wrapped in a closure (e.g., lambda x:
+             t(Maybe, x))
 
     Returns:
         A TypedFunc object with a polymorphic type (e.g. a -> b -> c, etc) with

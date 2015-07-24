@@ -112,7 +112,8 @@ class TypeVariable(object):
         """
         if self.__name is None:
             self.__name = TypeVariable.next_var_name
-            TypeVariable.next_var_name = chr(ord(TypeVariable.next_var_name) + 1)
+            TypeVariable.next_var_name = chr(ord(TypeVariable.next_var_name)
+                                             + 1)
         return self.__name
 
     name = property(__getName)
@@ -138,7 +139,7 @@ class TypeOperator(object):
         if num_types == 0:
             return show_type(self.name)
         return "({0} {1})".format(show_type(self.name),
-                                ' '.join(map(show_type, self.types)))
+                                  ' '.join(map(show_type, self.types)))
 
 
 class Function(TypeOperator):
@@ -197,9 +198,10 @@ def analyze(node, env, non_generic=None):
         The computed type of the expression.
 
     Raises:
-        TypeError: The type of the expression could not be inferred, for example
-            if it is not possible to unify two types such as Integer and Bool
-            or if the abstract syntax tree rooted at node could not be parsed
+        TypeError: The type of the expression could not be inferred, for
+                   example if it is not possible to unify two types such as
+                   Integer and Bool or if the abstract syntax tree rooted at
+                   node could not be parsed
     """
 
     if non_generic is None:
@@ -260,7 +262,7 @@ def fresh(t, non_generic):
         t: A type to be copied.
         non_generic: A set of non-generic TypeVariables
     """
-    mappings = {} # A mapping of TypeVariables to TypeVariables
+    mappings = {}  # A mapping of TypeVariables to TypeVariables
 
     def freshrec(tp):
         p = prune(tp)

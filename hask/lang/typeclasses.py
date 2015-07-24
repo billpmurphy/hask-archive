@@ -1,9 +1,7 @@
 import operator
 
 from type_system import Typeclass
-from type_system import ADT
 from type_system import is_builtin
-from type_system import has_instance
 from type_system import nt_to_tuple
 from type_system import build_instance
 
@@ -14,7 +12,6 @@ from syntax import H
 
 #=============================================================================#
 # Basic typeclasses
-
 
 
 class Show(Typeclass):
@@ -33,7 +30,7 @@ class Show(Typeclass):
         __show__ = show ** (H/ "a" >> str)
         show = lambda self: __show__(self)
 
-        build_instance(Show, cls, {"show":show})
+        build_instance(Show, cls, {"show": show})
         if not is_builtin(cls):
             cls.__repr__ = show
             cls.__str__ = show
@@ -87,7 +84,7 @@ class Eq(Typeclass):
         eq = lambda self, other: __eq__(self, other)
         ne = lambda self, other: __ne__(self, other)
 
-        build_instance(Eq, cls, {"eq":eq, "ne":ne})
+        build_instance(Eq, cls, {"eq": eq, "ne": ne})
         if not is_builtin(cls):
             cls.__eq__ = eq
             cls.__ne__ = ne

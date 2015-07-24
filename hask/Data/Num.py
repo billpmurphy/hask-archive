@@ -31,7 +31,7 @@ class Num(Show, Eq):
     """
     @classmethod
     def make_instance(typeclass, cls, add, mul, abs, signum, fromInteger,
-            negate, sub=None):
+                      negate, sub=None):
 
         @sig(H[(Num, "a")]/ "a" >> "a" >> "a")
         def default_sub(a, b):

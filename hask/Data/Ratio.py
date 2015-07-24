@@ -1,5 +1,3 @@
-import fractions
-
 from ..lang import sig
 from ..lang import H
 from ..lang import t

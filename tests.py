@@ -11,9 +11,8 @@ from hask import L
 from hask import Ordering, LT, EQ, GT
 from hask import Maybe, Just, Nothing, in_maybe
 from hask import Either, Left, Right, in_either
-from hask import Typeclass, Hask
-from hask import Read, Show, Eq, Ord, Bounded
-from hask import Num, Real, Integral, RealFrac, Fractional, Floating, RealFloat
+from hask import Typeclass
+from hask import Read, Show, Eq, Ord, Bounded, Num
 from hask import Functor, Applicative, Monad
 from hask import Foldable, Traversable
 
@@ -23,8 +22,6 @@ from hask.lang.type_system import build_sig_arg
 from hask.lang.type_system import build_sig
 from hask.lang.type_system import build_ADT
 from hask.lang.type_system import typeof
-from hask.lang.type_system import make_data_const
-from hask.lang.type_system import make_type_const
 from hask.lang.type_system import pattern_match
 from hask.lang.type_system import PatternMatchBind
 
@@ -46,7 +43,6 @@ se = SyntaxError
 ve = ValueError
 
 
-
 class TestHindleyMilner(unittest.TestCase):
     """Test the internals of the Hindley-Milner type inference engine"""
 
@@ -57,7 +53,8 @@ class TestHindleyMilner(unittest.TestCase):
 
     def not_inference(self, expr):
         """Type inference failed using our toy environment"""
-        with self.assertRaises(te): analyze(expr, self.env)
+        with self.assertRaises(te):
+            analyze(expr, self.env)
         return
 
     def unified(self, t1, t2):
@@ -71,9 +68,11 @@ class TestHindleyMilner(unittest.TestCase):
         return
 
     def not_typecheck(self, expr, expr_type):
-        """Typecheck failed, but inference succeeded using our toy environment"""
+        """Typecheck failed, but inference succeeded using our toy environment
+        """
         self.inference(expr)
-        with self.assertRaises(te): self.typecheck(expr, expr_type)
+        with self.assertRaises(te):
+            self.typecheck(expr, expr_type)
         return
 
     def setUp(self):
@@ -90,18 +89,19 @@ class TestHindleyMilner(unittest.TestCase):
         self.NoneT = TypeOperator("None", [])
 
         # toy environment
-        self.env = {"pair" : Function(self.var1, Function(self.var2, self.Pair)),
-                    "True" : self.Bool,
-                    "None" : self.NoneT,
-                    "id"   : Function(self.var4, self.var4),
-                    "cond" : Function(self.Bool, Function(self.var3,
-                                Function(self.var3, self.var3))),
-                    "zero" : Function(self.Integer, self.Bool),
-                    "pred" : Function(self.Integer, self.Integer),
+        self.env = {"pair": Function(self.var1,
+                                     Function(self.var2, self.Pair)),
+                    "True": self.Bool,
+                    "None": self.NoneT,
+                    "id": Function(self.var4, self.var4),
+                    "cond": Function(self.Bool, Function(self.var3,
+                                     Function(self.var3, self.var3))),
+                    "zero": Function(self.Integer, self.Bool),
+                    "pred": Function(self.Integer, self.Integer),
                     "times": Function(self.Integer,
-                                Function(self.Integer, self.Integer)),
-                    "4"    : self.Integer,
-                    "1"    : self.Integer }
+                                      Function(self.Integer, self.Integer)),
+                    "4": self.Integer,
+                    "1": self.Integer}
 
         # some expressions to play around with
         self.compose = Lam("f", Lam("g", Lam("arg",
@@ -504,6 +504,7 @@ class TestTypeSystem(unittest.TestCase):
 
     def test_TypedFunc_func(self):
         """PyFunc signature type"""
+
         @sig(H/ func >> func)
         def id_wrap(f):
             return lambda x: f(x)
@@ -2533,8 +2534,10 @@ class Test_README_Examples(unittest.TestCase):
         self.assertEqual(maybe_eat(1), Just(0))
         self.assertEqual(maybe_eat(0), Nothing)
         self.assertEqual(Just(6), Just(7) >> maybe_eat)
-        self.assertEqual(Just(7), Just(10) >> maybe_eat >> maybe_eat >> maybe_eat)
-        self.assertEqual(Nothing, Just(1) >> maybe_eat >> maybe_eat >> maybe_eat)
+        self.assertEqual(Just(7),
+                         Just(10) >> maybe_eat >> maybe_eat >> maybe_eat)
+        self.assertEqual(Nothing,
+                         Just(1) >> maybe_eat >> maybe_eat >> maybe_eat)
 
         either_eat = in_either(eat_cheese)
         self.assertEqual(either_eat(10), Right(9))
@@ -2547,7 +2550,7 @@ class Test_README_Examples(unittest.TestCase):
 
         from hask.Data.Maybe import mapMaybe
         self.assertEqual(mapMaybe(safe_div(12)) % L[0, 1, 3, 0, 6],
-            L[12, 4, 2])
+                         L[12, 4, 2])
 
         from hask.Data.List import isInfixOf
         self.assertTrue(isInfixOf(L[2, 8], L[1, 4, 6, 2, 8, 3, 7]))

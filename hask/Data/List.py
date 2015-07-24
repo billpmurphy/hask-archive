@@ -25,7 +25,7 @@ from Maybe import Nothing
 # Basic functions
 
 
-@sig(H/ ["a"] >> "a" )
+@sig(H/ ["a"] >> "a")
 def head(xs):
     """
     head :: [a] -> a
@@ -35,7 +35,7 @@ def head(xs):
     return xs[0]
 
 
-@sig(H/ ["a"] >> "a" )
+@sig(H/ ["a"] >> "a")
 def last(xs):
     """
     last :: [a] -> a
@@ -45,7 +45,7 @@ def last(xs):
     return xs[-1]
 
 
-@sig(H/ ["a"] >> ["a"] )
+@sig(H/ ["a"] >> ["a"])
 def tail(xs):
     """
     tail :: [a] -> [a]
@@ -57,7 +57,7 @@ def tail(xs):
     return xs[1:]
 
 
-@sig(H/ ["a"] >> ["a"] )
+@sig(H/ ["a"] >> ["a"])
 def init(xs):
     """
     init :: [a] -> [a]
@@ -256,7 +256,7 @@ def foldr(f, z, xs):
     """
     return ~(caseof(xs)
                 | m(L[[]])     >> z
-                | m(m.a ^ m.b) >> f(m.a, foldr(f, z, m.b)))
+                | m(m.a ^ m.b) >> f(p.a, foldr(f, z, p.b)))
 
 
 @sig(H/ (H/ "a" >> "a" >> "a") >> ["a"] >> "a")

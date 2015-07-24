@@ -76,7 +76,7 @@ class TypeMeta(type):
     def __init__(self, *args):
         super(TypeMeta, self).__init__(*args)
         self.__instances__ = {}
-        self.__dependencies__ = self.mro()[1:-2] # excl. self, Typeclass, object
+        self.__dependencies__ = self.mro()[1:-2] # excl self, Typeclass, object
 
     def __getitem__(self, item):
         try:
@@ -152,7 +152,6 @@ def has_instance(cls, typeclass):
     if not issubclass(typeclass, Typeclass):
         return False
     return id(cls) in typeclass.__instances__
-
 
 
 #=============================================================================#

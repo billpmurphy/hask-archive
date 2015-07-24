@@ -1,11 +1,8 @@
 import fractions
 
-from .lang import build_instance
 from .lang import H
 from .lang import sig
 from .lang import t
-from .lang import L
-from .lang import instance
 
 
 #=============================================================================#
