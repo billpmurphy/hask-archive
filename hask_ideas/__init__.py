@@ -29,86 +29,86 @@ import Python.builtins
 # Core language
 
 ## Typeclass instance declaration
-from hask.lang import instance
+from lang import instance
 
 ## Operator sections
-from hask.lang import __
+from lang import __
 
 ## Guard expressions
-from hask.lang import guard
-from hask.lang import c
-from hask.lang import otherwise
-from hask.lang import NoGuardMatchException
+from lang import guard
+from lang import c
+from lang import otherwise
+from lang import NoGuardMatchException
 
 ## Lists/list comprehensions
-from hask.lang import L
+from lang import L
 
 ## ADT creation
-from hask.lang import data
-from hask.lang import d
-from hask.lang import deriving
+from lang import data
+from lang import d
+from lang import deriving
 
 ## Type signatures
-from hask.lang import sig
-from hask.lang import H
-from hask.lang import t
-from hask.lang import func
-from hask.lang import TypeSignatureError
+from lang import sig
+from lang import H
+from lang import t
+from lang import func
+from lang import TypeSignatureError
 
 ## Pattern matching
-from hask.lang import caseof
-from hask.lang import p
-from hask.lang import m
-from hask.lang import IncompletePatternError
+from lang import caseof
+from lang import p
+from lang import m
+from lang import IncompletePatternError
 
 ## REPL tools
-from hask.lang import _t
-from hask.lang import _i
-from hask.lang import _q
+from lang import _t
+from lang import _i
+from lang import _q
 
 ## Type system/typeclasses
-from hask.lang import typeof
-from hask.lang import has_instance
-from hask.lang import Typeclass
-from hask.lang import Hask
+from lang import typeof
+from lang import has_instance
+from lang import Typeclass
+from lang import Hask
 
 
 #=============================================================================#
 # Other imports
 
 # Basic Typeclasses
-from hask.Prelude import Read
-from hask.Prelude import Show
-from hask.Prelude import Eq
-from hask.Prelude import Ord
-from hask.Prelude import Enum
-from hask.Prelude import Bounded
-from hask.Prelude import Num
-from hask.Prelude import Real
-from hask.Prelude import Integral
-from hask.Prelude import Fractional
-from hask.Prelude import Floating
-from hask.Prelude import RealFrac
-from hask.Prelude import RealFloat
-from hask.Prelude import Functor
-from hask.Prelude import Applicative
-from hask.Prelude import Monad
-from hask.Prelude import Traversable
-from hask.Prelude import Foldable
+from Prelude import Read
+from Prelude import Show
+from Prelude import Eq
+from Prelude import Ord
+from Prelude import Enum
+from Prelude import Bounded
+from Prelude import Num
+from Prelude import Real
+from Prelude import Integral
+from Prelude import Fractional
+from Prelude import Floating
+from Prelude import RealFrac
+from Prelude import RealFloat
+from Prelude import Functor
+from Prelude import Applicative
+from Prelude import Monad
+from Prelude import Traversable
+from Prelude import Foldable
 
 
 # Standard types
-from hask.Prelude import Maybe
-from hask.Prelude import Just
-from hask.Prelude import Nothing
-from hask.Prelude import in_maybe
+from Prelude import Maybe
+from Prelude import Just
+from Prelude import Nothing
+from Prelude import in_maybe
 
-from hask.Prelude import Either
-from hask.Prelude import Left
-from hask.Prelude import Right
-from hask.Prelude import in_either
+from Prelude import Either
+from Prelude import Left
+from Prelude import Right
+from Prelude import in_either
 
-from hask.Prelude import Ordering
-from hask.Prelude import LT
-from hask.Prelude import EQ
-from hask.Prelude import GT
+from Prelude import Ordering
+from Prelude import LT
+from Prelude import EQ
+from Prelude import GT
